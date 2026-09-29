@@ -52,7 +52,7 @@ test("IT navigation replaces personal assets without revoking own-asset capabili
 test("private deep links cannot fall through to employee management", () => {
   assert.equal(resolveRoute("/admin/employees/user-1/private")?.capability, "PRIVATE_HR_ACCESS");
   assert.equal(resolveRoute("/admin/employees/new")?.capability, "EMPLOYEE_MANAGE");
-  for (const path of ["/admin/employees/x/private/extra", "/admin/employees/new/private", "/admin/anything", "/people/anything", "/admin/employees/../private"]) assert.equal(resolveRoute(path), undefined);
+  for (const path of ["/admin/employees/x/private/extra", "/admin/employees/new/private", "/admin/anything", "/people/anything/extra", "/admin/employees/../private"]) assert.equal(resolveRoute(path), undefined);
   for (const route of ROUTES) assert(resolveRoute(route.path.replace("[id]", "test-id")));
 });
 test("return URLs allow only known local routes", () => {

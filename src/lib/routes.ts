@@ -12,6 +12,7 @@ const managed = (path: string, title: string, capability: Capability, group: str
 export const ROUTES: AppRoute[] = [
   employee("/", "홈", "홈"),
   employee("/people", "직원", "인사", "Users2"),
+  employee("/people/[id]", "직원 프로필"),
   employee("/organization", "조직도", "인사", "ChartNetwork"),
   employee("/career", "커리어", "인사", "ChartNetwork"),
   employee("/career/new", "커리어 작성"),
@@ -44,6 +45,7 @@ export const ROUTES: AppRoute[] = [
   managed("/admin/settings/birthday-email", "생일 메일 설정", "SETTINGS_MANAGE", "관리", "Settings"),
   { path: "/admin/employees/new", title: "직원 등록", capability: "EMPLOYEE_MANAGE", icon: "UserPlus" },
   { path: "/admin/employees/[id]", title: "직원 상세", capability: "EMPLOYEE_MANAGE", icon: "Users2" },
+  { path: "/admin/employees/[id]/edit", title: "직원 수정", capability: "EMPLOYEE_MANAGE", icon: "UserCog" },
   { path: "/admin/employees/[id]/private", title: "HR Private", capability: "PRIVATE_HR_ACCESS", icon: "FolderLock" },
   { path: "/admin/projects/[id]", title: "프로젝트 상세", capability: "PROJECT_MANAGE", icon: "FolderCog" },
 ];

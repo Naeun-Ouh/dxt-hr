@@ -3,21 +3,33 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { requireCapability } from "@/lib/auth/access";
 import { can, type Principal } from "@/lib/permissions";
+import { EmployeeList, EmployeeEditor, EmployeeDetail, HrPrivateScreen, OrganizationScreen } from "@/components/employees/screens";
+import type { SearchParams } from "@/lib/employees/data";
 import { resolveRoute } from "@/lib/routes";
 export const dynamic = "force-dynamic";
-export default async function ProtectedPage({ params }: { params: Promise<{ path?: string[] }> }) {
+export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
   const pathname = `/${path.join("/")}`;
   const route = resolveRoute(pathname);
   if (!route) notFound();
   // Check every page navigation, including RSC requests and deep links, before rendering.
   const principal = await requireCapability(route.capability, pathname);
+  const query = await searchParams;
+  let screen: React.ReactNode;
+  switch (route.path) {
+    case "/people": case "/admin/employees": screen = <EmployeeList admin={route.path.startsWith("/admin")} query={query} />; break;
+    case "/admin/employees/new": screen = <EmployeeEditor principal={principal} />; break;
+    case "/admin/employees/[id]/edit": screen = <EmployeeEditor id={path[2]} principal={principal} />; break;
+    case "/admin/employees/[id]": screen = <EmployeeDetail id={path[2]} admin principal={principal} query={query} />; break;
+    case "/people/[id]": screen = <EmployeeDetail id={path[1]} admin={false} principal={principal} query={query} />; break;
+    case "/admin/employees/[id]/private": screen = <HrPrivateScreen id={path[2]} query={query} />; break;
+    case "/organization": screen = <OrganizationScreen principal={principal} query={query} />; break;
+  }
   return <AppShell principal={principal} route={route}>
-    {pathname === "/" ? <Home principal={principal} /> : <>
+    {screen || (pathname === "/" ? <Home principal={principal} /> : <>
       <div className="page-heading"><h1>{route.title}</h1><p>디엑스티 임직원 운영 관리</p></div>
-      {route.path === "/admin/employees/[id]" && can(principal, "PRIVATE_HR_ACCESS") && <Link className="button" href={`${pathname}/private`}>HR Private</Link>}
       <section className="surface empty-state"><h2>{route.title} 화면을 준비하고 있습니다</h2><p>서비스 준비가 완료되면 이곳에서 이용하실 수 있습니다.</p><Link href="/" className="button">홈으로 돌아가기</Link></section>
-    </>}
+    </>)}
   </AppShell>;
 }
 function Home({ principal }: { principal: Principal }) {

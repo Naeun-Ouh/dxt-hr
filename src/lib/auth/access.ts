@@ -13,7 +13,11 @@ export const currentPrincipal = cache(async () => {
   const { data, error: membershipError } = await client.from("app_memberships")
     .select("display_name,status,roles,capabilities").eq("user_id", user.id).maybeSingle();
   if (membershipError) return null;
-  return parseMembership(user.id, data);
+  const principal = parseMembership(user.id, data);
+  if (!principal) return null;
+  // Domain employment status revokes access independently of auth membership.
+  const { data: active, error: accessError } = await client.rpc("has_app_capability", { requested: "EMPLOYEE_ACCESS" });
+  return !accessError && active === true ? principal : null;
 });
 export async function requireCapability(capability: Capability, returnPath = "/") {
   const principal = await currentPrincipal();
