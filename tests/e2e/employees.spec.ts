@@ -61,12 +61,22 @@ test('organizations can be created and renamed; concurrent employee forms reject
 test('server actions recheck the current role even from an already-open private page',async({page,context})=>{
  await loginAs(context,'ceo');await page.goto(`/admin/employees/${id}/private`);
  await loginAs(context,'admin');
- const revealResponse=page.waitForResponse(r=>r.request().method()==='POST'&&Boolean(r.request().headers()['next-action'])).then(r=>r.text());
+ // Buffer action responses before the client navigates to its 404 boundary.
+ // Reading Chrome's response body after that navigation races resource eviction.
+ await page.route('**/admin/employees/**', async route => {
+  if (!route.request().headers()['next-action']) return route.continue();
+  const response = await route.fetch();
+  const body = await response.text();
+  expect(body).toContain('NEXT_HTTP_ERROR_FALLBACK;404');
+  expect(body).not.toContain('000-test-123');
+  await route.fulfill({ response });
+ });
  await page.getByRole('button',{name:'민감정보 열람',exact:true}).click();
- const body=await revealResponse;expect(body).toContain('NEXT_HTTP_ERROR_FALLBACK;404');expect(body).not.toContain('000-test-123');
+ await expect(page.getByRole('heading',{name:'페이지를 찾을 수 없습니다'})).toBeVisible();
  await loginAs(context,'ceo');await page.goto(`/admin/employees/${id}/private`);await page.getByRole('button',{name:'수정',exact:true}).click();
  await page.locator('input[name="salary"]').fill('999');await loginAs(context,'admin');
  await page.getByRole('button',{name:'민감정보 저장'}).click();
- await expect(page.locator('.private-fields')).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'페이지를 찾을 수 없습니다'})).toBeVisible();
+ await page.unroute('**/admin/employees/**');
  await loginAs(context,'ceo');await page.goto(`/admin/employees/${id}/private`);await page.getByRole('button',{name:'민감정보 열람',exact:true}).click();await expect(page.getByText('000-test-123',{exact:true})).toBeVisible();await expect(page.getByText('999',{exact:true})).toHaveCount(0);
 });
