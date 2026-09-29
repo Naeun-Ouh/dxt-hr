@@ -39,18 +39,19 @@ test("employee cannot directly request any restricted route even with forged use
   }
 });
 test("specialists and multi-role users cannot reach unrelated admin or private HR pages", async ({ page, context }) => {
-  for (const [name, denied] of Object.entries({ leader: ["/admin/expenses", "/admin/assets"], expense: ["/leave/approvals", "/admin/accounts"], it: ["/admin/expenses", "/leave/approvals"], combined: ["/admin/employees"] })) {
+  for (const [name, denied] of Object.entries({ leader: ["/admin/expenses", "/admin/assets"], division: ["/leave/approvals", "/admin/expenses"], expense: ["/leave/approvals", "/admin/accounts"], it: ["/admin/expenses", "/leave/approvals"], combined: ["/admin/employees"] })) {
     await loginAs(context, name);
     for (const path of [...denied, "/admin/employees/test/private"]) expect((await page.goto(path))!.status()).toBe(404);
   }
 });
-test("admin and CEO reach operational routes but private HR requires explicit grant", async ({ page, context }) => {
+test("CEO reaches private HR by role while ADMIN requires the designated grant", async ({ page, context }) => {
   for (const name of ["admin", "ceo", "designated", "privateCeo"]) {
     await loginAs(context, name);
     for (const path of ["/admin/employees", "/admin/expenses", "/admin/accounts", "/admin/projects/test"]) expect((await page.goto(path))!.status()).toBe(200);
+    const hasPrivateHr = cases[name].roles.includes("CEO") || Boolean(cases[name].capabilities?.includes("PRIVATE_HR_ACCESS"));
     await page.goto("/admin/employees/test");
-    await expect(page.getByRole("link", { name: "HR Private" })).toHaveCount(cases[name].capabilities ? 1 : 0);
-    expect((await page.goto("/admin/employees/test/private"))!.status()).toBe(cases[name].capabilities ? 200 : 404);
+    await expect(page.getByRole("link", { name: "HR Private" })).toHaveCount(hasPrivateHr ? 1 : 0);
+    expect((await page.goto("/admin/employees/test/private"))!.status()).toBe(hasPrivateHr ? 200 : 404);
   }
 });
 test("RSC requests, unknown descendants and privilege-shaped query strings fail closed", async ({ context, page }) => {

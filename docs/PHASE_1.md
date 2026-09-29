@@ -18,7 +18,7 @@ One table: `app_memberships`, keyed by `auth.users.id`, with display name, ACTIV
 - TEAM_LEADER adds team projects and leave approval/reason access, without team expenses.
 - EXPENSE_ADMIN adds expense management only; IT_ADMIN adds asset, Windows, and account management plus the documented secret-reveal capabilities.
 - ADMIN/CEO receive broad operational access; CEO alone receives resignation-reason capability.
-- Issue #1 explicitly says no automatic private-HR inheritance. Consequently **CEO and the designated ADMIN both need an explicit `PRIVATE_HR_ACCESS` grant**. The database rejects a second non-CEO private-HR administrator.
+- **CEO receives `PRIVATE_HR_ACCESS` by role; the designated ADMIN requires an explicit grant**, as clarified in the [Phase 1 review](https://github.com/Naeun-Ouh/dxt-hr/pull/8#issuecomment-5899461042). Specialist roles never inherit private-HR access. The database rejects a second non-CEO private-HR administrator.
 - ADMIN/CEO do not receive Windows/password reveal from their roles; an explicit grant or additive IT_ADMIN role is required.
 - DIVISION_HEAD remains employee-only pending the policy in PERMISSIONS.md. No broader access is inferred.
 - IT/admin asset management replaces the personal asset navigation item while preserving access to `/assets/me`.
@@ -47,7 +47,7 @@ Screenshots use synthetic identity only:
 
 ## Verification and remaining integration
 
-Unit tests cover all 128 role combinations, specialist isolation, explicit grants, invalid memberships, route matching, and safe redirects. PGlite runs the actual SQL migration and verifies RLS, denied writes, invalid roles/grants, and the single-admin constraint. Playwright tests the production build with a separate local Auth/PostgREST double, including direct URLs, forged metadata, unknown routes, RSC errors, private-HR eligibility, role-specific navigation, the Google OAuth/PKCE callback and return path, logout, image geometry, and mobile overflow.
+Unit tests cover all 128 role combinations, specialist isolation, CEO private-HR access without a grant, designated-ADMIN grants, invalid memberships, route matching, and safe redirects. PGlite runs the actual SQL migration and verifies RLS, denied writes, invalid roles/grants, and the single-admin constraint. Playwright tests the production build with a separate local Auth/PostgREST double, including direct URLs, forged metadata, unknown routes, RSC errors, private-HR eligibility, role-specific navigation, the Google OAuth/PKCE callback and return path, logout, image geometry, and mobile overflow.
 
 The repository contains no Supabase project credentials. Applying the migration and a real Google/Supabase sign-in remain deployment setup checks; the local test double does not prove external provider configuration. No live database was changed. Phase 2 must add employee/domain schemas and own/team/global data policies before exposing business data. Broader division-head permissions remain unresolved as specified.
 

@@ -16,7 +16,7 @@ create table public.app_memberships (
     cardinality(capabilities) = 0 or roles && array['ADMIN','CEO']::text[]
   )
 );
--- CEO also needs an explicit grant (Issue #1); a second designated ADMIN is rejected.
+-- CEO receives private HR access by role; a second explicitly designated ADMIN is rejected.
 create unique index one_designated_private_hr_admin on public.app_memberships ((true))
   where capabilities @> array['PRIVATE_HR_ACCESS']::text[] and not (roles @> array['CEO']::text[]);
 alter table public.app_memberships enable row level security;

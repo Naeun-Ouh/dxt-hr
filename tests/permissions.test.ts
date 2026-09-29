@@ -3,18 +3,18 @@ import assert from "node:assert/strict";
 import { can, capabilitiesFor, parseMembership, ROLES, type Principal, type Role } from "../src/lib/permissions";
 import { navigationFor, resolveRoute, ROUTES, safeReturnPath } from "../src/lib/routes";
 const person = (...roles: Role[]): Principal => ({ id: "test", name: "테스트", roles, grants: [] });
-test("each role gets employee base but no implicit private HR grant", () => {
+test("each role gets employee base and only CEO gets private HR by role", () => {
   for (const role of ROLES) {
     assert(can(person(role), "EMPLOYEE_ACCESS"));
-    assert(!can(person(role), "PRIVATE_HR_ACCESS"));
+    assert.equal(can(person(role), "PRIVATE_HR_ACCESS"), role === "CEO");
   }
 });
-test("all 128 role combinations are additive without sensitive HR inheritance", () => {
+test("all 128 role combinations are additive with private HR inherited only from CEO", () => {
   for (let mask = 0; mask < 2 ** ROLES.length; mask++) {
     const roles = ROLES.filter((_, i) => mask & (1 << i));
     const expected = new Set(roles.flatMap(role => [...capabilitiesFor(person(role))]));
     assert.deepEqual(capabilitiesFor(person(...roles)), expected);
-    assert(!can(person(...roles), "PRIVATE_HR_ACCESS"));
+    assert.equal(can(person(...roles), "PRIVATE_HR_ACCESS"), roles.includes("CEO"));
     const paths = navigationFor(person(...roles)).map(route => route.path);
     assert.equal(new Set(paths).size, paths.length);
   }
@@ -37,7 +37,9 @@ test("specialist roles do not acquire unrelated operational or secret access", (
   assert(can(person("CEO"), "RESIGNATION_REASON_ACCESS"));
   assert(!can(person("ADMIN"), "RESIGNATION_REASON_ACCESS"));
 });
-test("private HR requires an eligible role AND an explicit grant", () => {
+test("CEO needs no private HR grant; ADMIN needs one; specialist grants are ignored", () => {
+  assert(can(person("CEO"), "PRIVATE_HR_ACCESS"));
+  assert(!can(person("ADMIN"), "PRIVATE_HR_ACCESS"));
   for (const role of ROLES) {
     const user = { ...person(role), grants: ["PRIVATE_HR_ACCESS"] as const };
     assert.equal(can({ ...user, grants: [...user.grants] }, "PRIVATE_HR_ACCESS"), ["CEO", "ADMIN"].includes(role));

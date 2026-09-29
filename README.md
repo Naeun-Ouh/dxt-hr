@@ -51,7 +51,7 @@ insert into public.app_memberships (user_id, display_name, roles)
 values ('00000000-0000-0000-0000-000000000000', '직원 이름', array['EMPLOYEE']);
 ```
 
-Grant `PRIVATE_HR_ACCESS` explicitly to CEO and the designated ADMIN through trusted provisioning. A database constraint allows at most one non-CEO ADMIN with this grant. No role automatically receives it. Set `status = 'INACTIVE'` to revoke application access; each new protected request re-reads membership.
+CEO receives `PRIVATE_HR_ACCESS` automatically by role. Grant it explicitly only to the designated ADMIN through trusted provisioning. A database constraint allows at most one non-CEO ADMIN with this grant. Other roles do not automatically receive it. Set `status = 'INACTIVE'` to revoke application access; each new protected request re-reads membership.
 
 ### Validation
 

@@ -28,7 +28,7 @@ const roleCapabilities: Record<Role, readonly Capability[]> = {
   EXPENSE_ADMIN: ["EXPENSE_MANAGE"],
   IT_ADMIN: ["ASSET_MANAGE", "WINDOWS_MANAGE", "ACCOUNT_MANAGE", "WINDOWS_KEY_REVEAL", "ACCOUNT_PASSWORD_REVEAL"],
   ADMIN: operational,
-  CEO: [...operational, "RESIGNATION_REASON_ACCESS"],
+  CEO: [...operational, "PRIVATE_HR_ACCESS", "RESIGNATION_REASON_ACCESS"],
 };
 export function capabilitiesFor(principal: Principal): Set<Capability> {
   const capabilities = new Set<Capability>();
@@ -37,8 +37,8 @@ export function capabilitiesFor(principal: Principal): Set<Capability> {
     capabilities.add("EMPLOYEE_ACCESS");
     for (const capability of roleCapabilities[role]) capabilities.add(capability);
   }
-  // Issue #1 requires an explicit PRIVATE_HR_ACCESS grant, including for CEO.
-  // The database limits this to CEO and at most one designated ADMIN.
+  // CEO receives PRIVATE_HR_ACCESS by role; ADMIN requires an explicit grant.
+  // The database allows at most one non-CEO ADMIN with that grant.
   if (principal.roles.some(role => role === "ADMIN" || role === "CEO")) {
     for (const grant of principal.grants) if (EXPLICIT_CAPABILITIES.includes(grant)) capabilities.add(grant);
   }
