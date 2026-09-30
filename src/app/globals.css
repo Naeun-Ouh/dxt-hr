@@ -190,3 +190,84 @@ button:disabled { opacity: .65; cursor: wait; }
 .role-option input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 3px; }
 .employee-role-field small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .employee-role-field small.field-error { color: #b91c1c; }
+
+/* Phase 3: Figma 14 / 15 / 16 / 17 / 33; responsive content in the existing shell. */
+.project-heading h1 { font-size: 26px; }
+.project-heading p { font-size: 13px; }
+.project-heading .button, .project-form .button, .extension-form .button, .career-layout .button { font-size: 13px; padding: 7px 16px; border-radius: 8px; }
+.project-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:32px; width:100%; }
+.project-stats .surface { padding:20px; border-radius:10px; }
+.project-stats p { color:var(--muted); font-size:12px; margin-bottom:12px; }
+.project-stats strong { font-size:26px; margin-right:8px; }
+.project-stats span { font-size:12px; color:var(--muted); }
+.project-filter { padding:10px 16px; }
+.project-filter label { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.project-filter select { width:130px; }
+.project-filter input { flex:1; min-width:120px; }
+.project-list { background:white; border:1px solid var(--border); border-radius:10px; overflow:hidden; width:100%; }
+.project-table { width:100%; border:1px solid var(--border); border-radius:10px; background:white; }
+.project-list .project-table { border:0; border-radius:0; }
+.project-table table { width:100%; min-width:780px; border-collapse:collapse; text-align:left; }
+.project-table th { padding:15px 18px; background:#f9fafb; color:var(--muted); font-size:11px; white-space:nowrap; }
+.project-table td { padding:21px 18px; border-top:1px solid #f0f1f5; font-size:13px; color:#636f85; line-height:1.6; }
+.project-table td small { display:block; font-size:11px; }
+.project-table td strong,.project-name { color:var(--ink); font-weight:600; }
+.project-table code { font-size:10px; overflow-wrap:anywhere; }
+.project-info { width:100%; padding:20px; border-radius:10px; border:1px solid #c7d2fe; background:#eef2ff; color:#4338ca; font-size:12px; line-height:1.7; }
+.project-info p { margin-top:6px; }
+.project-summary,.assignment-card { border-radius:10px; padding:24px; }
+.project-summary h2,.assignment-card h2 { font-size:22px; font-weight:700; }
+.project-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px 32px; margin:28px 0 0; }
+.project-facts dt { color:var(--muted); font-size:12px; margin-bottom:7px; }
+.project-facts dd { margin:0; font-size:13px; }
+.project-section { width:100%; }
+.project-section h2,.project-section-title { font-size:16px; font-weight:700; width:100%; }
+.project-section-title { margin-bottom:16px; }
+.project-section h2 span { font-size:12px; color:var(--muted); margin-left:10px; }
+.project-form { display:flex; flex-direction:column; gap:24px; border-radius:10px; }
+.project-note { color:var(--muted); font-size:12px; line-height:1.7; }
+.extension-section { border-radius:10px; padding:20px; }
+.extension-form { display:flex; gap:16px; align-items:end; flex-wrap:wrap; margin:20px 0; }
+.extension-form .field { flex:1; min-width:150px; }
+.extension-form .form-error { width:100%; }
+.project-completed { background:#f3f4f6; color:#636f85; }
+.project-planned { background:#fff7ed; color:#9a3412; }
+.project-active { background:#ecfdf5; color:#047857; }
+.delete-record { font-size:12px; color:#b91c1c; }
+.delete-record form { padding:12px; background:white; border:1px solid #fecaca; border-radius:8px; display:grid; gap:12px; color:var(--ink); }
+.delete-record summary { padding:6px 0; }
+.danger { color:#b91c1c; }
+.career-cta { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:28px; }
+.career-cta p { font-size:12px; color:var(--muted); margin-top:10px; }
+.career-layout { width:100%; display:grid; grid-template-columns:minmax(0,700fr) minmax(0,380fr); gap:40px; align-items:start; }
+.career-form { padding:20px; display:flex; flex-direction:column; gap:20px; border-radius:10px; }
+.career-form .field { gap:8px; font-size:12px; }
+.career-form input,.career-form select { min-height:38px; }
+.career-form input[readonly] { background:#f9fafb; }
+.career-form textarea { resize:vertical; min-height:110px; font:inherit; border:1px solid var(--border); border-radius:7px; padding:11px; color:var(--ink); }
+.career-form .button-row input { flex:1; min-width:100px; width:auto; }
+.career-preview { min-height:560px; padding:20px; border-radius:10px; }
+.career-preview h3 { font-size:22px; margin:28px 0 8px; }
+.career-preview h4 { font-size:16px; margin:24px 0 10px; }
+.career-preview h5 { font-size:12px; color:var(--muted); margin:30px 0 12px; }
+.career-preview p { font-size:12px; color:var(--muted); line-height:1.7; }
+.career-preview hr { border:0; border-top:1px solid var(--border); margin-top:28px; }
+.responsibilities { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.8; }
+.skill-tags { display:flex; flex-wrap:wrap; gap:10px; }
+.skill-tags .status-badge { border:0; color:#4f46e5; background:#eef2ff; }
+.career-record { display:flex; flex-direction:column; gap:16px; }
+.career-record p { color:var(--muted); font-size:13px; }
+.coverage-days { color:var(--brand)!important; }
+@media(max-width:1100px) { .career-layout { grid-template-columns:1fr; gap:24px; } .project-stats { gap:16px; } .project-filter { flex-wrap:wrap; } }
+@media(max-width:700px) { .project-stats,.project-facts { grid-template-columns:1fr; } .career-cta { align-items:start; flex-direction:column; } }
+.success-banner { width:100%; padding:12px 16px; background:#ecfdf5; color:#047857; border-radius:8px; }
+.employee-projects { list-style:none; margin:20px 0 0; padding:0; }
+.employee-projects li { padding:14px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.employee-projects p { color:var(--muted); margin-top:8px; }
+.project-form .field > label,.career-form .field > label,.extension-form .field > label { font-weight:500; }
+.status-badge { display:inline-flex; align-items:center; padding:4px 8px; border-radius:999px; font-size:12px; line-height:16px; font-weight:500; white-space:nowrap; }
+.career-form input,.career-form select,.project-form input,.project-form select,.extension-form input { background:white; }
+.career-form input[readonly],.extension-form input[readonly] { background:#f9fafb; }
+.content-view > .project-section-title { margin-bottom:0; }
+.project-section .panel-heading h2 { flex:1; width:auto; }
+.project-section .panel-heading .button { flex:none; white-space:nowrap; font-size:13px; padding:7px 16px; border-radius:8px; }

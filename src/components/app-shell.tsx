@@ -15,7 +15,7 @@ export function AppShell({ principal, route, children }: { principal: Principal;
         {groups.map(group => <section className="nav-section" key={group} aria-label={group}>
           {group !== "홈" && <h2>{group}</h2>}
           {navigation.filter(item => item.group === group).map(item => {
-            const active = item.path === route.path || (item.path === "/people" && route.path === "/people/[id]") || (item.path === "/admin/employees" && route.path.startsWith("/admin/employees/")) || (item.path === "/admin/projects" && route.path === "/admin/projects/[id]");
+            const active = item.path === route.path || (item.path === "/career" && route.path.startsWith("/career/")) || (item.path === "/projects/me" && route.path.startsWith("/projects/assignments/")) || (item.path === "/people" && route.path === "/people/[id]") || (item.path === "/admin/employees" && route.path.startsWith("/admin/employees/")) || (item.path === "/admin/projects" && route.path.startsWith("/admin/projects/"));
             return <Link className={`nav-link${active ? " active" : ""}`} aria-current={active ? "page" : undefined} key={item.path} href={item.path}>
               <Icon name={item.icon} /><span>{item.title}</span>{item.path === "/leave/approvals" && <span className="small-badge">팀장</span>}
             </Link>;

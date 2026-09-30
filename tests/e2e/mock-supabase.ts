@@ -1,10 +1,13 @@
 // Test-only external Auth/PostgREST double. There is no auth bypass in application code.
 import { createServer } from "node:http";
 import { cases, tokenFor, idFor } from "./fixtures";
-import { domainDatabase, asUser } from '../domain-fixture';
+import { asUser } from '../domain-fixture';
+import { projectDatabase } from '../project-fixture';
+import { PROJECT_COLUMNS, ASSIGNMENT_COLUMNS, CAREER_COLUMNS, EXTENSION_COLUMNS } from '../../src/lib/projects/types';
 async function main() {
-const db = await domainDatabase();
+const db = await projectDatabase();
 const tables: Record<string,string[]> = {
+ project: PROJECT_COLUMNS.split(','), project_assignment: ASSIGNMENT_COLUMNS.split(','), career: CAREER_COLUMNS.split(','), project_extension: EXTENSION_COLUMNS.split(','),
  employee: ['id','name','english_name','company_email','phone','department_id','title','hire_date','employment_status','work_location','version'],
  employee_role: ['employee_id','role'],
  organization: ['id','name','parent_id','type','version'],
@@ -44,7 +47,7 @@ const server = createServer(async (request, response) => {
     const result=await asUser(db,name,async tx=>{
      const rpc=url.pathname.split('/rpc/')[1];
      if(rpc) {
-      const args: Record<string,string[]>= {has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
+      const args: Record<string,string[]>= {can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
       if(!args[rpc]) throw new Error('Unsupported test RPC');
       const params=args[rpc].map(key=>input[key] ?? null);
       const r=await tx.query<{result: unknown}>(`select public.${rpc}(${params.map((_,i)=>'$'+(i+1)).join(',')}) as result`,params);
@@ -70,7 +73,7 @@ const server = createServer(async (request, response) => {
       const order=(url.searchParams.get('order') || '').split(',').filter(Boolean).map(p=>{const [col,dir]=p.split('.');if(!allowed.includes(col)||!['asc','desc'].includes(dir)) throw new Error('Unsupported test order');return col+' '+dir;});
       const offset=Number(url.searchParams.get('offset') || 0),limit=Number(url.searchParams.get('limit') || 1000);
       const r=await tx.query(`select ${columns.map(c=>c === 'employee_role(role)' ? `(select coalesce(json_agg(json_build_object('role',er.role)),'[]'::json) from employee_role er where er.employee_id=employee.id) as employee_role` : c).join(',')} from ${table}${condition}${order.length?' order by '+order.join(','):''} limit ${bind(limit)} offset ${bind(offset)}`,params);
-      return {data:r.rows.map(row => { const value = row as Record<string,unknown>; if(value.hire_date instanceof Date) value.hire_date=value.hire_date.toISOString().slice(0,10); return value; }),count:Number(count.rows[0].n)};
+      return {data:r.rows.map(row => { const value = row as Record<string,unknown>; for(const [key,v] of Object.entries(value)) if(v instanceof Date) value[key]=key.endsWith('_date')?v.toISOString().slice(0,10):v.toISOString(); return value; }),count:Number(count.rows[0].n)};
      }
      if(table!=='organization'||!['POST','PATCH'].includes(request.method!)) throw new Error('Unsupported test mutation');
      const keys=Object.keys(input);if(keys.some(k=>!allowed.includes(k))) throw new Error('Unsupported test mutation column');
