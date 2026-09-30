@@ -1,9 +1,10 @@
 import "server-only";
+import { ROLES } from "../permissions";
 import { notFound } from "next/navigation";
 import { createAuthClient } from "../auth/server";
 import { requireCapability } from "../auth/access";
 import { isUuid } from "./validation";
-import type { Employee, Organization } from "./types";
+import type { Employee, EmployeeProfile, Organization } from "./types";
 export const EMPLOYEE_COLUMNS = "id,name,english_name,company_email,phone,department_id,title,hire_date,employment_status,work_location,version";
 export async function employeeClient() {
   const client = await createAuthClient();
@@ -16,13 +17,14 @@ export async function organizations(): Promise<Organization[]> {
   if (error) throw new Error("Organization service unavailable");
   return data as Organization[];
 }
-export async function getEmployee(id: string): Promise<Employee> {
+export async function getEmployee(id: string): Promise<EmployeeProfile> {
   await requireCapability("EMPLOYEE_ACCESS", "/people");
   if (!isUuid(id)) notFound();
-  const { data, error } = await (await employeeClient()).from("employee").select(EMPLOYEE_COLUMNS).eq("id", id).maybeSingle();
+  const { data, error } = await (await employeeClient()).from("employee").select(`${EMPLOYEE_COLUMNS},employee_role(role)`).eq("id", id).maybeSingle();
   if (error) throw new Error("Employee service unavailable");
   if (!data) notFound();
-  return data as Employee;
+  const { employee_role, ...employee } = data;
+  return { ...employee, roles: ROLES.filter(role => employee_role.some(row => row.role === role)) } as EmployeeProfile;
 }
 export type SearchParams = Record<string, string | string[] | undefined>;
 export function directoryFilters(query: SearchParams) {

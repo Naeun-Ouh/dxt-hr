@@ -5,14 +5,14 @@ Implements Issue #2 from main `2805ad1`. The latest [issue guidance](https://git
 ## Routes and behavior
 
 - `/people` and `/admin/employees`: database-backed directory, name/email search, department and ACTIVE/INACTIVE/all filters, stable pagination and empty state. ADMIN/CEO see creation and editing controls.
-- `/admin/employees/new`, `/admin/employees/[id]/edit`: basic and work details, encrypted DOB, validation, duplicate-email feedback and optimistic concurrency. Creating a profile never provisions a login or changes roles.
-- `/people/[id]`, `/admin/employees/[id]`: actual profile and status, detail tabs. Project, career and equipment tabs remain neutral placeholders for their scheduled phases; no fabricated records.
+- `/admin/employees/new`, `/admin/employees/[id]/edit`: basic and work details, multi-select employee roles, encrypted DOB, validation, duplicate-email feedback and optimistic concurrency. Creating a profile never provisions a login or changes application-membership roles.
+- `/people/[id]`, `/admin/employees/[id]`: actual profile, assigned role labels and status, detail tabs. Project, career and equipment tabs remain neutral placeholders for their scheduled phases; no fabricated records.
 - `/organization`: hierarchy, department-directory links, ADMIN/CEO creation/editing; cycles and duplicate sibling names rejected.
 - `/admin/employees/[id]/private`: HR Private absent from unauthorized navigation and denied on direct, RSC and action requests. Default values are masked; explicit audited reveal auto-hides after 60 seconds or tab backgrounding. Blank edit fields preserve stored values; explicit checkboxes clear fields.
 
 ## Schema and authorization
 
-Apply `202609300001_foundation.sql`, then `202609300002_employees.sql`. The second migration adds `organization`, `employee`, `employee_birth_detail`, `employee_private_hr` and metadata-only `audit_log`, with RLS, restrictive grants and authenticated RPCs.
+Apply `202609300001_foundation.sql`, `202609300002_employees.sql`, then `202609300003_employee_roles.sql`. The second migration adds `organization`, `employee`, `employee_birth_detail`, `employee_private_hr` and metadata-only `audit_log`, with RLS, restrictive grants and authenticated RPCs.
 
 | Data / action | Employee and specialist roles | ADMIN | CEO / designated ADMIN |
 | --- | --- | --- | --- |
@@ -24,9 +24,17 @@ Apply `202609300001_foundation.sql`, then `202609300002_employees.sql`. The seco
 
 All access additionally requires ACTIVE membership and no INACTIVE linked employee. Role combinations remain additive. Database decisions read `auth.uid()` and current membership, not client role claims. Security-definer helpers have an empty search path and no caller-controlled identity. Profile writes run atomically with optional birth/private creation. Optimistic versions reject stale form submissions.
 
-`employee.auth_user_id` is nullable and writable only through trusted provisioning. Link an existing joined employee's auth user using trusted SQL; employee forms cannot grant login access, change roles or assign this link. The existing membership constraint still permits at most one non-CEO designated ADMIN. Deactivating a linked employee revokes access on subsequent protected requests and domain database queries.
+`employee.auth_user_id` is nullable and writable only through trusted provisioning. Link an existing joined employee's auth user using trusted SQL; employee forms cannot grant login access, change auth roles or assign this link. The existing membership constraint still permits at most one non-CEO designated ADMIN. Deactivating a linked employee revokes access on subsequent protected requests and domain database queries.
 
 The logical model's private fields are stored together in one authenticated encrypted JSON payload, including bank name. Full DOB uses a separate encrypted table because ordinary ADMIN has birthday-management access but no HR Private access. General employee queries never fetch either ciphertext. Initial private pages serialize only record presence/version to client components; decryption happens only in guarded server actions. Mutations and explicit reveals produce audit metadata (actor, action, entity, time), without input values or ciphertext.
+
+## Employee-domain roles
+
+The role chips follow Figma 03 (node `15:819`): wrapping 12px labels, pill borders, and indigo selected states, implemented as keyboard-accessible checkboxes. The profile displays all assigned role labels. At least one of the existing seven role values is required; duplicate selections are normalized.
+
+Migration `202609300003_employee_roles.sql` adds `employee_role(employee_id, role)` with a composite primary key, FK, enum-value check, RLS, and audit trigger. Existing profiles receive the ordinary EMPLOYEE domain role; nothing is copied to or from auth membership. A deferred constraint prevents an employee from ending a transaction with no roles. The version-checked profile RPC replaces the role set atomically with basic/birth/private writes; later validation failures roll everything back. Profile reads include roles in a single database query.
+
+Active employees may read normal domain roles. Only EMPLOYEE_MANAGE may mutate them. Assigning CEO or ADMIN in this table cannot affect navigation or sensitive capabilities: authorization continues to read only trusted `app_memberships` plus linked employment status. Tests explicitly assign CEO to an ordinary ADMIN's linked employee profile and confirm private HR remains denied and every auth membership is unchanged. A future trusted onboarding step may copy approved HR assignments; this form never does so.
 
 ## Encryption configuration
 
@@ -64,8 +72,8 @@ Screenshots use synthetic fixtures only:
 
 ## Verification and deployment boundary
 
-Local validation passed: 12 unit/database tests, 19 browser tests, lint, production build and TypeScript checks.
+Local validation passed: 14 unit/database tests, 20 browser tests, lint, production build and TypeScript checks.
 
 Run `npm run lint`, `npm test`, `npm run build`, `npm run typecheck` and `npm run test:e2e`. Tests cover role combinations, RLS, direct unauthorized writes, atomic rollback, encryption tampering/context/rotation, private initial HTML, audited reveal/masking, action reauthorization, profile creation/edit/inactivation, directory filters, organization edits and stale writes. Browser Auth is a test double; domain requests execute against the actual migrations in PGlite as the authenticated role.
 
-No live Supabase credentials or production employee data were available. Before deployment, apply both migrations to staging, configure real encryption keys and Google OAuth, provision test memberships and linked profiles, and verify the same flows against live Supabase/PostgREST. This PR does not claim live OAuth, production key management or deployed migration validation.
+No live Supabase credentials or production employee data were available. Before deployment, apply all migrations to staging, configure real encryption keys and Google OAuth, provision test memberships and linked profiles, and verify the same flows against live Supabase/PostgREST. This PR does not claim live OAuth, production key management or deployed migration validation.

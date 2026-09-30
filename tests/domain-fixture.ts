@@ -19,6 +19,7 @@ export async function domainDatabase() {
  }
  await db.query("insert into organization(id,name) values($1,'개발팀')",[departmentId]);
  await db.query("insert into employee(id,name,company_email,title,hire_date,department_id,phone,work_location) values($1,'김테스트','kim@example.test','개발자','2025-01-02',$2,'010-0000-0000','서울')",[personId,departmentId]);
+ await db.exec(readFileSync('supabase/migrations/202609300003_employee_roles.sql','utf8'));
  await db.query('insert into employee_birth_detail values($1,$2)',[personId,encryptValue('1990-01-02',`${personId}:birth`,ring)]);
  await db.query('insert into employee_private_hr(employee_id,encrypted_payload) values($1,$2)',[personId,encryptValue(JSON.stringify({resident_registration_number:'900102-1234567',address:'테스트 전용 주소',bank_name:'테스트은행',bank_account:'000-test-123',salary:'50000000',emergency_contact:'테스트 연락처'}),`${personId}:private`,ring)]);
  return db;

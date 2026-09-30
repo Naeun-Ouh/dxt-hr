@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import { ROLES } from "@/lib/permissions";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { saveEmployee, saveOrganization, savePrivate, revealPrivate, revealBirth } from "@/app/actions/employees";
-import { PRIVATE_FIELDS, PRIVATE_LABELS, type Employee, type Organization, type FormState, type PrivateValues } from "@/lib/employees/types";
+import { PRIVATE_FIELDS, PRIVATE_LABELS, EMPLOYEE_ROLE_LABELS, type EmployeeProfile, type Organization, type FormState, type PrivateValues } from "@/lib/employees/types";
 function Feedback({ state }: { state: FormState }) {
   return state.error ? <div role="alert" className="form-error">{state.error}</div> : null;
 }
@@ -20,7 +21,7 @@ function PrivateInputs({ state, editable = false }: { state: FormState; editable
     {editable && <label className="check-label"><input type="checkbox" name={`clear_${name}`} />기존 {PRIVATE_LABELS[name]} 삭제</label>}
   </div>)}</div>;
 }
-export function EmployeeForm({ employee, departments, privateAccess, hasBirth }: { employee?: Employee; departments: Organization[]; privateAccess: boolean; hasBirth?: boolean }) {
+export function EmployeeForm({ employee, departments, privateAccess, hasBirth }: { employee?: EmployeeProfile; departments: Organization[]; privateAccess: boolean; hasBirth?: boolean }) {
   const [state, action, pending] = useActionState(saveEmployee.bind(null, employee?.id || null), {} as FormState);
   return <form action={action} className="employee-form">
     <input type="hidden" name="version" value={employee?.version || 0} />
@@ -41,6 +42,15 @@ export function EmployeeForm({ employee, departments, privateAccess, hasBirth }:
         <div className="field-grid">
           <label className="field"><span>부서</span><select aria-label="부서" name="department_id" defaultValue={employee?.department_id || ""}><option value="">미배정</option>{departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select>{state.fields?.department_id && <small className="field-error">{state.fields.department_id}</small>}</label>
           <Field label="직책" name="title" value={employee?.title} required state={state} />
+          <fieldset className="employee-role-field" aria-describedby="roles-hint roles-error" aria-invalid={Boolean(state.fields?.roles)}>
+            <legend>역할 (복수 선택) <span className="required">*</span></legend>
+            <div className="role-options">{ROLES.map(role => <label className="role-option" key={role}>
+              <input className="sr-only" type="checkbox" name="roles" value={role} defaultChecked={(employee?.roles || ["EMPLOYEE"]).includes(role)} />
+              <span>{EMPLOYEE_ROLE_LABELS[role]}</span>
+            </label>)}</div>
+            <small id="roles-hint">직원에게 배정된 역할입니다. 실제 서비스 접근 권한은 별도로 승인됩니다.</small>
+            <small className="field-error" id="roles-error">{state.fields?.roles}</small>
+          </fieldset>
           <Field label="입사일" name="hire_date" value={employee?.hire_date} required type="date" state={state} />
           <label className="field"><span>근무 상태</span><select aria-label="근무 상태" name="employment_status" defaultValue={employee?.employment_status || "ACTIVE"}><option value="ACTIVE">재직</option><option value="INACTIVE">퇴사</option></select></label>
           <Field label="근무지" name="work_location" value={employee?.work_location} state={state} maxLength={200} />

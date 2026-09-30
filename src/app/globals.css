@@ -181,3 +181,12 @@ button:disabled { opacity: .65; cursor: wait; }
   .profile-meta p { gap: 8px; }
   .table-footer { flex-wrap: wrap; }
 }
+.employee-role-field { min-width: 0; border: 0; padding: 0; margin: 0; }
+.employee-role-field legend { padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #4b5563; }
+.role-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.role-option { position: relative; cursor: pointer; }
+.role-option > span { display: block; padding: 6px 12px; border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: #4b5563; }
+.role-option input:checked + span { background: #eef2ff; border-color: var(--brand); color: var(--brand); font-weight: 700; }
+.role-option input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 3px; }
+.employee-role-field small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.employee-role-field small.field-error { color: #b91c1c; }

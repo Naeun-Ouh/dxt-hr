@@ -1,3 +1,4 @@
+import { ROLES, type Role } from "../permissions";
 import { PRIVATE_FIELDS, type EmployeeInput, type PrivateValues } from "./types";
 export class ValidationError extends Error {
   constructor(public fields: Record<string, string>) { super("입력 내용을 확인해 주세요."); }
@@ -14,6 +15,9 @@ export function versionFrom(form: FormData): number {
 }
 export function employeeInput(form: FormData): EmployeeInput {
   const fields: Record<string, string> = {};
+  const submittedRoles = form.getAll("roles");
+  if (!submittedRoles.length || submittedRoles.some(role => typeof role !== "string" || !ROLES.includes(role as Role))) fields.roles = "역할을 하나 이상 선택해 주세요.";
+  const roles = ROLES.filter(role => submittedRoles.includes(role));
   const read = (key: string, max: number, required = false) => {
     const value = text(form, key);
     if ((required && !value) || value.length > max) fields[key] = required && !value ? "필수 입력 항목입니다." : `${max}자 이내로 입력해 주세요.`;
@@ -27,7 +31,7 @@ export function employeeInput(form: FormData): EmployeeInput {
   if (department_id && !isUuid(department_id)) fields.department_id = "부서를 다시 선택해 주세요.";
   if (!["ACTIVE", "INACTIVE"].includes(employment_status)) fields.employment_status = "근무 상태를 선택해 주세요.";
   if (Object.keys(fields).length) throw new ValidationError(fields);
-  return { name, english_name: english_name || null, company_email, phone: phone || null, title, work_location: work_location || null, department_id: department_id || null, hire_date, employment_status: employment_status as "ACTIVE" | "INACTIVE" };
+  return { roles, name, english_name: english_name || null, company_email, phone: phone || null, title, work_location: work_location || null, department_id: department_id || null, hire_date, employment_status: employment_status as "ACTIVE" | "INACTIVE" };
 }
 export function birthInput(form: FormData): string {
   const birth = text(form, "birth_date");

@@ -17,10 +17,10 @@ test('authenticated encryption binds values to employee and field, detects tampe
  assert.throws(()=>decryptValue(c,personId+':private',{activeId:'next',keys:{next:next.keys.next}}));
  assert.throws(()=>parseKeyring('{}','missing')); assert.throws(()=>parseKeyring('{"test":"abc"}','test'));
 });
-test('validation rejects malformed dates and private data; employee payload cannot grant roles',()=>{
+test('validation rejects malformed dates and private data; employee payload validates domain roles and cannot assign auth identities',()=>{
  assert(!validDate('2026-02-30')); assert(validDate('2024-02-29'));
  const f=new FormData(); for(const [k,v] of Object.entries({name:' Test ',company_email:'TEST@EXAMPLE.TEST',title:'Dev',hire_date:'2026-01-01',employment_status:'ACTIVE',roles:'CEO',auth_user_id:idFor('employee')})) f.set(k,v);
- const input=employeeInput(f); assert.equal(input.company_email,'test@example.test'); assert(!('roles' in input));assert(!('auth_user_id' in input));
+ const input=employeeInput(f); assert.equal(input.company_email,'test@example.test'); assert.deepEqual(input.roles,['CEO']);assert(!('auth_user_id' in input));
  f.set('hire_date','2026-02-30'); assert.throws(()=>employeeInput(f));
  const p=new FormData();p.set('salary','-1'); assert.throws(()=>privateInput(p,emptyPrivate()));
  p.set('salary','');assert.equal(privateInput(p,{...emptyPrivate(),salary:'123'}).salary,'123');p.set('clear_salary','on');assert.equal(privateInput(p,{...emptyPrivate(),salary:'123'}).salary,'');
@@ -35,7 +35,7 @@ test('domain RLS, atomic changes, private encryption, audit and inactive linked 
    assert.equal((await tx.query('select * from employee_birth_detail')).rows.length,allowed||name==='admin'?1:0);
   });
   for(const name of ['employee','leader','division','expense','it','combined','inactive','unprovisioned']) {
-   await assert.rejects(asUser(db,name,tx=>tx.query('select save_employee_profile($1,$2,0)',[crypto.randomUUID(),{name:'X',company_email:'x@example.test',title:'T',hire_date:'2026-01-01',employment_status:'ACTIVE'}])));
+   await assert.rejects(asUser(db,name,tx=>tx.query('select save_employee_profile($1,$2,0)',[crypto.randomUUID(),{name:'X',company_email:'x@example.test',title:'T',hire_date:'2026-01-01',employment_status:'ACTIVE',roles:['EMPLOYEE']}])));
    await assert.rejects(asUser(db,name,tx=>tx.query('select record_private_hr_view($1)',[personId])));
    await assert.rejects(asUser(db,name,tx=>tx.query('select record_birth_view($1)',[personId])));
    await assert.rejects(asUser(db,name,tx=>tx.query("insert into organization(name) values ('forbidden')")));
@@ -44,7 +44,7 @@ test('domain RLS, atomic changes, private encryption, audit and inactive linked 
   await assert.rejects(asUser(db,'admin',tx=>tx.query('update employee set auth_user_id=$1 where id=$2',[idFor('admin'),personId])));
   await assert.rejects(asUser(db,'ceo',tx=>tx.exec("update app_memberships set roles=array['CEO']")));
   await assert.rejects(asUser(db,'ceo',tx=>tx.exec("insert into audit_log(action,entity_type,entity_id) values('FORGED','employee',gen_random_uuid())")));
-  const profile={name:'수정테스트',company_email:'new@example.test',title:'직책',hire_date:'2026-01-01',employment_status:'ACTIVE'};
+  const profile={name:'수정테스트',company_email:'new@example.test',title:'직책',hire_date:'2026-01-01',employment_status:'ACTIVE',roles:['EMPLOYEE']};
   const newId=crypto.randomUUID();
   await assert.rejects(asUser(db,'ceo',tx=>tx.query('select save_employee_profile($1,$2,0,null,false,$3)',[newId,profile,'plaintext-secret'])));
   assert.equal((await db.query('select id from employee where id=$1',[newId])).rows.length,0);

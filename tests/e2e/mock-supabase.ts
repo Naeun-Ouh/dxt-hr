@@ -6,6 +6,7 @@ async function main() {
 const db = await domainDatabase();
 const tables: Record<string,string[]> = {
  employee: ['id','name','english_name','company_email','phone','department_id','title','hire_date','employment_status','work_location','version'],
+ employee_role: ['employee_id','role'],
  organization: ['id','name','parent_id','type','version'],
  employee_private_hr: ['employee_id','encrypted_payload','version'], employee_birth_detail: ['employee_id','birth_date_encrypted'],
 };
@@ -52,7 +53,8 @@ const server = createServer(async (request, response) => {
      const table=url.pathname.split('/').at(-1)!; const allowed=tables[table];
      if(!allowed) throw new Error('Unsupported test table');
      const columns=(url.searchParams.get('select') || '*').split(',');
-     if(columns.some(c=>!allowed.includes(c))) throw new Error('Unsupported test column');
+     const roleRelation = table === 'employee' && columns.includes('employee_role(role)');
+     if(columns.some(c=>!allowed.includes(c) && !(roleRelation && c === 'employee_role(role)'))) throw new Error('Unsupported test column');
      const params: unknown[]=[]; const bind=(v:unknown)=>{params.push(v);return '$'+params.length;};
      const where: string[]=[];
      for(const [key,value] of url.searchParams) {
@@ -67,7 +69,7 @@ const server = createServer(async (request, response) => {
       const count=await tx.query<{n: number}>(`select count(*)::int as n from ${table}${condition}`,params);
       const order=(url.searchParams.get('order') || '').split(',').filter(Boolean).map(p=>{const [col,dir]=p.split('.');if(!allowed.includes(col)||!['asc','desc'].includes(dir)) throw new Error('Unsupported test order');return col+' '+dir;});
       const offset=Number(url.searchParams.get('offset') || 0),limit=Number(url.searchParams.get('limit') || 1000);
-      const r=await tx.query(`select ${columns.join(',')} from ${table}${condition}${order.length?' order by '+order.join(','):''} limit ${bind(limit)} offset ${bind(offset)}`,params);
+      const r=await tx.query(`select ${columns.map(c=>c === 'employee_role(role)' ? `(select coalesce(json_agg(json_build_object('role',er.role)),'[]'::json) from employee_role er where er.employee_id=employee.id) as employee_role` : c).join(',')} from ${table}${condition}${order.length?' order by '+order.join(','):''} limit ${bind(limit)} offset ${bind(offset)}`,params);
       return {data:r.rows.map(row => { const value = row as Record<string,unknown>; if(value.hire_date instanceof Date) value.hire_date=value.hire_date.toISOString().slice(0,10); return value; }),count:Number(count.rows[0].n)};
      }
      if(table!=='organization'||!['POST','PATCH'].includes(request.method!)) throw new Error('Unsupported test mutation');
