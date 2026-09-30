@@ -47,7 +47,7 @@ const server = createServer(async (request, response) => {
     const result=await asUser(db,name,async tx=>{
      const rpc=url.pathname.split('/rpc/')[1];
      if(rpc) {
-      const args: Record<string,string[]>= {current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
+      const args: Record<string,string[]>= {can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
       if(!args[rpc]) throw new Error('Unsupported test RPC');
       const params=args[rpc].map(key=>input[key] ?? null);
       const r=await tx.query<{result: unknown}>(`select public.${rpc}(${params.map((_,i)=>'$'+(i+1)).join(',')}) as result`,params);

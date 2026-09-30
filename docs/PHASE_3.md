@@ -10,12 +10,12 @@ Implements Issue #3 from main, including `PHASE_3_CONTEXT.md`, its referenced pr
 - `/admin/resources`: selected-year union of registered assignment periods, including scheduled dates. Inclusive covered dates are counted once across overlapping or adjacent assignments. The UI shows periods and deduplicated date counts, **no utilization percentage**. No denominator or leave-carryover policy is inferred.
 - `/projects/team`: the same period calculation over authorized team assignments.
 - `/projects/me`, `/projects/assignments/[id]`: own current assignments and planned/past history, including project/customer, dates, role, PM and location. Query parameters cannot change the owner.
-- `/career`, `/career/new`, `/career/[id]/edit`: owner-only records, actual own-assignment selector, derived customer/project/period, job function, role, responsibilities, removable skills, live profile preview and immediate save without approval. Active-project records can be edited.
-- Existing employee profile project tabs render only authorized assignments. Career tabs link to the owner's career; they never expose another employee's career.
+- `/career`, `/career/new`, `/career/[id]/edit`: own authoring records, actual own-assignment selector, derived customer/project/period, job function, role, responsibilities, removable skills, live profile preview and immediate save without approval. Active-project records can be edited.
+- Existing employee profile project tabs render only authorized assignments. Career tabs show owner or same-department Team Leader reads, with team content strictly read-only. Unauthorized career tabs are hidden. The team project table links to these career tabs.
 
 ## Migration and integrity
 
-Apply `supabase/migrations/202609300004_projects.sql` after migrations 001–003. No service-role credential is used by the application. It adds `project`, `project_assignment`, `project_extension`, and `career`; skills are a bounded array on career rather than a separately mutable child table. Career derives its project and dates through the assignment FK to avoid inconsistent duplicate metadata.
+Apply `supabase/migrations/202609300004_projects.sql` after migrations 001–003, then `202609300005_team_career_read.sql`. The additive migration replaces only the career SELECT policy with a separate owner/team read helper; it does not widen writes. No service-role credential is used by the application. It adds `project`, `project_assignment`, `project_extension`, and `career`; skills are a bounded array on career rather than a separately mutable child table. Career derives its project and dates through the assignment FK to avoid inconsistent duplicate metadata.
 
 Projects require a PM employee and location per the focused brief. Assignment end dates are explicit and bounded by the project interval; extending a project does not silently extend its assignments. Multiple concurrent assignments remain independent. Planned/active/completed are explicit lifecycle states. The current-assignment view also requires today's date (Asia/Seoul) to fall within the assignment dates.
 
@@ -28,8 +28,8 @@ Deletion uses restrictive foreign keys: a project with assignments or end-date h
 Authentication and trusted membership capabilities are checked on every protected request. The database independently verifies active membership and linked employment status. UI role hiding is not a security boundary.
 
 - ADMIN/CEO: `PROJECT_MANAGE` grants project/assignment management and resource reads, **not another employee's career**.
-- Employee: reads own assignments and the associated project summary. Career reads/edits are owner-only; the owner is derived from the trusted auth-to-employee link, never supplied by a form.
-- TEAM_LEADER: `TEAM_PROJECT_READ` is limited to the same non-null direct `department_id` as the linked employee. No descendant organization or division-wide access is inferred. An unlinked leader/no-department leader gets no broader scope.
+- Employee: reads own assignments and the associated project summary. Career authoring screens and all writes are owner-only; the owner is derived from the trusted auth-to-employee link, never supplied by a form.
+- TEAM_LEADER: `TEAM_PROJECT_READ` and the separate `TEAM_CAREER_READ` are limited to the same non-null direct `department_id` as the linked employee. Career reads use the same direct-department scope, without inheriting the project administrator bypass. No descendant organization or division-wide access is inferred. An unlinked leader/no-department leader gets no broader scope.
 - EXPENSE_ADMIN, IT_ADMIN and DIVISION_HEAD do not receive project management through those roles. Additive combinations still work.
 - Unlinked accounts receive an actionable own-project/career empty state; trusted provisioning must set `employee.auth_user_id` after joining.
 
@@ -39,11 +39,11 @@ RLS restricts all four tables. Authenticated clients receive SELECT only; writes
 
 ## Validation and evidence
 
-Local validation passed: 18 unit/database tests, 24 browser tests, lint, production build, and TypeScript checking.
+Local validation passed: 20 unit/database tests, 25 browser tests, lint, production build, and TypeScript checking.
 
 Run the same commands as CI: `npm run lint`, `npm test`, `npm run build`, `npm run typecheck`, and `npm run test:e2e`.
 
-The database suite uses PGlite with all actual migrations and authenticated roles. Coverage includes overlap/adjacency/leap-year/year-boundary calculations; invalid dates/selectors; direct RPC and table-write denial; cross-user career and assignment isolation; specialist and out-of-team rejection; null-department scope; CRUD; stale writes; invalid range rollback; extension history; restrictive deletion; forged owner input; and former-employee retention.
+The database suite uses PGlite with all actual migrations and authenticated roles. Coverage includes overlap/adjacency/leap-year/year-boundary calculations; invalid dates/selectors; direct RPC and table-write denial; cross-user career and assignment isolation; specialist and out-of-team rejection; null-department scope; CRUD; stale writes; invalid range rollback; extension history; restrictive deletion; forged owner input; and former-employee retention. Review regression tests prove in-team career reads, out-of-team/specialist denial, owner-only writes even with a valid leader-owned assignment, and null-department/inactive revocation.
 
 Playwright runs the production Next build against a local Auth/PostgREST double backed by those migrations. It covers full project/assignment CRUD, history, project filtering, stale project edits, resource deduplication, own/team pages, career creation/update/preview, forged selectors and URLs/RSC requests, and action replay after changing the authenticated session. Existing employee/auth/security regression tests remain included. All fixture names/content are synthetic.
 
@@ -60,6 +60,7 @@ Intentional adaptations: responsive flow instead of prototype absolute coordinat
 - [16 — My projects](screenshots/phase3-my-projects.png)
 - [17 — Career form and preview](screenshots/phase3-career.png)
 - [33 — Project detail and extension history](screenshots/phase3-project-detail.png)
+- [Team member career — read-only](screenshots/phase3-team-career.png)
 - [Mobile career form](screenshots/phase3-career-mobile.png)
 
 After review and merge, the next priority remains Phase 5 Expense; this PR does not start that phase.

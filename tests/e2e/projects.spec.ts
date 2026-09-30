@@ -63,3 +63,33 @@ test('forged career IDs, assignment selectors, and actions from a changed sessio
  await page.route('**/admin/projects/**',async route=>{if(!route.request().headers()['next-action'])return route.continue();const response=await route.fetch();expect(await response.text()).toContain('NEXT_HTTP_ERROR_FALLBACK;404');await route.fulfill({response});});
  await page.getByRole('button',{name:'투입 저장'}).click();await expect(page.getByRole('heading',{name:'페이지를 찾을 수 없습니다'})).toBeVisible();
 });
+
+test('team career is readable only in scope; own editor and action remain owner-only',async({page,context})=>{
+ await loginAs(context,'leader');await page.goto('/projects/team');
+ await page.getByRole('row').filter({hasText:'김테스트'}).getByRole('link',{name:'커리어 보기'}).click();
+ await expect(page.getByText('팀원 커리어 · 읽기 전용입니다. 작성과 수정은 직원 본인만 할 수 있습니다.')).toBeVisible();
+ await expect(page.getByText('실험 데이터 구조 설계와 사용자 요구사항 분석',{exact:true})).toBeVisible();
+ await expect(page.getByRole('link',{name:'커리어 수정',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'커리어 저장',exact:true})).toHaveCount(0);
+ await page.screenshot({path:'docs/screenshots/phase3-team-career.png',fullPage:true});
+ await page.goto('/career');await expect(page.getByText('아직 작성한 커리어가 없습니다. 본인의 프로젝트 경험을 기록해 보세요.')).toBeVisible();
+ expect((await page.goto(`/career/${career}/edit`))!.status()).toBe(404);
+ const response=await page.goto('/people/10000000-0000-4000-8000-000000000003?tab=career');
+ expect(await response!.text()).not.toContain('외부팀 비공개 경력 내용');
+ await expect(page.getByText(/조회 권한이 없는 커리어/)).toBeVisible();
+ for(const user of ['employee','expense','it','division','admin','ceo']) {
+  await loginAs(context,user);
+  const target=user==='employee'?'10000000-0000-4000-8000-000000000002':person;
+  const secret=user==='employee'?'동료 전용 경력 내용':'실험 데이터 구조 설계와 사용자 요구사항 분석';
+  const response=await page.goto(`/people/${target}?tab=career&role=TEAM_LEADER`);
+  expect(await response!.text()).not.toContain(secret);
+  await expect(page.locator('.employee-tabs').getByRole('link',{name:'커리어',exact:true})).toHaveCount(0);
+  await expect(page.getByText(/조회 권한이 없는 커리어/)).toBeVisible();
+  const rsc=await context.request.get(`/people/${target}?tab=career`,{headers:{RSC:'1'}});expect(await rsc.text()).not.toContain(secret);
+ }
+ await loginAs(context,'employee');await page.goto(`/career/${career}/edit`);
+ await loginAs(context,'leader');await page.getByLabel('주요 업무',{exact:true}).fill('팀장의 허용되지 않은 수정');
+ await page.getByRole('button',{name:'커리어 저장'}).click();await expect(page.locator('.form-error[role=alert]')).toContainText('저장할 수 없습니다');
+ await page.goto(`/people/${person}?tab=career`);await expect(page.getByText('실험 데이터 구조 설계와 사용자 요구사항 분석',{exact:true})).toBeVisible();
+ await expect(page.getByText('팀장의 허용되지 않은 수정',{exact:true})).toHaveCount(0);
+});

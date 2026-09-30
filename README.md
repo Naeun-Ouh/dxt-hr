@@ -77,4 +77,4 @@ Employee profiles are separate from login memberships. Trusted provisioning can 
 
 ## Phase 3 project and career setup
 
-Apply migration `202609300004_projects.sql` after the employee migrations. Trusted provisioning must link `employee.auth_user_id` for own-project/career and team scope. See [Phase 3 implementation](docs/PHASE_3.md) for routes, history/retention behavior, row policies, unresolved team/denominator policies, validation, and Figma screenshots.
+Apply migrations `202609300004_projects.sql` and `202609300005_team_career_read.sql` in order after the employee migrations. Trusted provisioning must link `employee.auth_user_id` for own-project/career and team scope. See [Phase 3 implementation](docs/PHASE_3.md) for routes, history/retention behavior, row policies, unresolved team/denominator policies, validation, and Figma screenshots.

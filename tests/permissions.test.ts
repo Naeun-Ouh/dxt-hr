@@ -64,3 +64,16 @@ test("invalid and inactive membership records fail closed", () => {
   assert(parseMembership("id", valid));
   for (const bad of [null, {}, { ...valid, status: "INACTIVE" }, { ...valid, roles: [] }, { ...valid, roles: ["OWNER"] }, { ...valid, capabilities: ["ALL"] }, { ...valid, display_name: " " }]) assert.equal(parseMembership("id", bad), null);
 });
+
+test('career read adds only bounded team-leader scope, including additive roles',async()=>{
+ const {canReadCareerFor}=await import('../src/lib/projects/access');
+ const self={id:'a',department_id:'team'},peer={id:'b',department_id:'team'},outside={id:'c',department_id:'other'};
+ for(const role of ROLES) {
+  assert(canReadCareerFor(person(role),self,self));
+  assert.equal(canReadCareerFor(person(role),self,peer),role==='TEAM_LEADER');
+  assert.equal(canReadCareerFor(person(role),self,outside),false);
+  assert.equal(canReadCareerFor(person(role),undefined,peer),false);
+ }
+ assert(canReadCareerFor(person('TEAM_LEADER','IT_ADMIN'),self,peer));
+ assert(!canReadCareerFor(person('TEAM_LEADER'),{...self,department_id:null},{...peer,department_id:null}));
+});

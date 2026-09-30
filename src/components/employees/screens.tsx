@@ -1,3 +1,4 @@
+import { canViewEmployeeCareer } from "@/lib/projects/data";
 import { EmployeeProjectTab } from "../projects/employee-tab";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -39,12 +40,13 @@ export async function EmployeeEditor({ id, principal }: { id?: string; principal
 }
 export async function EmployeeDetail({ id, admin, principal, query }: { id: string; admin: boolean; principal: Principal; query: SearchParams }) {
   const [employee, departments] = await Promise.all([getEmployee(id), organizations()]);
+  const careerVisible = await canViewEmployeeCareer(id);
   const tab = ["projects", "career", "assets"].includes(String(query.tab)) ? String(query.tab) : "profile";
   const base = `${admin ? "/admin/employees" : "/people"}/${id}`;
   return <>
     {query.saved === "1" && <p role="status" className="success-notice">프로필이 저장되었습니다.</p>}
     <section className="surface profile-summary"><span className="person-avatar large">{employee.name.slice(0, 1)}</span><div className="profile-meta"><div className="button-row"><h1>{employee.name}</h1><Status status={employee.employment_status} /></div><p>{employee.company_email}<span>｜</span>{departments.find(d => d.id === employee.department_id)?.name || "미배정"}<span>｜</span>{employee.title}</p></div>{admin && <Link className="button" href={`${base}/edit`}>프로필 수정</Link>}</section>
-    <nav className="employee-tabs" aria-label="직원 상세 탭">{[["profile", "프로필"], ["projects", "프로젝트"], ["career", "커리어"], ["assets", "장비"]].map(([key, label]) => <Link key={key} href={`${base}?tab=${key}`} aria-current={tab === key ? "page" : undefined}>{label}</Link>)}{can(principal, "PRIVATE_HR_ACCESS") && <Link href={`/admin/employees/${id}/private`}>HR Private</Link>}</nav>
+    <nav className="employee-tabs" aria-label="직원 상세 탭">{[["profile", "프로필"], ["projects", "프로젝트"], ["career", "커리어"], ["assets", "장비"]].filter(([key]) => key !== "career" || careerVisible).map(([key, label]) => <Link key={key} href={`${base}?tab=${key}`} aria-current={tab === key ? "page" : undefined}>{label}</Link>)}{can(principal, "PRIVATE_HR_ACCESS") && <Link href={`/admin/employees/${id}/private`}>HR Private</Link>}</nav>
     {tab === "profile" ? <section className="surface"><h2>기본 / 근무 정보</h2><dl className="profile-facts">{[["역할", employee.roles.map(role => EMPLOYEE_ROLE_LABELS[role]).join(" · ")], ["이름", employee.name], ["영문명", employee.english_name], ["회사 이메일", employee.company_email], ["휴대폰 번호", employee.phone], ["부서", departments.find(d => d.id === employee.department_id)?.name], ["직책", employee.title], ["입사일", employee.hire_date], ["근무지", employee.work_location]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl></section> : tab === "projects" || tab === "career" ? <EmployeeProjectTab id={id} career={tab === "career"}/> : <section className="surface empty-state"><h2>장비 정보를 준비하고 있습니다</h2><p>서비스 준비가 완료되면 이곳에서 확인할 수 있습니다.</p></section>}
   </>;
 }
