@@ -1,3 +1,4 @@
+import { legacyWorkbookFixture } from './legacy-workbook-fixture';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -100,4 +101,40 @@ test('retroactive claims require reason in database and enter a future payment c
  await asUser(db,'employee',tx=>tx.query("select submit_expense_claim($1,2,'증빙 재발급')",[id]));
  assert.equal((await db.query<{ok:boolean}>('select payment_date>=public.expense_today() ok from expense_claim where id=$1',[id])).rows[0].ok,true);
  }finally{await db.close();}
+});
+
+test('actual legacy layout: blank real area never imports SAMPLE vehicles or prefilled summaries',async()=>{
+ const book=legacyWorkbookFixture();
+ const preview=await parseWorkbook(Buffer.from(await book.xlsx.writeBuffer()),'2024_DXT지출결의서_00월_홍길동_NEW.xlsx',currentMonth,currentMonth+'-01',[]);
+ assert.equal(preview.items.length,0);
+ assert.equal(preview.items.filter(i=>i.vehicle).length,0);
+ assert(preview.problems.some(p=>p.message==='등록할 경비가 없습니다.'));
+ assert(!preview.problems.some(p=>p.origin?.startsWith('주유비,통행비!17')||p.origin?.startsWith('주유비,통행비!18')));
+ book.getWorksheet('지출결의서')!.getRow(16).values=[1,'실제 사용처','소모품','소모품비',5000,'개인카드'];
+ const ordinary=await parseWorkbook(Buffer.from(await book.xlsx.writeBuffer()),'legacy.xlsx',currentMonth,currentMonth+'-01',[]);
+ assert.equal(ordinary.items.length,1);assert.equal(ordinary.items[0].merchant,'실제 사용처');assert.equal(ordinary.items[0].amount,5000);assert.equal(ordinary.problems.filter(p=>p.severity==='ERROR').length,0);
+});
+test('actual legacy layout: only upper input rows are authoritative and broken totals are ignored',async()=>{
+ for(const type of ['FUEL','TOLL'] as const) {
+  const book=legacyWorkbookFixture(),travel=book.getWorksheet('주유비,통행비')!;
+  travel.getCell('A2').value='작성방법'; // Introductory guidance is not an end marker before input begins.
+  const start=type==='FUEL'?1:9;
+  ['실제 고객 출장','서울','부산',1234,3].forEach((value,index)=>travel.getRow(8).getCell(start+index).value=value);
+  travel.getRow(8).getCell(start+5).value={formula:type==='FUEL'?'D8*D8':'K8*L8',result:999999};
+  const preview=await parseWorkbook(Buffer.from(await book.xlsx.writeBuffer()),'legacy.xlsx',currentMonth,currentMonth+'-01',[]);
+  assert.equal(preview.items.length,1);assert.equal(preview.items[0].expense_type,type);assert.equal(preview.items[0].amount,3702);
+  assert(preview.items[0].import_origin?.startsWith('주유비,통행비!8'));
+  assert(!preview.items.some(i=>i.merchant.includes('Samsung')||i.amount===100720||i.amount===48000));
+  assert.equal(preview.problems.filter(p=>p.severity==='ERROR').length,0);
+ }
+});
+test('legacy parser stops globally at markers and repeated headers without restarting',async()=>{
+ for(const marker of ['SAMPLE','sample','예시','합계','작성방법','']) {
+  const book=legacyWorkbookFixture(),travel=book.getWorksheet('주유비,통행비')!;
+  travel.unMergeCells('A16:N16');travel.getCell('A16').value=null;travel.getCell('H16').value=marker||null;
+  // Empty marker exercises repeated semantic headings alone as the boundary.
+  const preview=await parseWorkbook(Buffer.from(await book.xlsx.writeBuffer()),'legacy.xlsx',currentMonth,currentMonth+'-01',[]);
+  assert.equal(preview.items.length,0,marker||'repeated header');
+  assert(!preview.problems.some(p=>p.origin?.startsWith('주유비,통행비!17')||p.origin?.startsWith('주유비,통행비!18')));
+ }
 });

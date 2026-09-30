@@ -1,3 +1,4 @@
+import { legacyWorkbookFixture } from '../legacy-workbook-fixture';
 import { test,expect } from '@playwright/test';
 import ExcelJS from 'exceljs';
 import { loginAs,tokenFor } from './fixtures';
@@ -52,6 +53,16 @@ test('dining attendees consume a shared monthly allowance and exhausted reuse is
  await loginAs(context,'employee');await page.goto('/expenses/new');await page.getByLabel('경비 유형').selectOption('DINING');await page.getByLabel('사용처',{exact:true}).fill('다른 회식');await page.getByLabel('품목 / 사용 목적').fill('회식');await page.getByLabel('금액 (원)',{exact:true}).fill('10000');await page.getByRole('checkbox',{name:/이동료/}).check();await page.getByLabel('이동료 한도 사용액').fill('10000');await page.getByLabel('영수증 / 증빙 *',{exact:true}).setInputFiles(pdf);await page.getByRole('button',{name:'저장',exact:true}).click();await expect(page.locator('.form-error[role=alert]')).toContainText('남은 월 한도');
  const book=new ExcelJS.Workbook();await book.xlsx.load(await templateWorkbook(month) as never);book.getWorksheet('지출결의서')!.addRow([month+'-01','회식 식당','회식','복리후생비',10000,'개인카드','','회식','개인카드','expense@example.test:10000']);
  await page.goto('/expenses/upload');await page.getByLabel('Excel 파일 (.xlsx)').setInputFiles({name:'dining.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(await book.xlsx.writeBuffer())});await page.getByLabel('전체 경비 증빙 (PDF / PNG / JPG)').setInputFiles(pdf);await page.getByRole('button',{name:'파일 검증'}).click();await expect(page.getByText('참석자의 남은 월 한도를 초과했습니다. 한도 사용액을 확인해 주세요.')).toBeVisible();await expect(page.getByRole('button',{name:'검증 결과 확인 후 등록'})).toBeDisabled();
+});
+test('actual legacy SAMPLE section stays out of preview and registered expenses',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/expenses/upload');
+ const book=legacyWorkbookFixture();
+ const upload=async()=>page.getByLabel('Excel 파일 (.xlsx)').setInputFiles({name:'legacy.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(await book.xlsx.writeBuffer())});
+ await upload();await page.getByLabel('전체 경비 증빙 (PDF / PNG / JPG)').setInputFiles(pdf);await page.getByLabel('차량 사용일 (기존 양식에 날짜가 없는 경우)').fill(month+'-01');
+ await page.getByRole('button',{name:'파일 검증'}).click();await expect(page.getByText('등록할 경비가 없습니다.')).toBeVisible();await expect(page.getByRole('button',{name:'검증 결과 확인 후 등록'})).toBeDisabled();await expect(page.getByText('Samsung BioLogics')).toHaveCount(0);
+ const row=book.getWorksheet('주유비,통행비')!.getRow(8);['실제 출장만 등록','서울','부산',1234,3].forEach((value,i)=>row.getCell(i+1).value=value);row.getCell(6).value={formula:'D8*D8',result:999999};
+ await upload();await page.getByRole('button',{name:'파일 검증'}).click();await expect(page.getByRole('cell',{name:'실제 출장만 등록',exact:true})).toBeVisible();await expect(page.getByRole('cell',{name:'₩3,702',exact:true})).toBeVisible();await expect(page.getByText('Samsung BioLogics')).toHaveCount(0);
+ await page.getByRole('button',{name:'검증 결과 확인 후 등록'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');await expect(page.getByText('주유비 · 실제 출장만 등록')).toBeVisible();await expect(page.getByText(/₩1,234 × 3회 = ₩3,702/)).toBeVisible();await expect(page.getByText('Samsung BioLogics')).toHaveCount(0);
 });
 test('monthly submission, admin filters/export, action replay and payment lock complete the flow',async({page,context})=>{
  await loginAs(context,'employee');await page.goto(`/expenses/${claim}`);await page.getByRole('button',{name:'월 경비 제출'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');

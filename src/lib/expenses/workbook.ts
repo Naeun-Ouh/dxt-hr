@@ -55,12 +55,33 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
    const row=sheet.getRow(n);if(row.values&&row.getCell(1).text.includes('일자'))break;
    row.eachCell(cell=>{const title=/(\d{4})\s*년\s*(\d{1,2})\s*월/.exec(cell.text);if(title&&`${title[1]}-${title[2].padStart(2,'0')}`!==month)error('기존 양식의 보고 월과 선택한 사용월이 다릅니다.',`지출결의서!${n}`);});
   }
-  let vehicleHeaderFound=false;
-  travel.eachRow((row,rowNo)=>{
-   const labels:Record<string,number>={};row.eachCell((cell,col)=>{labels[clean(cell.text)]=col;});
-   if(labels['유형']&&labels['편도금액']&&labels['횟수']) {
-    vehicleHeaderFound=true;
-    for(let n=rowNo+1;n<=travel.rowCount;n++) {
+  const rowLabels=(row:ExcelJS.Row)=>{
+   const labels:Record<string,number>={};
+   row.eachCell((cell,col)=>{if(!cell.isMerged||cell.master.address===cell.address)labels[clean(cell.text)]=col;});
+   return labels;
+  };
+  const vehicleHeader=(labels:Record<string,number>)=>
+   Boolean(labels['횟수']&&(labels['편도주유비']||labels['편도통행비']||(labels['유형']&&labels['편도금액'])));
+  const exampleRow=(row:ExcelJS.Row)=>Object.keys(rowLabels(row)).some(label=>/^(?:sample|example|샘플|예시)(?:[:：].*)?$/i.test(label));
+  const inputEnd=(row:ExcelJS.Row)=>exampleRow(row)||Object.keys(rowLabels(row)).some(label=>/^(?:합계|총계|계)$/.test(label)||/^(?:작성방법|복사|붙여넣기)/.test(label));
+  // Select the first input header once. Never restart at an example/repeated header.
+  let vehicleHeaderRow=0;
+  for(let n=1;n<=travel.rowCount;n++) {
+   const row=travel.getRow(n);
+   if(exampleRow(row))break;
+   if(vehicleHeader(rowLabels(row))){vehicleHeaderRow=n;break;}
+  }
+  const labels=vehicleHeaderRow?rowLabels(travel.getRow(vehicleHeaderRow)):{};
+  const legacyVehicleLayout=Boolean(vehicleHeaderRow&&!labels['유형']);
+  if(!vehicleHeaderRow)error('차량 시트의 편도 금액·횟수 열을 찾을 수 없습니다.');
+  else {
+   let inputLimit=travel.rowCount+1;
+   for(let n=vehicleHeaderRow+1;n<=travel.rowCount;n++) {
+    const row=travel.getRow(n);
+    if(inputEnd(row)||vehicleHeader(rowLabels(row))){inputLimit=n;break;}
+   }
+   if(!legacyVehicleLayout) {
+    for(let n=vehicleHeaderRow+1;n<inputLimit;n++) {
      const r=travel.getRow(n);if(!r.hasValues)continue;
      try {
       const get=(key:string)=>labels[key]?scalar(r.getCell(labels[key])):'';
@@ -70,26 +91,23 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
       i.vehicle={project_or_trip_name:i.trip_context,origin:String(get('출발지')),destination:String(get('도착지')),one_way_amount:numberValue(get('편도금액')),trip_count:numberValue(get('횟수'))};i.amount=i.vehicle.one_way_amount*i.vehicle.trip_count;i.import_origin=`주유비,통행비!${n}`;result.items.push(i);
      }catch(e){error((e as Error).message,`주유비,통행비!${n}`);}
     }
-   }
-  });
-  // Legacy workbook: two side-by-side sets; derive columns from semantic headings, never F/N formula results.
-  if(!vehicleHeaderFound)travel.eachRow((row,rowNo)=>{
-   row.eachCell((cell,col)=>{
-    const label=clean(cell.text);if(!/^편도(주유비|통행비)$/.test(label))return;vehicleHeaderFound=true;
-    const type:Purpose=label.includes('주유')?'FUEL':'TOLL';
-    for(let n=rowNo+1;n<=travel.rowCount;n++) {
-     const r=travel.getRow(n); const context=r.getCell(col-3).text.trim();
-     if(/합계|총계|복사|붙여|작성방법/.test(context))break;
-     if(!context&&!r.getCell(col-2).text&&!r.getCell(col-1).text)continue;
-     try {
-      const i=base(month);i.expense_type=type;i.usage_date=vehicleDate;i.merchant=context;i.description=PURPOSES[type];i.account_category=ACCOUNTS[type];i.trip_context=context;
-      i.vehicle={project_or_trip_name:context,origin:String(scalar(r.getCell(col-2))),destination:String(scalar(r.getCell(col-1))),one_way_amount:numberValue(scalar(r.getCell(col))),trip_count:numberValue(scalar(r.getCell(col+1)))};
-      i.amount=i.vehicle.one_way_amount*i.vehicle.trip_count;i.import_origin=`주유비,통행비!${n} (${PURPOSES[type]})`;result.items.push(i);
-     }catch(e){error((e as Error).message,`주유비,통행비!${n}`);}
+   } else {
+    // Both side-by-side blocks share the same bounded real input area.
+    for(const [label,col] of Object.entries(labels)) {
+     if(!/^편도(주유비|통행비)$/.test(label))continue;
+     const type:Purpose=label.includes('주유')?'FUEL':'TOLL';
+     for(let n=vehicleHeaderRow+1;n<inputLimit;n++) {
+      const r=travel.getRow(n),context=r.getCell(col-3).text.trim();
+      if(!context&&!r.getCell(col-2).text&&!r.getCell(col-1).text)continue;
+      try {
+       const i=base(month);i.expense_type=type;i.usage_date=vehicleDate;i.merchant=context;i.description=PURPOSES[type];i.account_category=ACCOUNTS[type];i.trip_context=context;
+       i.vehicle={project_or_trip_name:context,origin:String(scalar(r.getCell(col-2))),destination:String(scalar(r.getCell(col-1))),one_way_amount:numberValue(scalar(r.getCell(col))),trip_count:numberValue(scalar(r.getCell(col+1)))};
+       i.amount=i.vehicle.one_way_amount*i.vehicle.trip_count;i.import_origin=`주유비,통행비!${n} (${PURPOSES[type]})`;result.items.push(i);
+      }catch(e){error((e as Error).message,`주유비,통행비!${n}`);}
+     }
     }
-   });
-  });
-  if(!vehicleHeaderFound)error('차량 시트의 편도 금액·횟수 열을 찾을 수 없습니다.');
+   }
+  }
   let headers:Record<string,number>|undefined;
   sheet.eachRow((row,n)=>{
    const labels:Record<string,number>={};row.eachCell((cell,col)=>{if(!cell.isMerged||cell.master.address===cell.address)labels[clean(cell.text)]=col;});
@@ -101,7 +119,11 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
     if(/^(합계|총계|계)$/.test(description)||/합계|총계/.test(String(row.getCell(1).text)))return;
     if(!description&&!merchant)return;
     const type=purpose(String(get('유형')||description));
-    if(['FUEL','TOLL'].includes(type)&&result.items.some(i=>i.expense_type===type&&i.vehicle))return;
+    if(['FUEL','TOLL'].includes(type)) {
+     if(result.items.some(i=>i.expense_type===type&&i.vehicle))return;
+     // Actual legacy rows 12–13 are prefilled examples/manual summaries, not evidence of usage.
+     if(legacyVehicleLayout){result.problems.push({severity:'WARNING',code:'LEGACY_SUMMARY_IGNORED',message:'기존 양식의 차량 요약은 가져오지 않습니다. 두 번째 시트의 실제 입력 영역에 사용 내역을 입력해 주세요.',origin:`지출결의서!${n}`});return;}
+    }
 
     const i=base(month);Object.assign(i,{usage_date:dateValue(get('일자')||get('사용일'),month),expense_type:type,merchant,description,account_category:String(get('계정과목')||ACCOUNTS[type]),amount:numberValue(get('합계')),evidence_type:String(get('증빙종류')||''),notes:String(get('비고')||''),import_origin:`지출결의서!${n}`});
     if(['FUEL','TOLL'].includes(type)){i.legacy_summary=true;if(!i.merchant)i.merchant=PURPOSES[type];}
