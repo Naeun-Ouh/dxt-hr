@@ -33,11 +33,19 @@ This repository is implemented from an approved product specification and Figma 
 
 9. Prefer ledger/event records for mutable balances such as leave.
 
-10. Each PR should implement one focused vertical slice and include:
+10. Treat row-level data isolation as a mandatory security boundary.
+    - Employees can access only their own restricted records unless an explicit broader capability exists.
+    - Never trust URL secrecy, hidden navigation, client state, employee_id/user_id parameters, or page guards as sufficient authorization.
+    - Enforce ownership/capability in server actions/APIs and at the database layer with RLS or an equivalent row policy.
+    - Knowing another employee's URL or UUID must not expose their expense, leave reason, equipment detail, HR-private data, offboarding detail, or other restricted records.
+    - Every domain PR must include negative authorization tests proving cross-user access fails.
+
+11. Each PR should implement one focused vertical slice and include:
     - routes/screens changed,
     - DB/schema changes,
     - validation rules,
-    - permission checks,
+    - permission and ownership checks,
+    - negative cross-user authorization tests,
     - test coverage,
     - screenshots for major UI changes.
 
@@ -54,12 +62,4 @@ If the existing codebase later adopts another stack, preserve the product/busine
 
 ## Delivery order
 
-1. Foundation/auth/roles/layout
-2. Employee + organization + HR Private
-3. Project + assignment + career
-4. Leave + holiday + weekend work/substitute leave
-5. Expense + Excel validation + admin export
-6. Asset + Windows license + account vault UI
-7. Onboarding + offboarding
-8. Announcements + family events + birthday email
-9. Admin hardening, audit logs, tests, deployment
+See `docs/ROADMAP.md` for current business priority.
