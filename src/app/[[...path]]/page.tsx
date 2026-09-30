@@ -6,6 +6,7 @@ import { can, type Principal } from "@/lib/permissions";
 import { EmployeeList, EmployeeEditor, EmployeeDetail, HrPrivateScreen, OrganizationScreen } from "@/components/employees/screens";
 import type { SearchParams } from "@/lib/employees/data";
 import { resolveRoute } from "@/lib/routes";
+import { ProjectList, ProjectEditor, ProjectDetail, MyProjects, ResourceView, CareerScreen } from "@/components/projects/screens";
 export const dynamic = "force-dynamic";
 export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
@@ -17,6 +18,17 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/admin/projects": screen = <ProjectList query={query}/>; break;
+    case "/admin/projects/new": screen = <ProjectEditor/>; break;
+    case "/admin/projects/[id]/edit": screen = <ProjectEditor id={path[2]}/>; break;
+    case "/admin/projects/[id]": screen = <ProjectDetail id={path[2]} query={query}/>; break;
+    case "/admin/resources": screen = <ResourceView query={query}/>; break;
+    case "/projects/team": screen = <ResourceView team query={query}/>; break;
+    case "/projects/me": screen = <MyProjects/>; break;
+    case "/projects/assignments/[id]": screen = <MyProjects id={path[2]}/>; break;
+    case "/career": screen = <CareerScreen query={query}/>; break;
+    case "/career/new": screen = <CareerScreen create query={query}/>; break;
+    case "/career/[id]/edit": screen = <CareerScreen id={path[1]} query={query}/>; break;
     case "/people": case "/admin/employees": screen = <EmployeeList admin={route.path.startsWith("/admin")} query={query} />; break;
     case "/admin/employees/new": screen = <EmployeeEditor principal={principal} />; break;
     case "/admin/employees/[id]/edit": screen = <EmployeeEditor id={path[2]} principal={principal} />; break;

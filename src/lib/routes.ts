@@ -16,6 +16,8 @@ export const ROUTES: AppRoute[] = [
   employee("/organization", "조직도", "인사", "ChartNetwork"),
   employee("/career", "커리어", "인사", "ChartNetwork"),
   employee("/career/new", "커리어 작성"),
+  employee("/career/[id]/edit", "커리어 수정"),
+  employee("/projects/assignments/[id]", "내 투입 상세"),
   employee("/projects/me", "내 프로젝트", "프로젝트", "FolderLock"),
   managed("/projects/team", "팀 프로젝트 현황", "TEAM_PROJECT_READ", "프로젝트", "Users3"),
   managed("/admin/resources", "인력 투입 현황", "PROJECT_MANAGE", "프로젝트", "Users3"),
@@ -47,6 +49,8 @@ export const ROUTES: AppRoute[] = [
   { path: "/admin/employees/[id]", title: "직원 상세", capability: "EMPLOYEE_MANAGE", icon: "Users2" },
   { path: "/admin/employees/[id]/edit", title: "직원 수정", capability: "EMPLOYEE_MANAGE", icon: "UserCog" },
   { path: "/admin/employees/[id]/private", title: "HR Private", capability: "PRIVATE_HR_ACCESS", icon: "FolderLock" },
+  { path: "/admin/projects/new", title: "프로젝트 등록", capability: "PROJECT_MANAGE", icon: "FolderCog" },
+  { path: "/admin/projects/[id]/edit", title: "프로젝트 수정", capability: "PROJECT_MANAGE", icon: "FolderCog" },
   { path: "/admin/projects/[id]", title: "프로젝트 상세", capability: "PROJECT_MANAGE", icon: "FolderCog" },
 ];
 export function resolveRoute(path: string): AppRoute | undefined {

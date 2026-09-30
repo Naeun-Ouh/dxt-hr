@@ -9,7 +9,7 @@ test('directory searches, filters and profile tabs use real domain records', asy
  await page.goto('/people?q=kim&status=ALL');await page.getByRole('link',{name:/김테스트/}).click();
  await expect(page.getByRole('heading',{name:'기본 / 근무 정보'})).toBeVisible();
  await expect(page.getByRole('link',{name:'HR Private'})).toHaveCount(0);
- await page.getByRole('link',{name:'프로젝트',exact:true}).click();await expect(page.getByText('프로젝트 정보를 준비하고 있습니다')).toBeVisible();
+ await page.getByRole('link',{name:'프로젝트',exact:true}).click();await expect(page.getByRole('heading',{name:'프로젝트 투입 이력'})).toBeVisible();
  await page.goto('/organization');await expect(page.getByRole('heading',{name:'조직 등록'})).toHaveCount(0);
 });
 test('admin creates, validates, edits and inactivates a profile without private HR controls',async({page,context})=>{

@@ -74,3 +74,7 @@ See [Phase 1 implementation and visual review](docs/PHASE_1.md) for boundaries, 
 Configure the server-only `HR_ENCRYPTION_ACTIVE_KEY` and `HR_ENCRYPTION_KEYS` before entering birth dates or HR Private values. See [Phase 2 implementation](docs/PHASE_2.md) for the key format, rotation, schema, permissions, screenshots, and deployment validation.
 
 Employee profiles are separate from login memberships. Trusted provisioning can link `employee.auth_user_id` to an existing `auth.users.id` after joining. A linked INACTIVE employee cannot access the app or domain tables even if their membership remains ACTIVE. Employee forms assign one or more HR roles in `employee_role`, but cannot set the auth link, application-membership roles, or capabilities. These domain roles do not grant service access.
+
+## Phase 3 project and career setup
+
+Apply migration `202609300004_projects.sql` after the employee migrations. Trusted provisioning must link `employee.auth_user_id` for own-project/career and team scope. See [Phase 3 implementation](docs/PHASE_3.md) for routes, history/retention behavior, row policies, unresolved team/denominator policies, validation, and Figma screenshots.

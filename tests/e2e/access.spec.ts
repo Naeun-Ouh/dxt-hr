@@ -47,7 +47,7 @@ test("specialists and multi-role users cannot reach unrelated admin or private H
 test("CEO reaches private HR by role while ADMIN requires the designated grant", async ({ page, context }) => {
   for (const name of ["admin", "ceo", "designated", "privateCeo"]) {
     await loginAs(context, name);
-    for (const path of ["/admin/employees", "/admin/expenses", "/admin/accounts", "/admin/projects/test"]) expect((await page.goto(path))!.status()).toBe(200);
+    for (const path of ["/admin/employees", "/admin/expenses", "/admin/accounts", "/admin/projects/30000000-0000-4000-8000-000000000001"]) expect((await page.goto(path))!.status()).toBe(200);
     const hasPrivateHr = cases[name].roles.includes("CEO") || Boolean(cases[name].capabilities?.includes("PRIVATE_HR_ACCESS"));
     await page.goto("/admin/employees/10000000-0000-4000-8000-000000000001");
     await expect(page.getByRole("link", { name: "HR Private" })).toHaveCount(hasPrivateHr ? 1 : 0);

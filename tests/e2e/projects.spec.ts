@@ -1,0 +1,65 @@
+import { test, expect } from '@playwright/test';
+import { loginAs } from './fixtures';
+const project='30000000-0000-4000-8000-000000000001', otherAssignment='40000000-0000-4000-8000-000000000002', career='50000000-0000-4000-8000-000000000001';
+const person='10000000-0000-4000-8000-000000000001';
+test('project and assignment CRUD, filters, extension history and stale project edits',async({page,context})=>{
+ await loginAs(context,'admin');await page.goto('/admin/projects');
+ await page.getByRole('link',{name:'+ 프로젝트 등록'}).click();
+ await page.getByLabel('고객사',{exact:true}).fill('브라우저 고객사');await page.getByLabel('프로젝트명').fill('브라우저 프로젝트');
+ await page.getByLabel('시작일',{exact:true}).fill('2026-01-01');await page.getByLabel('현재 종료일').fill('2026-12-31');
+ await page.getByLabel('근무지').fill('서울');await page.getByRole('combobox',{name:'PM',exact:true}).selectOption(person);await page.getByRole('combobox',{name:'상태',exact:true}).selectOption('ACTIVE');
+ await page.getByRole('button',{name:'프로젝트 저장'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ const path=new URL(page.url()).pathname;
+ await page.getByRole('link',{name:'+ 투입 추가'}).click();await page.getByRole('combobox',{name:'직원',exact:true}).selectOption(person);await page.getByLabel('투입 역할').fill('테스트 역할');
+ await page.getByLabel('투입 시작일').fill('2026-03-01');await page.getByLabel('투입 종료일').fill('2026-09-30');await page.getByLabel('투입 상태').selectOption('ACTIVE');
+ await page.getByRole('button',{name:'투입 저장'}).click();await expect(page.getByRole('cell',{name:'테스트 역할',exact:true})).toBeVisible();
+ await page.getByRole('link',{name:'수정',exact:true}).click();await page.getByLabel('투입 역할').fill('수정된 역할');await page.getByRole('button',{name:'투입 저장'}).click();await expect(page.getByRole('cell',{name:'수정된 역할',exact:true})).toBeVisible();
+ await page.getByRole('row').filter({hasText:'수정된 역할'}).locator('summary').click();await page.getByRole('button',{name:'삭제 확인'}).click();await expect(page.getByRole('cell',{name:'수정된 역할',exact:true})).toHaveCount(0);
+ await page.locator('main > .delete-record summary').click();await page.getByRole('button',{name:'삭제 확인'}).click();await expect(page).toHaveURL(/\/admin\/projects\?deleted=1/);
+ expect((await page.goto(path))!.status()).toBe(404);
+ await page.goto(`/admin/projects/${project}`);
+ await page.getByLabel('새 종료일').fill('2027-03-31');await page.getByRole('button',{name:'종료일 변경'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ await expect(page.locator('.extension-section').getByRole('cell',{name:'2026-12-31',exact:true})).toBeVisible();await expect(page.getByRole('cell',{name:'2027-03-31',exact:true})).toBeVisible();
+ const other=await context.newPage();await page.goto(`/admin/projects/${project}/edit`);await other.goto(`/admin/projects/${project}/edit`);
+ await page.getByLabel('근무지').fill('이천 / 원격');await page.getByRole('button',{name:'프로젝트 저장'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ await other.getByRole('button',{name:'프로젝트 저장'}).click();await expect(other.locator('.form-error[role=alert]')).toContainText('다른 사용자가 변경했습니다');await other.close();
+ await page.screenshot({path:'docs/screenshots/phase3-project-detail.png',fullPage:true});
+ await page.goto('/admin/projects');await page.getByLabel('프로젝트 검색').fill('없는 프로젝트');await page.getByRole('button',{name:'검색',exact:true}).click();await expect(page.getByText('조건에 맞는 프로젝트가 없습니다.')).toBeVisible();
+ await page.goto('/admin/projects');await page.screenshot({path:'docs/screenshots/phase3-project-list.png',fullPage:true});
+});
+test('resource coverage deduplicates overlaps, team scope stays narrow and own pages hide other assignments',async({page,context})=>{
+ await loginAs(context,'admin');await page.goto('/admin/resources?year=2026');
+ await expect(page.getByRole('row').filter({has:page.getByText('김테스트',{exact:true})})).toContainText('365일');
+ await expect(page.getByText(/가동률 분모 정책은 미정/)).toBeVisible();await page.screenshot({path:'docs/screenshots/phase3-resources.png',fullPage:true});
+ await loginAs(context,'leader');const response=await page.goto('/projects/team');
+ await expect(page.getByRole('row').filter({hasText:'이동료'})).toBeVisible();await expect(page.getByText('외부팀 비공개 역할')).toHaveCount(0);
+ expect(await response!.text()).not.toContain('외부팀 비공개 역할');
+ await loginAs(context,'employee');await page.goto('/projects/me?employee_id=10000000-0000-4000-8000-000000000003');
+ await expect(page.getByRole('heading',{name:'현재 투입 프로젝트'})).toBeVisible();await expect(page.getByText('Data Engineer',{exact:true})).toBeVisible();await expect(page.getByText('팀 동료 역할')).toHaveCount(0);await page.screenshot({path:'docs/screenshots/phase3-my-projects.png',fullPage:true});
+ expect((await page.goto(`/projects/assignments/${otherAssignment}`))!.status()).toBe(404);
+ const rsc=await context.request.get(`/projects/assignments/${otherAssignment}`,{headers:{RSC:'1'}});const body=await rsc.text();expect(body).toContain('NEXT_HTTP_ERROR_FALLBACK;404');expect(body).not.toContain('팀 동료 역할');
+});
+test('career is authored from own assignments with metadata preview and can be updated during an active project',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/career/new');
+ await page.getByLabel('프로젝트 선택').selectOption('40000000-0000-4000-8000-000000000004');
+ await expect(page.getByLabel('고객사',{exact:true})).toHaveValue('다른 고객사');await expect(page.getByLabel('기간',{exact:true})).toHaveValue('2026-04-01 – 2026-12-31');
+ await page.getByLabel('직무',{exact:true}).fill('IT Consultant');await page.getByLabel('역할',{exact:true}).fill('Data Engineer');await page.getByLabel('주요 업무',{exact:true}).fill('데이터 플랫폼 설계와 사용자 요구사항 분석');
+ await page.getByLabel('기술 입력').fill('SQL');await page.getByRole('button',{name:'+ 기술 추가'}).click();await page.getByLabel('기술 입력').fill('Data Governance');await page.getByRole('button',{name:'+ 기술 추가'}).click();
+ await expect(page.getByLabel('프로필 미리보기')).toContainText('Data Engineer');await page.screenshot({path:'docs/screenshots/phase3-career.png',fullPage:true});
+ await page.getByRole('button',{name:'커리어 저장'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ await page.getByLabel('주요 업무',{exact:true}).fill('진행 중 업무 업데이트');await page.getByRole('button',{name:'커리어 저장'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ await page.goto('/career');await expect(page.getByText('진행 중 업무 업데이트',{exact:true})).toBeVisible();
+ await page.setViewportSize({width:390,height:844});await page.goto('/career/new');expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(390);await page.screenshot({path:'docs/screenshots/phase3-career-mobile.png',fullPage:true});
+});
+test('forged career IDs, assignment selectors, and actions from a changed session fail closed',async({page,context})=>{
+ await loginAs(context,'expense');expect((await page.goto(`/career/${career}/edit`))!.status()).toBe(404);
+ for(const user of ['expense','it','division']) {await loginAs(context,user);expect((await page.goto('/admin/projects/new'))!.status()).toBe(404);}
+ await loginAs(context,'employee');await page.goto(`/career/${career}/edit`);
+ await page.getByLabel('프로젝트 선택').evaluate((element,value)=>{const option=document.createElement('option');option.value=value;option.text='forged';element.appendChild(option);},otherAssignment);
+ await page.getByLabel('프로젝트 선택').selectOption(otherAssignment);await page.getByRole('button',{name:'커리어 저장'}).evaluate(button=>(button as HTMLButtonElement).disabled=false);await page.getByRole('button',{name:'커리어 저장'}).click();await expect(page.locator('.form-error[role=alert]')).toContainText('저장할 수 없습니다');
+ await page.goto(`/career/${career}/edit`);await loginAs(context,'expense');await page.getByLabel('주요 업무',{exact:true}).fill('다른 직원의 변조');await page.getByRole('button',{name:'커리어 저장'}).click();await expect(page.locator('.form-error[role=alert]')).toContainText('저장할 수 없습니다');
+ await loginAs(context,'employee');await page.goto(`/career/${career}/edit`);await expect(page.getByLabel('주요 업무',{exact:true})).not.toHaveValue('다른 직원의 변조');
+ await loginAs(context,'admin');await page.goto(`/admin/projects/${project}?assignment=new`);await page.getByRole('combobox',{name:'직원',exact:true}).selectOption(person);await page.getByLabel('투입 역할').fill('권한 없는 투입');await loginAs(context,'employee');
+ await page.route('**/admin/projects/**',async route=>{if(!route.request().headers()['next-action'])return route.continue();const response=await route.fetch();expect(await response.text()).toContain('NEXT_HTTP_ERROR_FALLBACK;404');await route.fulfill({response});});
+ await page.getByRole('button',{name:'투입 저장'}).click();await expect(page.getByRole('heading',{name:'페이지를 찾을 수 없습니다'})).toBeVisible();
+});
