@@ -29,7 +29,7 @@ This repository is intentionally implementation-first:
 4. Open focused PRs.
 5. Reconcile implementation with Figma and documented validation/permission rules before merging.
 
-## Phase 1 development
+## Development
 
 Requires Node.js 22 or newer.
 
@@ -41,7 +41,7 @@ npm run dev
 
 Open http://localhost:3000. Without Supabase configuration, the sign-in screen shows a setup message and protected routes remain inaccessible. There is no demo user or production auth bypass.
 
-Configure a Supabase project with Google OAuth, apply `supabase/migrations/202609300001_foundation.sql`, and provision a membership **after the employee joins** using trusted SQL/server administration. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `APP_ORIGIN`. Register `${APP_ORIGIN}/auth/callback` in Supabase's redirect allowlist and the Supabase OAuth callback URL in Google. An authenticated Google account alone does not grant application access.
+Configure a Supabase project with Google OAuth, apply all migrations in `supabase/migrations/` in filename order, and provision a membership **after the employee joins** using trusted SQL/server administration. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `APP_ORIGIN`. Register `${APP_ORIGIN}/auth/callback` in Supabase's redirect allowlist and the Supabase OAuth callback URL in Google. An authenticated Google account alone does not grant application access.
 
 Never use a Supabase service-role key as the publishable key. No service-role key is needed by this app. Membership writes are deliberately unavailable to browser clients and app users, including ADMIN.
 
@@ -64,6 +64,13 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests run the production build against an isolated local Supabase HTTP test double; no real employee data or credentials are used. To reuse an installed Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. PostgreSQL constraints and RLS are exercised separately with PGlite.
+Browser tests run the production build against an isolated local Supabase HTTP test double; no real employee data or credentials are used. To reuse an installed Chromium binary, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. The HTTP double executes domain queries against PGlite with the authenticated database role and the actual migrations; dedicated database tests also exercise constraints and RLS.
 
 See [Phase 1 implementation and visual review](docs/PHASE_1.md) for boundaries, screenshots, and setup checks.
+
+
+## Phase 2 employee setup
+
+Configure the server-only `HR_ENCRYPTION_ACTIVE_KEY` and `HR_ENCRYPTION_KEYS` before entering birth dates or HR Private values. See [Phase 2 implementation](docs/PHASE_2.md) for the key format, rotation, schema, permissions, screenshots, and deployment validation.
+
+Employee profiles are separate from login memberships. Trusted provisioning can link `employee.auth_user_id` to an existing `auth.users.id` after joining. A linked INACTIVE employee cannot access the app or domain tables even if their membership remains ACTIVE. Employee forms assign one or more HR roles in `employee_role`, but cannot set the auth link, application-membership roles, or capabilities. These domain roles do not grant service access.

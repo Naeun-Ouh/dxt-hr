@@ -41,7 +41,7 @@ test("employee cannot directly request any restricted route even with forged use
 test("specialists and multi-role users cannot reach unrelated admin or private HR pages", async ({ page, context }) => {
   for (const [name, denied] of Object.entries({ leader: ["/admin/expenses", "/admin/assets"], division: ["/leave/approvals", "/admin/expenses"], expense: ["/leave/approvals", "/admin/accounts"], it: ["/admin/expenses", "/leave/approvals"], combined: ["/admin/employees"] })) {
     await loginAs(context, name);
-    for (const path of [...denied, "/admin/employees/test/private"]) expect((await page.goto(path))!.status()).toBe(404);
+    for (const path of [...denied, "/admin/employees/10000000-0000-4000-8000-000000000001/private"]) expect((await page.goto(path))!.status()).toBe(404);
   }
 });
 test("CEO reaches private HR by role while ADMIN requires the designated grant", async ({ page, context }) => {
@@ -49,14 +49,14 @@ test("CEO reaches private HR by role while ADMIN requires the designated grant",
     await loginAs(context, name);
     for (const path of ["/admin/employees", "/admin/expenses", "/admin/accounts", "/admin/projects/test"]) expect((await page.goto(path))!.status()).toBe(200);
     const hasPrivateHr = cases[name].roles.includes("CEO") || Boolean(cases[name].capabilities?.includes("PRIVATE_HR_ACCESS"));
-    await page.goto("/admin/employees/test");
+    await page.goto("/admin/employees/10000000-0000-4000-8000-000000000001");
     await expect(page.getByRole("link", { name: "HR Private" })).toHaveCount(hasPrivateHr ? 1 : 0);
-    expect((await page.goto("/admin/employees/test/private"))!.status()).toBe(hasPrivateHr ? 200 : 404);
+    expect((await page.goto("/admin/employees/10000000-0000-4000-8000-000000000001/private"))!.status()).toBe(hasPrivateHr ? 200 : 404);
   }
 });
 test("RSC requests, unknown descendants and privilege-shaped query strings fail closed", async ({ context, page }) => {
   await loginAs(context, "employee");
-  const response = await context.request.get("/admin/employees/test/private", { headers: { RSC: "1" } });
+  const response = await context.request.get("/admin/employees/10000000-0000-4000-8000-000000000001/private", { headers: { RSC: "1" } });
   // Next streams RSC errors with HTTP 200; the server error digest must reject rendering.
   const flight = await response.text();
   expect(flight).toContain('NEXT_HTTP_ERROR_FALLBACK;404');
