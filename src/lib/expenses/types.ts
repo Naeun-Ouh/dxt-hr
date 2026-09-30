@@ -1,0 +1,17 @@
+export const PURPOSES = { OVERTIME:'야근 식대', DINING:'회식', FUEL:'주유비', TOLL:'통행비', TAXI:'택시', TRAINING:'교육비', SUPPLIES:'소모품', OTHER:'기타' } as const;
+export type Purpose = keyof typeof PURPOSES;
+export const ACCOUNTS: Record<Purpose,string> = { OVERTIME:'복리후생비',DINING:'복리후생비',FUEL:'차량유지비',TOLL:'여비교통비',TAXI:'여비교통비',TRAINING:'교육훈련비',SUPPLIES:'소모품비',OTHER:'기타' };
+export const CLAIM_COLUMNS='id,employee_id,usage_month,status,submitted_at,late_reason,locked_at,payment_date,version,created_at,updated_at';
+export const ITEM_COLUMNS='id,claim_id,usage_date,expense_type,merchant,description,account_category,amount,evidence_type,payment_method,project_id,trip_context,notes,attachment_id,version,legacy_summary,import_filename,import_origin,imported_at,created_at,updated_at';
+export const ATTACHMENT_COLUMNS='id,claim_id,storage_path,filename,mime_type,byte_size,ready,created_at';
+export const VEHICLE_COLUMNS='item_id,kind,project_or_trip_name,origin,destination,one_way_amount,trip_count,calculated_total';
+export type Claim = {id:string;employee_id:string;usage_month:string;status:'DRAFT'|'SUBMITTED'|'LOCKED'|'PAID';submitted_at:string|null;late_reason:string;locked_at:string|null;payment_date:string|null;version:number};
+export type Attendee = {employee_id:string;allocated_amount:number;item_id?:string};
+export type Vehicle = {kind?:string;item_id?:string;project_or_trip_name:string;origin:string;destination:string;one_way_amount:number;trip_count:number;calculated_total?:number};
+export type ItemInput = {id:string;version:number;usage_date:string;expense_type:Purpose;merchant:string;description:string;account_category:string;amount:number;evidence_type:string;payment_method:string;project_id:string|null;trip_context:string;notes:string;attachment_id:string;attendees:Attendee[];vehicle?:Vehicle;legacy_summary?:boolean;import_filename?:string;import_origin?:string};
+export type Item = ItemInput & {claim_id:string;imported_at?:string};
+export type Attachment = {id:string;claim_id:string;storage_path:string;filename:string;mime_type:string;byte_size:number;ready:boolean};
+export type Problem = {severity:'ERROR'|'WARNING';code:string;message:string;origin?:string};
+export type Preview = {filename:string;month:string;items:ItemInput[];problems:Problem[]};
+export type ExpenseState = {error?:string;preview?:Preview};
+export const STATUS = {DRAFT:'작성중',SUBMITTED:'제출완료',LOCKED:'잠금',PAID:'지급완료'};

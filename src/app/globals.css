@@ -271,3 +271,30 @@ button:disabled { opacity: .65; cursor: wait; }
 .content-view > .project-section-title { margin-bottom:0; }
 .project-section .panel-heading h2 { flex:1; width:auto; }
 .project-section .panel-heading .button { flex:none; white-space:nowrap; font-size:13px; padding:7px 16px; border-radius:8px; }
+
+/* Expense — Figma 18–21 and 37, composed with the existing app shell. */
+.expense-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin:24px 0}
+.expense-summary>div{padding:18px;border-radius:10px;min-height:96px;display:flex;flex-direction:column;gap:14px}
+.expense-summary span{font-size:12px;color:#636f85}.expense-summary strong{font-size:24px;font-weight:800}
+.expense-warning,.expense-info{padding:16px 18px;border-radius:10px;margin:24px 0;font-size:13px;line-height:1.7}
+.expense-warning,.expense-badge.warning,.expense-summary .warning{background:#fff7e0}.expense-info{background:#eef2ff}
+.expense-warning p,.expense-info p{margin:6px 0 0}.expense-info p{color:#636f85;font-size:12px}
+.expense-summary .success,.expense-badge.success{background:#ecfdf5}.expense-summary .error,.expense-badge.error{background:#fff0f0}
+.expense-badge{display:inline-block;border-radius:999px;padding:4px 8px;background:#f9fafb;font-size:12px;white-space:nowrap}
+.expense-filters{display:flex;align-items:end;gap:20px;padding:18px;margin:24px 0}.expense-filters label{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#636f85}.expense-filters input,.expense-filters select{min-height:36px;border:1px solid #e5e7eb;border-radius:7px;padding:6px 12px;background:white;color:#111827}
+.expense-list-table{min-height:350px}.expense-list-table td{height:68px}.expense-entry-layout{display:grid;grid-template-columns:minmax(0,760fr) minmax(260px,320fr);gap:40px;align-items:start}
+.expense-entry-form{padding:24px 20px;display:grid;gap:18px}.expense-entry-form>.button{justify-self:end}.expense-entry-form .field{margin:0}.expense-policy{padding:20px}.expense-policy h2{font-size:15px;margin:0 0 24px}.expense-policy dl{display:grid;grid-template-columns:64px 1fr;gap:30px 8px;font-size:12px}.expense-policy dt{font-weight:600}.expense-policy dd{margin:0;color:#636f85;font-size:11px}
+.expense-upload{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-align:center;padding:18px 14px;font-size:12px}.expense-upload p{margin:8px 0}.expense-upload input{margin-top:10px;max-width:100%}.expense-upload a{display:block;margin-top:8px}
+.expense-vehicle,.expense-attendees{border:1px solid #e5e7eb;border-radius:8px;padding:18px}.expense-vehicle h2{font-size:15px}.expense-attendees legend{font-size:13px;font-weight:600}.attendee-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0}.attendee-row label{display:flex;align-items:center;gap:8px;font-size:13px}.attendee-row small{color:#636f85}.attendee-row>input{width:110px;padding:8px;border:1px solid #e5e7eb;border-radius:7px}
+.expense-item-card{padding:24px;margin:20px 0;font-size:13px;line-height:1.7}.expense-item-card h2{font-size:16px;margin:0}.expense-item-card .heading-row>strong{font-size:20px}.expense-claim-action{margin-top:18px;display:grid;gap:12px;justify-items:start}.expense-claim-action .field{width:min(100%,600px)}
+.expense-steps{display:flex;justify-content:space-between;padding:26px 40px;font-size:12px;color:#636f85;list-style-position:inside}.expense-steps .active{color:#4f46e5;font-weight:600}.expense-import-input{padding:24px;display:grid;gap:20px;margin:24px 0}.expense-import-input>.button{justify-self:end}.expense-import .project-table td{white-space:normal}.expense-month-link{margin:18px 0;font-size:13px}
+@media(max-width:1050px){.expense-entry-layout{grid-template-columns:1fr}.expense-summary{gap:12px}.expense-filters{flex-wrap:wrap}.attendee-row small{display:none}}
+@media(max-width:650px){.expense-summary{grid-template-columns:1fr}.expense-steps{padding:18px;gap:12px;flex-wrap:wrap}}
+.expense-summary,.expense-entry-layout,.expense-import,.expense-warning,.expense-info{width:100%;min-width:0}
+.content-view>.expense-summary,.content-view>.expense-warning,.content-view>.expense-info,.content-view>.expense-filters,.content-view>.expense-item-card{margin:0}
+.expense-entry-layout>section.surface{padding:0}.expense-entry-form input,.expense-entry-form select,.expense-import-input input{background:white}
+.expense-entry-form textarea,.expense-import textarea,.expense-claim-action textarea{font:inherit;resize:vertical;border:1px solid #e5e7eb;border-radius:7px;padding:10px;min-height:60px}
+.expense-list-table,.expense-import>.table-scroll{padding:0;overflow:auto;border-radius:10px}
+.expense-list-table table,.expense-import table{border-collapse:collapse;border:0;text-align:left}
+.expense-import>.table-scroll{min-height:260px}.expense-import .heading-row{margin-top:16px}.expense-import .expense-summary{margin:24px 0}
+.expense-entry-form .expense-warning{margin:0}.expense-entry-form .field-grid{gap:16px}

@@ -2,11 +2,14 @@
 import { createServer } from "node:http";
 import { cases, tokenFor, idFor } from "./fixtures";
 import { asUser } from '../domain-fixture';
-import { projectDatabase } from '../project-fixture';
+import { expenseDatabase, claimId, otherClaimId, receiptId, otherReceiptId } from '../expense-fixture';
+import { CLAIM_COLUMNS, ITEM_COLUMNS, ATTACHMENT_COLUMNS, VEHICLE_COLUMNS } from '../../src/lib/expenses/types';
 import { PROJECT_COLUMNS, ASSIGNMENT_COLUMNS, CAREER_COLUMNS, EXTENSION_COLUMNS } from '../../src/lib/projects/types';
 async function main() {
-const db = await projectDatabase();
+const db = await expenseDatabase();
+const files=new Map<string,Buffer>([[`${claimId}/${receiptId}`,Buffer.from('%PDF-1.4 own')],[`${otherClaimId}/${otherReceiptId}`,Buffer.from('%PDF-1.4 other')]]);
 const tables: Record<string,string[]> = {
+ expense_claim:CLAIM_COLUMNS.split(','),expense_item:ITEM_COLUMNS.split(','),expense_attachment:ATTACHMENT_COLUMNS.split(','),expense_attendee:['item_id','employee_id','allocated_amount'],vehicle_travel_detail:VEHICLE_COLUMNS.split(','),
  project: PROJECT_COLUMNS.split(','), project_assignment: ASSIGNMENT_COLUMNS.split(','), career: CAREER_COLUMNS.split(','), project_extension: EXTENSION_COLUMNS.split(','),
  employee: ['id','name','english_name','company_email','phone','department_id','title','hire_date','employment_status','work_location','version'],
  employee_role: ['employee_id','role'],
@@ -40,6 +43,19 @@ const server = createServer(async (request, response) => {
     return response.end(JSON.stringify(name === "unprovisioned" ? [] : [{ display_name: "테스트 사용자", status: fixture.status || "ACTIVE", roles: fixture.roles, capabilities: fixture.capabilities || [] }]));
   }
   if (url.pathname === "/auth/v1/logout") { response.writeHead(204); return response.end(); }
+  if(url.pathname.startsWith('/storage/v1/object/')) {
+   try {
+    const path=decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:authenticated\/)?expense-evidence\//,''));
+    if(request.method==='POST') {
+     const chunks:Buffer[]=[];for await(const chunk of request)chunks.push(Buffer.from(chunk));const body=Buffer.concat(chunks);
+     await asUser(db,name,tx=>tx.query("insert into storage.objects(bucket_id,name,metadata) values('expense-evidence',$1,$2)",[path,JSON.stringify({size:body.length,mimetype:request.headers['content-type']})]));
+     files.set(path,body);return response.end(JSON.stringify({Key:'expense-evidence/'+path}));
+    }
+    const rows=await asUser(db,name,tx=>tx.query("select name from storage.objects where bucket_id='expense-evidence' and name=$1",[path]));
+    if(!rows.rows.length||!files.has(path))throw new Error('Denied');
+    response.setHeader('Content-Type','application/pdf');return response.end(files.get(path));
+   }catch{response.writeHead(403);return response.end(JSON.stringify({message:'Denied'}));}
+  }
   if (url.pathname.startsWith('/rest/v1/')) {
    try {
     let body=''; for await(const chunk of request) body+=chunk;
@@ -47,9 +63,9 @@ const server = createServer(async (request, response) => {
     const result=await asUser(db,name,async tx=>{
      const rpc=url.pathname.split('/rpc/')[1];
      if(rpc) {
-      const args: Record<string,string[]>= {can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
+      const args: Record<string,string[]>= {expense_dining_available:['p_month','p_items'],ensure_expense_claim:['p_month'],reserve_expense_attachment:['p_claim','p_filename','p_mime','p_size'],finish_expense_attachment:['p_id'],save_expense_items:['p_claim','p_items','p_reason'],submit_expense_claim:['p_claim','p_version','p_reason'],manage_expense_claim:['p_claim','p_version','p_action'],can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
       if(!args[rpc]) throw new Error('Unsupported test RPC');
-      const params=args[rpc].map(key=>input[key] ?? null);
+      const params=args[rpc].map(key=>key==='p_items'?JSON.stringify(input[key]):input[key] ?? null);
       const r=await tx.query<{result: unknown}>(`select public.${rpc}(${params.map((_,i)=>'$'+(i+1)).join(',')}) as result`,params);
       return {data:r.rows[0].result};
      }
@@ -73,7 +89,7 @@ const server = createServer(async (request, response) => {
       const order=(url.searchParams.get('order') || '').split(',').filter(Boolean).map(p=>{const [col,dir]=p.split('.');if(!allowed.includes(col)||!['asc','desc'].includes(dir)) throw new Error('Unsupported test order');return col+' '+dir;});
       const offset=Number(url.searchParams.get('offset') || 0),limit=Number(url.searchParams.get('limit') || 1000);
       const r=await tx.query(`select ${columns.map(c=>c === 'employee_role(role)' ? `(select coalesce(json_agg(json_build_object('role',er.role)),'[]'::json) from employee_role er where er.employee_id=employee.id) as employee_role` : c).join(',')} from ${table}${condition}${order.length?' order by '+order.join(','):''} limit ${bind(limit)} offset ${bind(offset)}`,params);
-      return {data:r.rows.map(row => { const value = row as Record<string,unknown>; for(const [key,v] of Object.entries(value)) if(v instanceof Date) value[key]=key.endsWith('_date')?v.toISOString().slice(0,10):v.toISOString(); return value; }),count:Number(count.rows[0].n)};
+      return {data:r.rows.map(row => { const value = row as Record<string,unknown>; for(const [key,v] of Object.entries(value)) if(v instanceof Date) value[key]=(key.endsWith('_date')||key==='usage_month')?v.toISOString().slice(0,10):v.toISOString(); return value; }),count:Number(count.rows[0].n)};
      }
      if(table!=='organization'||!['POST','PATCH'].includes(request.method!)) throw new Error('Unsupported test mutation');
      const keys=Object.keys(input);if(keys.some(k=>!allowed.includes(k))) throw new Error('Unsupported test mutation column');
