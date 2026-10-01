@@ -1,14 +1,17 @@
+import { assetDatabase } from '../asset-fixture';
+import { ASSET_COLUMNS,VAULT_COLUMNS,ASSIGNMENT_COLUMNS as ASSET_ASSIGNMENT_COLUMNS,EVENT_COLUMNS } from '../../src/lib/assets/types';
 // Test-only external Auth/PostgREST double. There is no auth bypass in application code.
 import { createServer } from "node:http";
 import { cases, tokenFor, idFor } from "./fixtures";
 import { asUser } from '../domain-fixture';
-import { expenseDatabase, claimId, otherClaimId, receiptId, otherReceiptId } from '../expense-fixture';
+import { claimId, otherClaimId, receiptId, otherReceiptId } from '../expense-fixture';
 import { CLAIM_COLUMNS, ITEM_COLUMNS, ATTACHMENT_COLUMNS, VEHICLE_COLUMNS } from '../../src/lib/expenses/types';
 import { PROJECT_COLUMNS, ASSIGNMENT_COLUMNS, CAREER_COLUMNS, EXTENSION_COLUMNS } from '../../src/lib/projects/types';
 async function main() {
-const db = await expenseDatabase();
+const db = await assetDatabase();
 const files=new Map<string,Buffer>([[`${claimId}/${receiptId}`,Buffer.from('%PDF-1.4 own')],[`${otherClaimId}/${otherReceiptId}`,Buffer.from('%PDF-1.4 other')]]);
 const tables: Record<string,string[]> = {
+ asset:ASSET_COLUMNS.split(','),vault_entry:VAULT_COLUMNS.split(','),asset_assignment:ASSET_ASSIGNMENT_COLUMNS.split(','),asset_event:EVENT_COLUMNS.split(','),
  expense_claim:CLAIM_COLUMNS.split(','),expense_item:ITEM_COLUMNS.split(','),expense_attachment:ATTACHMENT_COLUMNS.split(','),expense_attendee:['item_id','employee_id','allocated_amount'],vehicle_travel_detail:VEHICLE_COLUMNS.split(','),
  project: PROJECT_COLUMNS.split(','), project_assignment: ASSIGNMENT_COLUMNS.split(','), career: CAREER_COLUMNS.split(','), project_extension: EXTENSION_COLUMNS.split(','),
  employee: ['id','name','english_name','company_email','phone','department_id','title','hire_date','employment_status','work_location','version'],
@@ -63,7 +66,7 @@ const server = createServer(async (request, response) => {
     const result=await asUser(db,name,async tx=>{
      const rpc=url.pathname.split('/rpc/')[1];
      if(rpc) {
-      const args: Record<string,string[]>= {expense_dining_available:['p_month','p_items'],ensure_expense_claim:['p_month'],reserve_expense_attachment:['p_claim','p_filename','p_mime','p_size'],finish_expense_attachment:['p_id'],save_expense_items:['p_claim','p_items','p_reason'],submit_expense_claim:['p_claim','p_version','p_reason'],manage_expense_claim:['p_claim','p_version','p_action'],can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
+      const args: Record<string,string[]>= {save_asset:['p_id','p_values','p_expected_version'],delete_asset:['p_id','p_expected_version'],save_vault_entry:['p_id','p_kind','p_values','p_ciphertext','p_expected_version'],reveal_vault_entry:['p_id','p_kind'],delete_vault_entry:['p_id','p_kind','p_expected_version'],expense_dining_available:['p_month','p_items'],ensure_expense_claim:['p_month'],reserve_expense_attachment:['p_claim','p_filename','p_mime','p_size'],finish_expense_attachment:['p_id'],save_expense_items:['p_claim','p_items','p_reason'],submit_expense_claim:['p_claim','p_version','p_reason'],manage_expense_claim:['p_claim','p_version','p_action'],can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
       if(!args[rpc]) throw new Error('Unsupported test RPC');
       const params=args[rpc].map(key=>key==='p_items'?JSON.stringify(input[key]):input[key] ?? null);
       const r=await tx.query<{result: unknown}>(`select public.${rpc}(${params.map((_,i)=>'$'+(i+1)).join(',')}) as result`,params);
