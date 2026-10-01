@@ -9,6 +9,7 @@ import { resolveRoute } from "@/lib/routes";
 import { ProjectList, ProjectEditor, ProjectDetail, MyProjects, ResourceView, CareerScreen } from "@/components/projects/screens";
 import { ExpenseList, ExpenseEditor, ExpenseDetail, ExpenseImport } from "@/components/expenses/screens";
 import { AssetList,AssetEditor,VaultScreen } from "@/components/assets/screens";
+import { OperationsScreen,AnnouncementsScreen,FamilyScreen,BirthdayScreen } from "@/components/operations/screens";
 export const dynamic = "force-dynamic";
 export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
@@ -20,6 +21,14 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/admin/onboarding": case "/admin/onboarding/new": case "/admin/onboarding/[id]":
+    case "/admin/offboarding": case "/admin/offboarding/new": case "/admin/offboarding/[id]":
+      screen=<OperationsScreen kind={path[1]==='onboarding'?'onboarding':'offboarding'} id={path[2]==='new'?undefined:path[2]} create={path[2]==='new'} query={query} principal={principal}/>;break;
+    case "/announcements":case "/announcements/new":case "/announcements/[id]":case "/announcements/[id]/edit":
+      screen=<AnnouncementsScreen id={path[1]==='new'?undefined:path[1]} create={path[1]==='new'} edit={path[2]==='edit'} query={query} principal={principal}/>;break;
+    case "/family-events":case "/family-events/new":case "/family-events/[id]/edit":case "/family-events/review":case "/family-events/review/[id]":
+      screen=<FamilyScreen id={path[1]==='review'?path[2]:path[1]==='new'?undefined:path[1]} create={path[1]==='new'} edit={path[2]==='edit'} review={path[1]==='review'} query={query} principal={principal}/>;break;
+    case "/admin/settings/birthday-email":screen=<BirthdayScreen query={query}/>;break;
     case "/assets/me": case "/assets/me/[id]": screen=<AssetList own query={query} id={path[2]}/>;break;
     case "/admin/assets":screen=<AssetList query={query}/>;break;
     case "/admin/assets/new":screen=<AssetEditor query={query}/>;break;

@@ -78,3 +78,7 @@ Employee profiles are separate from login memberships. Trusted provisioning can 
 ## Phase 3 project and career setup
 
 Apply migrations `202609300004_projects.sql` and `202609300005_team_career_read.sql` in order after the employee migrations. Trusted provisioning must link `employee.auth_user_id` for own-project/career and team scope. See [Phase 3 implementation](docs/PHASE_3.md) for routes, history/retention behavior, row policies, unresolved team/denominator policies, validation, and Figma screenshots.
+
+## Phase 7 company operations setup
+
+Apply `202610010008_operations.sql` after Phase 6. Configure the server-only operations service key, cron secret and shared Gmail OAuth settings, then backfill the minimal birthday calendar for existing encrypted DOBs. See [Phase 7 delivery and deployment](docs/PHASE_7_DELIVERY.md) for routes, CEO-only document access, pending/uncertain email behavior, setup order and screenshot evidence. Leave remains deferred.

@@ -1,0 +1,11 @@
+import { isUuid,validDate,ValidationError } from '../employees/validation';
+import { EVENT_CATEGORIES,TASK_STATES } from './types';
+export function field(form:FormData,key:string,max:number,required=true){const raw=form.get(key);if(raw!==null&&typeof raw!=='string')throw new ValidationError({[key]:'입력 형식을 확인해 주세요.'});const value=String(raw??'').trim();if((required&&!value)||value.length>max)throw new ValidationError({[key]:`필수 항목을 ${max}자 이내로 입력해 주세요.`});return value;}
+export function uuid(form:FormData,key:string){const value=field(form,key,36);if(!isUuid(value))throw new ValidationError({[key]:'선택 항목을 확인해 주세요.'});return value;}
+export function dateInput(form:FormData,key:string){const value=field(form,key,10);if(!validDate(value))throw new ValidationError({[key]:'유효한 날짜를 입력해 주세요.'});return value;}
+export function taskInput(form:FormData){const status=field(form,'status',30),owners=form.getAll('owners');if(!Object.hasOwn(TASK_STATES,status)||owners.length>50||owners.some(v=>typeof v!=='string'||!isUuid(v)))throw new ValidationError({status:'상태와 담당자를 확인해 주세요.'});return {p_status:status,p_memo:field(form,'memo',2000,false),p_owners:[...new Set(owners as string[])]};}
+export function familyInput(form:FormData){const category=field(form,'category',30);if(!Object.hasOwn(EVENT_CATEGORIES,category))throw new ValidationError({category:'지원 유형을 선택해 주세요.'});return {p_category:category,p_date:dateInput(form,'event_date'),p_title:field(form,'title',200),p_details:field(form,'details',5000)};}
+export function templateInput(form:FormData){const year=field(form,'year',4),subject=field(form,'subject',200),body=field(form,'body',10000);if(!/^[1-9]\d{3}$/.test(year)||Number(year)<1900||/[\r\n]/.test(subject)||/\{\{|\}\}/.test((subject+body).replace(/\{\{(name|birthday)\}\}/g,'')))throw new ValidationError({subject:'연도와 변수 {{name}}, {{birthday}}를 확인해 주세요.'});return {p_year:Number(year),p_subject:subject,p_body:body};}
+export function renderTemplate(value:string,name:string,birthday:string){return value.replace(/\{\{(name|birthday)\}\}/g,(_,key)=>key==='name'?name:birthday);}
+export const DEFAULT_SUBJECT='🎉 {{name}}님, 생일을 축하합니다!';
+export const DEFAULT_BODY='{{name}}님, 생일을 진심으로 축하드립니다.\n오늘 하루도 즐겁고 행복하게 보내세요!\n\n- DXT';
