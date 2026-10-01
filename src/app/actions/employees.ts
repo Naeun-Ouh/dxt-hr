@@ -27,10 +27,11 @@ export async function saveEmployee(id: string | null, _previous: FormState, form
     const hasPrivateInput = PRIVATE_FIELDS.some(field => Boolean(form.get(field)));
     if (hasPrivateInput && (!can(principal, "PRIVATE_HR_ACCESS") || id)) return { error: "이 정보는 저장할 수 없습니다." };
     const privateValues = hasPrivateInput ? privateInput(form, emptyPrivate()) : null;
-    const { error } = await (await employeeClient()).rpc("save_employee_profile", {
+    const { error } = await (await employeeClient()).rpc("save_employee_with_birthday", {
       p_id: employeeId, p_profile: profile, p_expected_version: version,
       p_birth_ciphertext: birth ? encryptHr(birth, `${employeeId}:birth`) : null,
       p_clear_birth: form.get("clear_birth") === "on",
+      p_month: birth ? Number(birth.slice(5,7)) : null, p_day: birth ? Number(birth.slice(8,10)) : null,
       p_private_ciphertext: privateValues ? encryptHr(JSON.stringify(privateValues), `${employeeId}:private`) : null,
     });
     if (error) return errorState(error);

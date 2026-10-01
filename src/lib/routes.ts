@@ -62,6 +62,16 @@ export const ROUTES: AppRoute[] = [
   { path: "/admin/accounts/new", title: "계정 등록", capability: "ACCOUNT_MANAGE", icon: "Laptop" },
   { path: "/admin/accounts/[id]", title: "계정 상세", capability: "ACCOUNT_MANAGE", icon: "Laptop" },
   { path: "/assets/me/[id]", title: "내 장비", capability: "EMPLOYEE_ACCESS", icon: "Laptop" },
+  { path: "/admin/onboarding/new", title: "온보딩 시작", capability: "ONBOARDING_MANAGE", icon: "UserPlus" },
+  { path: "/admin/onboarding/[id]", title: "온보딩 상세", capability: "ONBOARDING_MANAGE", icon: "UserPlus" },
+  { path: "/admin/offboarding/new", title: "퇴사 등록", capability: "OFFBOARDING_MANAGE", icon: "UserMinus" },
+  { path: "/admin/offboarding/[id]", title: "퇴사 상세", capability: "OFFBOARDING_MANAGE", icon: "UserMinus" },
+  { path: "/announcements/new", title: "공지 등록", capability: "ANNOUNCEMENT_MANAGE", icon: "Megaphone" },
+  { path: "/announcements/[id]/edit", title: "공지 수정", capability: "ANNOUNCEMENT_MANAGE", icon: "Megaphone" },
+  employee("/announcements/[id]", "공지사항"),
+  employee("/family-events/[id]/edit", "내 경조사 등록"),
+  { path: "/family-events/review", title: "대표자 경조사 접수", capability: "FAMILY_EVENT_REVIEW", icon: "Heart" },
+  { path: "/family-events/review/[id]", title: "경조사 접수 상세", capability: "FAMILY_EVENT_REVIEW", icon: "Heart" },
 ];
 export function resolveRoute(path: string): AppRoute | undefined {
   const segments = path.split("/");
