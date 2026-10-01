@@ -7,6 +7,7 @@ import { EmployeeList, EmployeeEditor, EmployeeDetail, HrPrivateScreen, Organiza
 import type { SearchParams } from "@/lib/employees/data";
 import { resolveRoute } from "@/lib/routes";
 import { ProjectList, ProjectEditor, ProjectDetail, MyProjects, ResourceView, CareerScreen } from "@/components/projects/screens";
+import { ExpenseList, ExpenseEditor, ExpenseDetail, ExpenseImport } from "@/components/expenses/screens";
 export const dynamic = "force-dynamic";
 export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
@@ -18,6 +19,13 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/expenses": screen=<ExpenseList query={query}/>; break;
+    case "/admin/expenses": screen=<ExpenseList query={query} admin/>; break;
+    case "/expenses/new": screen=<ExpenseEditor query={query}/>; break;
+    case "/expenses/items/[id]/edit": screen=<ExpenseEditor id={path[2]} query={query}/>; break;
+    case "/expenses/[id]": screen=<ExpenseDetail id={path[1]} query={query}/>; break;
+    case "/admin/expenses/[id]": screen=<ExpenseDetail id={path[2]} query={query} admin/>; break;
+    case "/expenses/upload": screen=<ExpenseImport/>; break;
     case "/admin/projects": screen = <ProjectList query={query}/>; break;
     case "/admin/projects/new": screen = <ProjectEditor/>; break;
     case "/admin/projects/[id]/edit": screen = <ProjectEditor id={path[2]}/>; break;

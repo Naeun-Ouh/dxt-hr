@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  experimental: { serverActions: { bodySizeLimit: "17mb" } },
   poweredByHeader: false,
   async headers() {
     return [{ source: "/:path*", headers: [
