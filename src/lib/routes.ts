@@ -55,6 +55,13 @@ export const ROUTES: AppRoute[] = [
   { path: "/admin/projects/new", title: "프로젝트 등록", capability: "PROJECT_MANAGE", icon: "FolderCog" },
   { path: "/admin/projects/[id]/edit", title: "프로젝트 수정", capability: "PROJECT_MANAGE", icon: "FolderCog" },
   { path: "/admin/projects/[id]", title: "프로젝트 상세", capability: "PROJECT_MANAGE", icon: "FolderCog" },
+  { path: "/admin/assets/new", title: "장비 등록", capability: "ASSET_MANAGE", icon: "Laptop" },
+  { path: "/admin/assets/[id]", title: "장비 상세", capability: "ASSET_MANAGE", icon: "Laptop" },
+  { path: "/admin/windows-licenses/new", title: "라이선스 등록", capability: "WINDOWS_MANAGE", icon: "Laptop" },
+  { path: "/admin/windows-licenses/[id]", title: "라이선스 상세", capability: "WINDOWS_MANAGE", icon: "Laptop" },
+  { path: "/admin/accounts/new", title: "계정 등록", capability: "ACCOUNT_MANAGE", icon: "Laptop" },
+  { path: "/admin/accounts/[id]", title: "계정 상세", capability: "ACCOUNT_MANAGE", icon: "Laptop" },
+  { path: "/assets/me/[id]", title: "내 장비", capability: "EMPLOYEE_ACCESS", icon: "Laptop" },
 ];
 export function resolveRoute(path: string): AppRoute | undefined {
   const segments = path.split("/");

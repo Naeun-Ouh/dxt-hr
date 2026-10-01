@@ -8,6 +8,7 @@ import type { SearchParams } from "@/lib/employees/data";
 import { resolveRoute } from "@/lib/routes";
 import { ProjectList, ProjectEditor, ProjectDetail, MyProjects, ResourceView, CareerScreen } from "@/components/projects/screens";
 import { ExpenseList, ExpenseEditor, ExpenseDetail, ExpenseImport } from "@/components/expenses/screens";
+import { AssetList,AssetEditor,VaultScreen } from "@/components/assets/screens";
 export const dynamic = "force-dynamic";
 export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
@@ -19,6 +20,13 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/assets/me": case "/assets/me/[id]": screen=<AssetList own query={query} id={path[2]}/>;break;
+    case "/admin/assets":screen=<AssetList query={query}/>;break;
+    case "/admin/assets/new":screen=<AssetEditor query={query}/>;break;
+    case "/admin/assets/[id]":screen=<AssetEditor id={path[2]} query={query}/>;break;
+    case "/admin/windows-licenses": case "/admin/windows-licenses/new": case "/admin/windows-licenses/[id]":
+    case "/admin/accounts": case "/admin/accounts/new": case "/admin/accounts/[id]":
+      screen=<VaultScreen kind={path[1]==='windows-licenses'?'windows':'account'} principal={principal} create={path[2]==='new'} id={path[2]==='new'?undefined:path[2]} query={query}/>;break;
     case "/expenses": screen=<ExpenseList query={query}/>; break;
     case "/admin/expenses": screen=<ExpenseList query={query} admin/>; break;
     case "/expenses/new": screen=<ExpenseEditor query={query}/>; break;
