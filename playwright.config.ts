@@ -6,6 +6,6 @@ export default defineConfig({
   webServer: [
     { command: "node --import tsx tests/e2e/mock-supabase.ts", url: "http://localhost:54329/health", reuseExistingServer: false },
     { command: "npm run start -- --port 3100", url: "http://localhost:3100/login", reuseExistingServer: false,
-      env: { NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54329", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key", APP_ORIGIN: "http://localhost:3100", VAULT_ENCRYPTION_ACTIVE_KEY: "test", VAULT_ENCRYPTION_KEYS: JSON.stringify({ test: Buffer.alloc(32, 7).toString("base64") }), HR_ENCRYPTION_ACTIVE_KEY: "test", HR_ENCRYPTION_KEYS: JSON.stringify({ test: Buffer.alloc(32, 7).toString("base64") }) } },
+      env: { GMAIL_CLIENT_ID: "", GMAIL_CLIENT_SECRET: "", GMAIL_REFRESH_TOKEN: "", GMAIL_SENDER: "", SUPABASE_SERVICE_ROLE_KEY: "test-operations-service", CRON_SECRET: "test-cron-secret-at-least-32-characters-long", NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54329", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key", APP_ORIGIN: "http://localhost:3100", VAULT_ENCRYPTION_ACTIVE_KEY: "test", VAULT_ENCRYPTION_KEYS: JSON.stringify({ test: Buffer.alloc(32, 7).toString("base64") }), HR_ENCRYPTION_ACTIVE_KEY: "test", HR_ENCRYPTION_KEYS: JSON.stringify({ test: Buffer.alloc(32, 7).toString("base64") }) } },
   ],
 });

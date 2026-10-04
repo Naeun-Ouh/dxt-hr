@@ -1,4 +1,6 @@
-import { assetDatabase } from '../asset-fixture';
+import type { Transaction } from '@electric-sql/pglite';
+import { operationsDatabase,asService,offboardingId,documentId,letter } from '../operations-fixture';
+import { OPERATION_COLUMNS,TASK_COLUMNS,HISTORY_COLUMNS,ANNOUNCEMENT_COLUMNS,REGISTRATION_COLUMNS,POST_COLUMNS,TEMPLATE_COLUMNS,DOCUMENT_COLUMNS } from '../../src/lib/operations/types';
 import { ASSET_COLUMNS,VAULT_COLUMNS,ASSIGNMENT_COLUMNS as ASSET_ASSIGNMENT_COLUMNS,EVENT_COLUMNS } from '../../src/lib/assets/types';
 // Test-only external Auth/PostgREST double. There is no auth bypass in application code.
 import { createServer } from "node:http";
@@ -8,9 +10,11 @@ import { claimId, otherClaimId, receiptId, otherReceiptId } from '../expense-fix
 import { CLAIM_COLUMNS, ITEM_COLUMNS, ATTACHMENT_COLUMNS, VEHICLE_COLUMNS } from '../../src/lib/expenses/types';
 import { PROJECT_COLUMNS, ASSIGNMENT_COLUMNS, CAREER_COLUMNS, EXTENSION_COLUMNS } from '../../src/lib/projects/types';
 async function main() {
-const db = await assetDatabase();
+const db = await operationsDatabase();
 const files=new Map<string,Buffer>([[`${claimId}/${receiptId}`,Buffer.from('%PDF-1.4 own')],[`${otherClaimId}/${otherReceiptId}`,Buffer.from('%PDF-1.4 other')]]);
+files.set(`${offboardingId}/${documentId}`,Buffer.from(letter));
 const tables: Record<string,string[]> = {
+ operation_case:OPERATION_COLUMNS.split(','),operation_task:TASK_COLUMNS.split(','),operation_task_owner:['task_id','employee_id'],operation_history:HISTORY_COLUMNS.split(','),resignation_private:['case_id','version'],resignation_document:DOCUMENT_COLUMNS.split(','),announcement:ANNOUNCEMENT_COLUMNS.split(','),family_registration:REGISTRATION_COLUMNS.split(','),family_post:POST_COLUMNS.split(','),birthday_template:TEMPLATE_COLUMNS.split(','),
  asset:ASSET_COLUMNS.split(','),vault_entry:VAULT_COLUMNS.split(','),asset_assignment:ASSET_ASSIGNMENT_COLUMNS.split(','),asset_event:EVENT_COLUMNS.split(','),
  expense_claim:CLAIM_COLUMNS.split(','),expense_item:ITEM_COLUMNS.split(','),expense_attachment:ATTACHMENT_COLUMNS.split(','),expense_attendee:['item_id','employee_id','allocated_amount'],vehicle_travel_detail:VEHICLE_COLUMNS.split(','),
  project: PROJECT_COLUMNS.split(','), project_assignment: ASSIGNMENT_COLUMNS.split(','), career: CAREER_COLUMNS.split(','), project_extension: EXTENSION_COLUMNS.split(','),
@@ -21,6 +25,7 @@ const tables: Record<string,string[]> = {
 };
 const server = createServer(async (request, response) => {
   const url = new URL(request.url!, "http://localhost:54329");
+  const service=request.headers.authorization==='Bearer test-operations-service';
   const name = Object.keys(cases).find(key => request.headers.authorization === `Bearer ${tokenFor(key)}`);
   response.setHeader("Content-Type", "application/json");
   if (url.pathname === "/health") return response.end('{}');
@@ -38,23 +43,23 @@ const server = createServer(async (request, response) => {
     return response.end(JSON.stringify({ access_token: tokenFor("employee"), refresh_token: "refresh-employee", token_type: "bearer", expires_in: 3600,
       user: { id: idFor("employee"), aud: "authenticated", email: "employee@example.test", app_metadata: {}, user_metadata: {} } }));
   }
-  if (!name) { response.writeHead(401); return response.end(JSON.stringify({ message: "Invalid token" })); }
-  if (url.pathname === "/auth/v1/user") return response.end(JSON.stringify({ id: idFor(name), aud: "authenticated", email: `${name}@example.test`, app_metadata: {}, user_metadata: { roles: ["CEO"] } }));
+  if (!name && !service) { response.writeHead(401); return response.end(JSON.stringify({ message: "Invalid token" })); }
+  if (url.pathname === "/auth/v1/user") return response.end(JSON.stringify({ id: idFor(name!), aud: "authenticated", email: `${name}@example.test`, app_metadata: {}, user_metadata: { roles: ["CEO"] } }));
   if (url.pathname === "/rest/v1/app_memberships") {
-    if (url.searchParams.get("user_id") !== `eq.${idFor(name)}`) { response.writeHead(403); return response.end('{}'); }
-    const fixture = cases[name];
+    if (url.searchParams.get("user_id") !== `eq.${idFor(name!)}`) { response.writeHead(403); return response.end('{}'); }
+    const fixture = cases[name!];
     return response.end(JSON.stringify(name === "unprovisioned" ? [] : [{ display_name: "테스트 사용자", status: fixture.status || "ACTIVE", roles: fixture.roles, capabilities: fixture.capabilities || [] }]));
   }
   if (url.pathname === "/auth/v1/logout") { response.writeHead(204); return response.end(); }
   if(url.pathname.startsWith('/storage/v1/object/')) {
    try {
-    const path=decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:authenticated\/)?expense-evidence\//,''));
+    const match=/^\/storage\/v1\/object\/(?:authenticated\/)?(expense-evidence|resignation-letters)\/(.+)$/.exec(url.pathname);if(!match)throw new Error('Unknown bucket');const bucket=match[1],path=decodeURIComponent(match[2]);
     if(request.method==='POST') {
      const chunks:Buffer[]=[];for await(const chunk of request)chunks.push(Buffer.from(chunk));const body=Buffer.concat(chunks);
-     await asUser(db,name,tx=>tx.query("insert into storage.objects(bucket_id,name,metadata) values('expense-evidence',$1,$2)",[path,JSON.stringify({size:body.length,mimetype:request.headers['content-type']})]));
-     files.set(path,body);return response.end(JSON.stringify({Key:'expense-evidence/'+path}));
+     await asUser(db,name!,tx=>tx.query("insert into storage.objects(bucket_id,name,metadata) values($3,$1,$2)",[path,JSON.stringify({size:body.length,mimetype:request.headers['content-type']}),bucket]));
+     files.set(path,body);return response.end(JSON.stringify({Key:bucket+'/'+path}));
     }
-    const rows=await asUser(db,name,tx=>tx.query("select name from storage.objects where bucket_id='expense-evidence' and name=$1",[path]));
+    const rows=service?await db.transaction(async tx=>{await tx.exec('set local role service_role');return tx.query('select name from storage.objects where bucket_id=$1 and name=$2',[bucket,path]);}):await asUser(db,name!,tx=>tx.query('select name from storage.objects where bucket_id=$1 and name=$2',[bucket,path]));
     if(!rows.rows.length||!files.has(path))throw new Error('Denied');
     response.setHeader('Content-Type','application/pdf');return response.end(files.get(path));
    }catch{response.writeHead(403);return response.end(JSON.stringify({message:'Denied'}));}
@@ -63,10 +68,10 @@ const server = createServer(async (request, response) => {
    try {
     let body=''; for await(const chunk of request) body+=chunk;
     const input=body?JSON.parse(body):{};
-    const result=await asUser(db,name,async tx=>{
+    const execute=async(tx:Transaction)=>{
      const rpc=url.pathname.split('/rpc/')[1];
      if(rpc) {
-      const args: Record<string,string[]>= {save_asset:['p_id','p_values','p_expected_version'],delete_asset:['p_id','p_expected_version'],save_vault_entry:['p_id','p_kind','p_values','p_ciphertext','p_expected_version'],reveal_vault_entry:['p_id','p_kind'],delete_vault_entry:['p_id','p_kind','p_expected_version'],expense_dining_available:['p_month','p_items'],ensure_expense_claim:['p_month'],reserve_expense_attachment:['p_claim','p_filename','p_mime','p_size'],finish_expense_attachment:['p_id'],save_expense_items:['p_claim','p_items','p_reason'],submit_expense_claim:['p_claim','p_version','p_reason'],manage_expense_claim:['p_claim','p_version','p_action'],can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
+      const args: Record<string,string[]>= {enqueue_company_mail:['p_family_only','p_birthdays'],claim_company_mail:['p_family_only'],finish_company_mail:['p_id','p_token','p_message_id','p_uncertain'],start_operation:['p_id','p_kind','p_employee','p_date'],save_operation_task:['p_id','p_status','p_memo','p_owners','p_version'],save_operation_case:['p_id','p_date','p_leave','p_complete','p_version'],save_resignation_reason:['p_id','p_ciphertext','p_version'],reveal_resignation_reason:['p_id'],reserve_resignation_document:['p_id','p_filename','p_mime','p_size'],finish_resignation_document:['p_id'],record_resignation_download:['p_id'],save_announcement:['p_id','p_title','p_body','p_publish','p_version'],save_family_registration:['p_id','p_category','p_date','p_title','p_details','p_version'],publish_family_post:['p_id','p_title','p_body','p_publish','p_version'],family_notification_status:['p_id'],save_birthday_template:['p_year','p_subject','p_body','p_version'],save_employee_with_birthday:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext','p_month','p_day'],save_asset:['p_id','p_values','p_expected_version'],delete_asset:['p_id','p_expected_version'],save_vault_entry:['p_id','p_kind','p_values','p_ciphertext','p_expected_version'],reveal_vault_entry:['p_id','p_kind'],delete_vault_entry:['p_id','p_kind','p_expected_version'],expense_dining_available:['p_month','p_items'],ensure_expense_claim:['p_month'],reserve_expense_attachment:['p_claim','p_filename','p_mime','p_size'],finish_expense_attachment:['p_id'],save_expense_items:['p_claim','p_items','p_reason'],submit_expense_claim:['p_claim','p_version','p_reason'],manage_expense_claim:['p_claim','p_version','p_action'],can_read_career:['p_employee'],current_employee_id:[],save_project:['p_id','p_values','p_expected_version'],save_assignment:['p_id','p_values','p_expected_version'],save_career:['p_id','p_values','p_expected_version'],delete_project_record:['p_kind','p_id','p_expected_version'],has_app_capability:['requested'],save_employee_profile:['p_id','p_profile','p_expected_version','p_birth_ciphertext','p_clear_birth','p_private_ciphertext'],save_private_hr:['p_employee_id','p_ciphertext','p_expected_version'],record_private_hr_view:['p_employee_id'],record_birth_view:['p_employee_id']};
       if(!args[rpc]) throw new Error('Unsupported test RPC');
       const params=args[rpc].map(key=>key==='p_items'?JSON.stringify(input[key]):input[key] ?? null);
       const r=await tx.query<{result: unknown}>(`select public.${rpc}(${params.map((_,i)=>'$'+(i+1)).join(',')}) as result`,params);
@@ -98,7 +103,8 @@ const server = createServer(async (request, response) => {
      const keys=Object.keys(input);if(keys.some(k=>!allowed.includes(k))) throw new Error('Unsupported test mutation column');
      const sql=request.method==='POST'?`insert into organization(${keys.join(',')}) values(${keys.map(k=>bind(input[k])).join(',')})`:`update organization set ${keys.map(k=>k+'='+bind(input[k])).join(',')}${condition}`;
      return {data:(await tx.query(sql+` returning ${columns.join(',')}`,params)).rows};
-    });
+    };
+    const result=service?await asService(db,execute):await asUser(db,name!,execute);
     if('count' in result) response.setHeader('Content-Range',`0-${Math.max(0,result.count!-1)}/${result.count}`);
     return response.end(JSON.stringify(result.data));
    } catch(error) {
