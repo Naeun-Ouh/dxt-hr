@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { operationsDatabase,asService,onboardingId,offboardingId,departingId,ceoEmployeeId,ceoDeliveryEmail,documentId,announcementId,draftId,familyId,otherFamilyId,resignationReason } from './operations-fixture';
+import { operationsDatabase,asService,onboardingId,offboardingId,departingId,ceoEmployeeId,ceoDeliveryEmail,birthdayDeliveryEmail,documentId,announcementId,draftId,familyId,otherFamilyId,resignationReason } from './operations-fixture';
 import { asUser,personId,ring } from './domain-fixture';
 import { colleagueId,outsideId } from './project-fixture';
 import { idFor } from './e2e/fixtures';
@@ -84,7 +84,7 @@ test('birthday/calendar scope, 09:00 timing, CEO-only family routing and duplica
  }
  await assert.rejects(asUser(db,'admin',tx=>tx.query('select * from birthday_calendar')));
  const sent:string[]=[],store=mailStore(db);const result=await dispatchMail(store,config,fakeMail(sent));assert.equal(result.sent,3); // one birthday, two registrations to CEO only
- assert.equal(sent.filter(m=>m.includes('To: kim@example.test')).length,1);
+ assert.equal(sent.filter(m=>m.includes('To: '+birthdayDeliveryEmail)).length,1);
  assert.equal(sent.filter(m=>m.includes('To: '+ceoDeliveryEmail)).length,2);
  assert.ok(sent.every(m=>!m.includes('Bcc:')&&!m.includes('Cc:')));
  await dispatchMail(store,config,fakeMail(sent));assert.equal(sent.length,3);
@@ -159,4 +159,44 @@ test('private CEO mail ignores Admin-editable profile addresses and requires ver
  await store.enqueue(otherFamilyId);await db.query('update auth.users set email_confirmed_at=null where id=$1',[idFor('ceo')]);
  assert.equal(await store.claim(otherFamilyId),null);
  assert.equal((await db.query<{state:string}>('select state from company_mail_delivery where subject_id=$1',[otherFamilyId])).rows[0].state,'CANCELLED');
+ }finally{await db.close();}});
+
+
+test('birthday transport uses verified identity despite forged Admin profile fields',async()=>{const db=await operationsDatabase();try{
+ await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-02T00:00:00Z'::timestamptz$$;");
+ await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Happy {{name}}','Birthday {{birthday}}',0)"));
+ const profile={name:'김테스트',company_email:'attacker@example.test',email:'attacker@example.test',auth_user_id:idFor('admin'),title:'개발자',hire_date:'2025-01-02',employment_status:'ACTIVE',roles:['EMPLOYEE']};
+ await asUser(db,'admin',tx=>tx.query('select save_employee_with_birthday($1,$2,1,null,false,null,null,null)',[personId,profile]));
+ assert.equal((await db.query<{company_email:string}>('select company_email from employee where id=$1',[personId])).rows[0].company_email,profile.company_email);
+ assert.equal((await db.query<{auth_user_id:string}>('select auth_user_id from employee where id=$1',[personId])).rows[0].auth_user_id,idFor('employee'));
+ assert.equal((await db.query<{email:string}>('select email from auth.users where id=$1',[idFor('employee')])).rows[0].email,birthdayDeliveryEmail);
+ await assert.rejects(asUser(db,'admin',tx=>tx.query('update auth.users set email=$1 where id=$2',[profile.email,idFor('employee')])));
+ const sent:string[]=[];await dispatchMail(mailStore(db),config,fakeMail(sent));
+ assert.equal(sent.filter(m=>m.includes('To: '+birthdayDeliveryEmail)).length,1);
+ assert.equal(sent.filter(m=>m.includes('To: '+ceoDeliveryEmail)).length,2);
+ assert.ok(sent.every(m=>!m.includes(profile.company_email)));
+ }finally{await db.close();}});
+
+test('ineligible birthday identities are cancelled before any transport claim',async()=>{const db=await operationsDatabase();try{
+ await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-02T00:00:00Z'::timestamptz$$;");
+ await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Happy {{name}}','Birthday {{birthday}}',0)"));
+ // Isolate birthdays; mutate eligibility after enqueue to cover stale pending deliveries.
+ await db.exec('update family_registration set notification_queued=true');
+ for(const scenario of ['unverified','unlinked','empty-email','null-email','inactive-membership','missing-membership','inactive-employee']){
+  await db.exec('delete from company_mail_delivery');
+  await db.query("update employee set auth_user_id=$1,employment_status='ACTIVE' where id=$2",[idFor('employee'),personId]);
+  await db.query('update auth.users set email=$1,email_confirmed_at=now() where id=$2',[birthdayDeliveryEmail,idFor('employee')]);
+  await db.query("insert into app_memberships(user_id,display_name,status,roles) values($1,'test','ACTIVE',array['EMPLOYEE']) on conflict(user_id) do update set status='ACTIVE'",[idFor('employee')]);
+  const store=mailStore(db);await store.enqueue();
+  assert.equal((await db.query("select * from company_mail_delivery where kind='BIRTHDAY' and state='PENDING'")).rows.length,1,scenario);
+  if(scenario==='unverified')await db.query('update auth.users set email_confirmed_at=null where id=$1',[idFor('employee')]);
+  if(scenario==='unlinked')await db.query('update employee set auth_user_id=null where id=$1',[personId]);
+  if(scenario==='empty-email'||scenario==='null-email')await db.query('update auth.users set email=$1 where id=$2',[scenario==='empty-email'?'   ':null,idFor('employee')]);
+  if(scenario==='inactive-membership')await db.query("update app_memberships set status='INACTIVE' where user_id=$1",[idFor('employee')]);
+  if(scenario==='missing-membership')await db.query('delete from app_memberships where user_id=$1',[idFor('employee')]);
+  if(scenario==='inactive-employee')await db.query("update employee set employment_status='INACTIVE' where id=$1",[personId]);
+  assert.equal(await store.claim(),null,scenario);
+  assert.deepEqual((await db.query('select state,error_code,claim_token,claimed_at from company_mail_delivery')).rows,[{state:'CANCELLED',error_code:'RECIPIENT_NO_LONGER_ELIGIBLE',claim_token:null,claimed_at:null}],scenario);
+  const sent:string[]=[];await dispatchMail(store,config,fakeMail(sent));assert.equal(sent.length,0,scenario);
+ }
  }finally{await db.close();}});

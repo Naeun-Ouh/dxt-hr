@@ -37,11 +37,11 @@ Each invocation drains pending work until empty or a 240-second work budget; a b
 
 ### Deployment order
 
-1. Apply all migrations through `202610040009_verified_ceo_mail.sql` to staging. Confirm service-role access to existing protected employee fields and private Storage using the actual Supabase project.
+1. Apply all migrations through `202610040010_verified_mail_recipients.sql` to staging. Confirm service-role access to existing protected employee fields and private Storage using the actual Supabase project.
 2. Keep existing server HR encryption variables, and configure server-only `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` (at least 32 characters), `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, and `GMAIL_SENDER`. Use a refresh token authorized for the configured shared Gmail account and `https://www.googleapis.com/auth/gmail.send`; sender must be that account or an approved sending alias. Never put these in NEXT_PUBLIC variables or commit values.
 3. Backfill existing encrypted DOBs once in a trusted server environment: `node --import tsx scripts/backfill-birthday-calendar.ts`. This reads/decrypts existing birth dates only in that process, writes month/day through a service-only compare-and-lock RPC, and logs a count only. It is rerunnable. An intervening DOB edit fails the affected write rather than storing a stale date.
 4. New employee saves update encrypted DOB and month/day atomically through `save_employee_with_birthday`. The old authenticated RPC is revoked; any direct legacy encrypted DOB mutation invalidates the calendar and fails closed until backfill. Clearing DOB clears the index.
-5. Save the intended yearly template; verify linked CEO recipients. Enable the production schedule only with the intended environment and recipients. Run a controlled staging Gmail/Storage acceptance test before real delivery, including role revocation on an already-open download screen.
+5. Save the intended yearly template; verify linked birthday employee and CEO recipients. Enable the production schedule only with the intended environment and recipients. Run a controlled staging Gmail/Storage acceptance test before real delivery, including role revocation on an already-open download screen.
 
 Live Supabase Storage/Gmail delivery has **not** been performed in this development environment. Those credentialed integration checks remain rollout work; local/CI checks exercise the real SQL schema/RLS through PGlite and a Supabase HTTP test adapter.
 
@@ -53,7 +53,7 @@ Evidence in `docs/screenshots/phase7-*.png`: onboarding, offboarding, announceme
 
 ## Verification
 
-Local validation passed: `npm run lint`, `npm test` (45 unit/database tests), `npm run build`, `npm run typecheck`, `npm run test:e2e` (42 browser tests).
+Local validation passed: `npm run lint`, `npm test` (47 unit/database tests), `npm run build`, `npm run typecheck`, `npm run test:e2e` (42 browser tests).
 
 Coverage includes SQL capability/ownership failures, optimistic concurrency and lifecycle history, INACTIVE with outstanding equipment, CEO-only reason and private Storage, private/public family separation, draft publication, yearly templates, minimum DOB indexing and atomic invalidation, 09:00 timing, individual/CEO-only mail addressing, duplicate and concurrent execution, ambiguous sends, secured cron, forged IDs, unauthorized HTML/RSC/API payloads, file upload/download and replayed actions after a role change. All browser tests run against a production Next.js build.
 
@@ -61,8 +61,16 @@ Phase 4 leave remains deferred. No leave ledger, fake leave record, resignation 
 
 ## 2026-10-04 pre-merge security correction
 
-Review reproduced an indirect disclosure: an operational Admin could change the CEO employee profile's company email and redirect private family notifications, despite having no family registration read capability. Migration `202610040009_verified_ceo_mail.sql` makes family-mail delivery use the linked CEO's `auth.users.email`, with non-null `email_confirmed_at`, in addition to current active CEO membership and employee checks. It never falls back to the editable profile address. An unverified or ineligible recipient is cancelled before a claim exposes the message to transport. Birthday addressing is unchanged.
+Review reproduced an indirect disclosure: an operational Admin could change the CEO employee profile's company email and redirect private family notifications, despite having no family registration read capability. Migration `202610040009_verified_ceo_mail.sql` makes family-mail delivery use the linked CEO's `auth.users.email`, with non-null `email_confirmed_at`, in addition to current active CEO membership and employee checks. It never falls back to the editable profile address. An unverified or ineligible recipient is cancelled before a claim exposes the message to transport. This initial correction was extended to birthday delivery by migration `202610040010_verified_mail_recipients.sql` below.
 
 A regression test changes the CEO profile address through the actual Admin employee RPC, confirms Auth records cannot be changed by that role, and verifies the alert still targets the verified CEO identity. A second case removes email verification and confirms that no message can be claimed. No real email is sent.
 
 Staging must use the intended verified company identity for CEO authorization, and retain secure email-change confirmation in Supabase Auth. See [Supabase email update documentation](https://supabase.com/docs/reference/javascript/auth-updateuser). If an unverified-recipient delivery is cancelled, it requires deliberate operational reconciliation after correcting identity setup.
+
+## Blocking review correction — verified birthday recipients
+
+[Review comment](https://github.com/Naeun-Ouh/dxt-hr/pull/13#issuecomment-5980223630) identified the same redirection risk in birthday mail. Migration `202610040010_verified_mail_recipients.sql` makes **both automatic mail types** resolve the recipient address from the employee's linked `auth.users.email`, requiring a non-empty address, non-null `email_confirmed_at`, active application membership and active, already-joined employee. Family alerts additionally require the current CEO role. The verified address is resolved once and used directly in the transport payload. Admin-editable `employee.company_email` is not a delivery trust boundary and is never a fallback.
+
+A pending delivery with an unlinked, unverified, empty-address or inactive identity is marked CANCELLED with `RECIPIENT_NO_LONGER_ELIGIBLE` before any payload or claim token is returned. Correct identity provisioning and deliberately reconcile cancelled work before recovery; automatic reruns do not revive cancelled deliveries.
+
+Regression tests first reproduced the failure on the reviewed head. They change the birthday profile email to `attacker@example.test` through the real Admin RPC, attempt forged Auth/link fields, verify Auth records remain protected, and inspect fake transport messages for the verified employee and CEO addresses. Separate cases revoke verification/linkage/membership or employee eligibility after enqueue and prove no transport payload or message is produced. Existing family-event routing regressions remain covered. No UI changed and no real email was sent.
