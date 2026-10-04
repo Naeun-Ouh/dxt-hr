@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { operationsDatabase,asService,onboardingId,offboardingId,departingId,ceoEmployeeId,documentId,announcementId,draftId,familyId,otherFamilyId,resignationReason } from './operations-fixture';
+import { operationsDatabase,asService,onboardingId,offboardingId,departingId,ceoEmployeeId,ceoDeliveryEmail,documentId,announcementId,draftId,familyId,otherFamilyId,resignationReason } from './operations-fixture';
 import { asUser,personId,ring } from './domain-fixture';
 import { colleagueId,outsideId } from './project-fixture';
 import { idFor } from './e2e/fixtures';
@@ -85,7 +85,7 @@ test('birthday/calendar scope, 09:00 timing, CEO-only family routing and duplica
  await assert.rejects(asUser(db,'admin',tx=>tx.query('select * from birthday_calendar')));
  const sent:string[]=[],store=mailStore(db);const result=await dispatchMail(store,config,fakeMail(sent));assert.equal(result.sent,3); // one birthday, two registrations to CEO only
  assert.equal(sent.filter(m=>m.includes('To: kim@example.test')).length,1);
- assert.equal(sent.filter(m=>m.includes('To: '+ceoEmployeeId+'@example.test')).length,2);
+ assert.equal(sent.filter(m=>m.includes('To: '+ceoDeliveryEmail)).length,2);
  assert.ok(sent.every(m=>!m.includes('Bcc:')&&!m.includes('Cc:')));
  await dispatchMail(store,config,fakeMail(sent));assert.equal(sent.length,3);
  await asService(db,tx=>tx.query('select enqueue_company_mail(null,true)'));assert.equal((await db.query("select * from company_mail_delivery where kind='BIRTHDAY'")).rows.length,1);
@@ -147,3 +147,16 @@ test('long Unicode mail subjects preserve text with bounded MIME headers',()=>{
  const headers=mime.split('\r\n\r\n')[0].split('\r\n');assert.ok(headers.every(line=>Buffer.byteLength(line)<=78));
  const decoded=[...mime.matchAll(/=\?UTF-8\?B\?([^?]+)\?=/g)].map(match=>Buffer.from(match[1],'base64').toString()).join('');assert.equal(decoded,subject);
 });
+
+
+test('private CEO mail ignores Admin-editable profile addresses and requires verified auth identity',async()=>{const db=await operationsDatabase();try{
+ const profile={name:'대표자',company_email:'redirected@example.test',title:'운영',hire_date:'2025-01-01',employment_status:'ACTIVE',roles:['EMPLOYEE']};
+ await asUser(db,'admin',tx=>tx.query('select save_employee_with_birthday($1,$2,1,null,false,null,null,null)',[ceoEmployeeId,profile]));
+ await assert.rejects(asUser(db,'admin',tx=>tx.query('update auth.users set email=$1 where id=$2',[profile.company_email,idFor('ceo')])));
+ const store=mailStore(db);await store.enqueue(familyId);
+ const claim=await store.claim(familyId);assert.equal(claim?.email,ceoDeliveryEmail);assert.ok(claim?.body.includes('PRIVATE-FAMILY-DETAILS'));
+ assert.notEqual(claim?.email,profile.company_email);await store.finish(claim!,'verified-message',false);
+ await store.enqueue(otherFamilyId);await db.query('update auth.users set email_confirmed_at=null where id=$1',[idFor('ceo')]);
+ assert.equal(await store.claim(otherFamilyId),null);
+ assert.equal((await db.query<{state:string}>('select state from company_mail_delivery where subject_id=$1',[otherFamilyId])).rows[0].state,'CANCELLED');
+ }finally{await db.close();}});

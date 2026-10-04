@@ -81,4 +81,4 @@ Apply migrations `202609300004_projects.sql` and `202609300005_team_career_read.
 
 ## Phase 7 company operations setup
 
-Apply `202610010008_operations.sql` after Phase 6. Configure the server-only operations service key, cron secret and shared Gmail OAuth settings, then backfill the minimal birthday calendar for existing encrypted DOBs. See [Phase 7 delivery and deployment](docs/PHASE_7_DELIVERY.md) for routes, CEO-only document access, pending/uncertain email behavior, setup order and screenshot evidence. Leave remains deferred.
+Apply `202610010008_operations.sql` and `202610040009_verified_ceo_mail.sql` in order after Phase 6. Configure the server-only operations service key, cron secret and shared Gmail OAuth settings, then backfill the minimal birthday calendar for existing encrypted DOBs. See [Phase 7 delivery and deployment](docs/PHASE_7_DELIVERY.md) for routes, CEO-only document access, pending/uncertain email behavior, setup order and screenshot evidence. Leave remains deferred.

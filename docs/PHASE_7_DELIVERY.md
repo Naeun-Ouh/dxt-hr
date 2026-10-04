@@ -29,7 +29,7 @@ Automatic mail is limited to birthday employees and active linked CEO recipients
 
 `vercel.json` schedules `0 0 * * *` (00:00 UTC / 09:00 Asia/Seoul). The SQL worker checks local date/time again and excludes inactive/future-join employees. Birthday records are unique per employee/year, including DOB corrections. Missing yearly templates cause no birthday mail. February 29 is matched literally; no unapproved alternate-date policy is introduced.
 
-Family registration attempts dispatch immediately. Missing configuration or pre-claim OAuth failure leaves durable pending work for the scheduled worker or an authenticated operator rerun. Only initial registration queues an alert. CEO recipients are resolved from active authorization memberships linked to active employee company email addresses; no arbitrary role in an employee profile grants delivery access.
+Family registration attempts dispatch immediately. Missing configuration or pre-claim OAuth failure leaves durable pending work for the scheduled worker or an authenticated operator rerun. Only initial registration queues an alert. CEO recipients are resolved from active authorization memberships linked to active employees and their verified Auth email addresses; no arbitrary role in an employee profile grants delivery access.
 
 SQL atomically claims pending deliveries using row locks and `SKIP LOCKED`. The claim is committed before the Gmail call. A confirmed Gmail message ID produces SENT; provider rejection/timeout/ambiguous result produces UNKNOWN. If the process dies after claiming, it remains SENDING. Neither state is automatically re-sent. This deliberately provides **at most one automatic send attempt**, not a false exactly-once delivery guarantee. Before any manual recovery, inspect the shared Gmail Sent mailbox using the delivery's stable Message-ID and reconcile the metadata; never blindly reset SENDING/UNKNOWN. Delivery rows retain only IDs/date/state/timestamps/provider ID and a generic error code.
 
@@ -37,7 +37,7 @@ Each invocation drains pending work until empty or a 240-second work budget; a b
 
 ### Deployment order
 
-1. Apply all migrations through `202610010008_operations.sql` to staging. Confirm service-role access to existing protected employee fields and private Storage using the actual Supabase project.
+1. Apply all migrations through `202610040009_verified_ceo_mail.sql` to staging. Confirm service-role access to existing protected employee fields and private Storage using the actual Supabase project.
 2. Keep existing server HR encryption variables, and configure server-only `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` (at least 32 characters), `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, and `GMAIL_SENDER`. Use a refresh token authorized for the configured shared Gmail account and `https://www.googleapis.com/auth/gmail.send`; sender must be that account or an approved sending alias. Never put these in NEXT_PUBLIC variables or commit values.
 3. Backfill existing encrypted DOBs once in a trusted server environment: `node --import tsx scripts/backfill-birthday-calendar.ts`. This reads/decrypts existing birth dates only in that process, writes month/day through a service-only compare-and-lock RPC, and logs a count only. It is rerunnable. An intervening DOB edit fails the affected write rather than storing a stale date.
 4. New employee saves update encrypted DOB and month/day atomically through `save_employee_with_birthday`. The old authenticated RPC is revoked; any direct legacy encrypted DOB mutation invalidates the calendar and fails closed until backfill. Clearing DOB clears the index.
@@ -53,8 +53,16 @@ Evidence in `docs/screenshots/phase7-*.png`: onboarding, offboarding, announceme
 
 ## Verification
 
-Local validation passed: `npm run lint`, `npm test` (44 unit/database tests), `npm run build`, `npm run typecheck`, `npm run test:e2e` (42 browser tests).
+Local validation passed: `npm run lint`, `npm test` (45 unit/database tests), `npm run build`, `npm run typecheck`, `npm run test:e2e` (42 browser tests).
 
 Coverage includes SQL capability/ownership failures, optimistic concurrency and lifecycle history, INACTIVE with outstanding equipment, CEO-only reason and private Storage, private/public family separation, draft publication, yearly templates, minimum DOB indexing and atomic invalidation, 09:00 timing, individual/CEO-only mail addressing, duplicate and concurrent execution, ambiguous sends, secured cron, forged IDs, unauthorized HTML/RSC/API payloads, file upload/download and replayed actions after a role change. All browser tests run against a production Next.js build.
 
 Phase 4 leave remains deferred. No leave ledger, fake leave record, resignation approval or external SaaS provisioning/disable was added.
+
+## 2026-10-04 pre-merge security correction
+
+Review reproduced an indirect disclosure: an operational Admin could change the CEO employee profile's company email and redirect private family notifications, despite having no family registration read capability. Migration `202610040009_verified_ceo_mail.sql` makes family-mail delivery use the linked CEO's `auth.users.email`, with non-null `email_confirmed_at`, in addition to current active CEO membership and employee checks. It never falls back to the editable profile address. An unverified or ineligible recipient is cancelled before a claim exposes the message to transport. Birthday addressing is unchanged.
+
+A regression test changes the CEO profile address through the actual Admin employee RPC, confirms Auth records cannot be changed by that role, and verifies the alert still targets the verified CEO identity. A second case removes email verification and confirms that no message can be claimed. No real email is sent.
+
+Staging must use the intended verified company identity for CEO authorization, and retain secure email-change confirmation in Supabase Auth. See [Supabase email update documentation](https://supabase.com/docs/reference/javascript/auth-updateuser). If an unverified-recipient delivery is cancelled, it requires deliberate operational reconciliation after correcting identity setup.
