@@ -8,7 +8,6 @@ import { isUuid,versionFrom,ValidationError } from '@/lib/employees/validation';
 import { encryptHr,decryptHr } from '@/lib/employees/crypto-server';
 import { field,uuid,dateInput,taskInput,familyInput,templateInput } from '@/lib/operations/validation';
 import { operationCapability,type OperationKind } from '@/lib/operations/types';
-import { runCompanyMail } from '@/lib/operations/mail-server';
 import type { FormState } from '@/lib/employees/types';
 function assertId(id:string){if(!isUuid(id))notFound();}
 function assertKind(kind:string):asserts kind is OperationKind{if(kind!=='onboarding'&&kind!=='offboarding')notFound();}
@@ -26,8 +25,7 @@ export async function uploadResignation(id:string,_state:FormState,form:FormData
  }catch(error){return failure(error);}revalidatePath('/admin/offboarding/'+id);redirect(`/admin/offboarding/${id}?saved=1`);}
 export async function saveAnnouncement(id:string|null,_state:FormState,form:FormData):Promise<FormState>{await requireCapability('ANNOUNCEMENT_MANAGE');if(id)assertId(id);const recordId=id||randomUUID();try{await rpc('save_announcement',{p_id:recordId,p_title:field(form,'title',200),p_body:field(form,'body',20000),p_publish:form.get('publish')==='on',p_version:versionFrom(form)});}catch(error){return failure(error);}revalidatePath('/announcements');redirect(`/announcements/${recordId}?saved=1`);}
 export async function saveFamily(id:string|null,_state:FormState,form:FormData):Promise<FormState>{await requireCapability('EMPLOYEE_ACCESS');if(id)assertId(id);const recordId=id||randomUUID();try{await rpc('save_family_registration',{p_id:recordId,...familyInput(form),p_version:versionFrom(form)});}catch(error){return failure(error);}
- // Registration stays durable if mail credentials are absent. No private input is logged.
- if(!id)try{await runCompanyMail(recordId);}catch{/* Cron retries only unclaimed pending notifications. */}
+ // Issue #15: registration is independent of deferred automatic mail.
  revalidatePath('/family-events');redirect(`/family-events/${recordId}/edit?saved=1`);
 }
 export async function publishFamily(id:string,_state:FormState,form:FormData):Promise<FormState>{await requireCapability('EMPLOYEE_ACCESS');assertId(id);const publish=form.get('publish')==='yes';try{await rpc('publish_family_post',{p_id:id,p_title:field(form,'board_title',200,publish),p_body:field(form,'board_body',5000,publish),p_publish:publish,p_version:versionFrom(form)});}catch(error){return failure(error);}revalidatePath('/family-events');redirect(`/family-events/${id}/edit?saved=1`);}

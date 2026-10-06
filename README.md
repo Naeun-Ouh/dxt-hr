@@ -12,7 +12,7 @@ Internal HR & Operations system for DXT.
 
 ## Product scope
 
-DXT People & Operations consolidates employee, organization, project assignment, career, leave, expense, equipment, Windows license, onboarding/offboarding, announcements, family events, and selected Gmail automation workflows.
+DXT People & Operations consolidates employee, organization, project assignment, career, leave, expense, equipment, Windows license, onboarding/offboarding, announcements, and family events. Google OAuth login remains required; automatic Gmail delivery is deferred.
 
 This repository is intentionally implementation-first:
 - do not invent HR policies,
@@ -81,4 +81,4 @@ Apply migrations `202609300004_projects.sql` and `202609300005_team_career_read.
 
 ## Phase 7 company operations setup
 
-Apply `202610010008_operations.sql`, `202610040009_verified_ceo_mail.sql`, and `202610040010_verified_mail_recipients.sql` in order after Phase 6. Configure the server-only operations service key, cron secret and shared Gmail OAuth settings, then backfill the minimal birthday calendar for existing encrypted DOBs. See [Phase 7 delivery and deployment](docs/PHASE_7_DELIVERY.md) for routes, CEO-only document access, pending/uncertain email behavior, setup order and screenshot evidence. Leave remains deferred.
+Apply all migrations through `202610060011_defer_automatic_mail.sql`. Google OAuth / Supabase Auth login stays unchanged. Keep the server-only service key for the private document proxy; Gmail OAuth and cron credentials are not required. Family registration, CEO inbox, public board, birthday privacy and saved templates remain available, but no automatic mail is queued, claimed or sent and no company-mail cron is configured. See [current v1 scope and rollout](docs/ISSUE_15_DELIVERY.md) and [historical Phase 7 implementation](docs/PHASE_7_DELIVERY.md).
