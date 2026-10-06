@@ -171,13 +171,11 @@ Checklist:
 
 ## Birthday email
 
-- 09:00 on birthday.
-- Only birthday person receives email.
-- Admin can edit yearly template.
-- Full DOB visible only to Admin/CEO.
+Automatic birthday email delivery is deferred from the active v1 scope.
+- Keep birthday data/privacy support.
+- Do not require Gmail delivery for current operation.
+- Existing mail implementation may remain dormant for later reactivation.
 - No lunar birthdays.
-- Shared Gmail account.
-- No complex retry screen.
 
 ## Family events
 
@@ -188,7 +186,7 @@ Categories:
 - Condolence
 
 - Employee registers event.
-- Registration emails CEO.
+- Automatic CEO email notification is deferred from the active v1 scope.
 - Employee may also publish on family-event board.
 - Family-event leave is separate from annual leave.
 - Do not mass-email all employees.
