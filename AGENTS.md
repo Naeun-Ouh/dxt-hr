@@ -12,6 +12,7 @@ This repository is implemented from an approved product specification and Figma 
    - `docs/ROUTES.md`
    - `docs/UI_IMPLEMENTATION.md`
    - `docs/HR_PRODUCT_PRINCIPLES.md`
+   - `docs/PORTABILITY.md`
 
 2. Figma is the UI source of truth:
    https://www.figma.com/design/BL670ZpeySoSAhEZLgK62e/DXT-HR_AI?node-id=0-1
@@ -62,6 +63,8 @@ This repository is implemented from an approved product specification and Figma 
 - Vercel-compatible scheduled jobs
 
 If the existing codebase later adopts another stack, preserve the product/business contracts above.
+
+Infrastructure-specific implementation must also follow `docs/PORTABILITY.md`; Supabase/Vercel are replaceable providers, not domain dependencies.
 
 ## Delivery order
 
