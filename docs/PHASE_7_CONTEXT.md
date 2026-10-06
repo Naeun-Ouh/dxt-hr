@@ -1,5 +1,8 @@
 # Phase 7 Implementation Context — Onboarding, Offboarding, Announcements, Family Events, Birthday Email
 
+> **Current v1 scope (Issue #15):** automatic birthday/family-event Gmail delivery is deferred. Google OAuth login remains unchanged. The mail descriptions below document the original implementation, not current deployment requirements. Follow [Issue #15 rollout](ISSUE_15_DELIVERY.md); do not configure Gmail credentials or the historical cron.
+
+
 Focused implementation brief for Issue #7.
 
 ## Read first

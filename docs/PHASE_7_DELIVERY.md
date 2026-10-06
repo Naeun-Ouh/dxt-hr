@@ -1,5 +1,8 @@
 # Phase 7 delivery — Issue #7
 
+> **Current v1 scope (Issue #15):** automatic birthday/family-event Gmail delivery is deferred. Google OAuth login remains unchanged. The mail descriptions below document the original implementation, not current deployment requirements. Follow [Issue #15 rollout](ISSUE_15_DELIVERY.md); do not configure Gmail credentials or the historical cron.
+
+
 Implemented from latest main (`12a3f40`) and the [latest Issue #7 comment](https://github.com/Naeun-Ouh/dxt-hr/issues/7#issuecomment-5932954835). Read `AGENTS.md`, Phase 7 context and all required product, business, permissions, data, routes, UI, principles and roadmap documents before implementation.
 
 ## Workflows and routes

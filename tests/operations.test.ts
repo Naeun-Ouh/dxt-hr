@@ -73,7 +73,7 @@ function mailStore(db:Awaited<ReturnType<typeof operationsDatabase>>):MailStore{
 const config={clientId:'test',clientSecret:'test',refreshToken:'test',sender:'shared@example.test'};
 const fakeMail=(sent:string[],fail=false):typeof fetch=>async(input,init)=>{if(String(input).includes('oauth2'))return Response.json({access_token:'test-token'});const raw=JSON.parse(String(init?.body)).raw;sent.push(Buffer.from(raw,'base64url').toString());if(fail)throw new Error('Ambiguous network timeout');return Response.json({id:'test-message-'+sent.length});};
 
-test('birthday/calendar scope, 09:00 timing, CEO-only family routing and duplicate job execution',async()=>{const db=await operationsDatabase();try{
+test('birthday/calendar scope, 09:00 timing, CEO-only family routing and duplicate job execution',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-02T00:00:00Z'::timestamptz$$;");
  await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Happy {{name}}','Birthday {{birthday}}',0)"));
  for(const role of ['employee','it','expense','leader','division']){
@@ -93,7 +93,7 @@ test('birthday/calendar scope, 09:00 timing, CEO-only family routing and duplica
  assert.equal((await asUser(db,'employee',tx=>tx.query<{value:string}>('select family_notification_status($1) value',[familyId]))).rows[0].value,'SENT');
  }finally{await db.close();}});
 
-test('mail unavailable stays pending; concurrent claims, ambiguous sends and provider failures cannot duplicate',async()=>{const db=await operationsDatabase();try{
+test('mail unavailable stays pending; concurrent claims, ambiguous sends and provider failures cannot duplicate',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  const store=mailStore(db),sent:string[]=[];
  assert.equal((await dispatchMail(store,undefined,fakeMail(sent),familyId)).configured,false);assert.equal(sent.length,0);
  assert.equal((await db.query<{state:string}>('select state from company_mail_delivery')).rows[0].state,'PENDING');
@@ -107,7 +107,7 @@ test('mail unavailable stays pending; concurrent claims, ambiguous sends and pro
  const claim=claims.find(Boolean)!;await store.finish(claim,'message-2',false);await assert.rejects(store.finish(claim,'message-2',false));
  }finally{await db.close();}});
 
-test('scheduler is not early, excludes inactive/future/non-birthday recipients and indexes only month/day',async()=>{const db=await operationsDatabase();try{
+test('scheduler is not early, excludes inactive/future/non-birthday recipients and indexes only month/day',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Hello {{name}}','Birthday {{birthday}}',0)"));
  await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-01T23:59:00Z'::timestamptz$$;");
  await asService(db,tx=>tx.query('select enqueue_company_mail(null,true)'));assert.equal((await db.query("select * from company_mail_delivery where kind='BIRTHDAY'")).rows.length,0);
@@ -149,7 +149,7 @@ test('long Unicode mail subjects preserve text with bounded MIME headers',()=>{
 });
 
 
-test('private CEO mail ignores Admin-editable profile addresses and requires verified auth identity',async()=>{const db=await operationsDatabase();try{
+test('private CEO mail ignores Admin-editable profile addresses and requires verified auth identity',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  const profile={name:'대표자',company_email:'redirected@example.test',title:'운영',hire_date:'2025-01-01',employment_status:'ACTIVE',roles:['EMPLOYEE']};
  await asUser(db,'admin',tx=>tx.query('select save_employee_with_birthday($1,$2,1,null,false,null,null,null)',[ceoEmployeeId,profile]));
  await assert.rejects(asUser(db,'admin',tx=>tx.query('update auth.users set email=$1 where id=$2',[profile.company_email,idFor('ceo')])));
@@ -162,7 +162,7 @@ test('private CEO mail ignores Admin-editable profile addresses and requires ver
  }finally{await db.close();}});
 
 
-test('birthday transport uses verified identity despite forged Admin profile fields',async()=>{const db=await operationsDatabase();try{
+test('birthday transport uses verified identity despite forged Admin profile fields',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-02T00:00:00Z'::timestamptz$$;");
  await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Happy {{name}}','Birthday {{birthday}}',0)"));
  const profile={name:'김테스트',company_email:'attacker@example.test',email:'attacker@example.test',auth_user_id:idFor('admin'),title:'개발자',hire_date:'2025-01-02',employment_status:'ACTIVE',roles:['EMPLOYEE']};
@@ -177,7 +177,7 @@ test('birthday transport uses verified identity despite forged Admin profile fie
  assert.ok(sent.every(m=>!m.includes(profile.company_email)));
  }finally{await db.close();}});
 
-test('ineligible birthday identities are cancelled before any transport claim',async()=>{const db=await operationsDatabase();try{
+test('ineligible birthday identities are cancelled before any transport claim',async()=>{const db=await operationsDatabase({dormantMail:true});try{
  await db.exec("create or replace function company_mail_now() returns timestamptz language sql stable as $$select '2026-01-02T00:00:00Z'::timestamptz$$;");
  await asUser(db,'admin',tx=>tx.query("select save_birthday_template(2026,'Happy {{name}}','Birthday {{birthday}}',0)"));
  // Isolate birthdays; mutate eligibility after enqueue to cover stale pending deliveries.
