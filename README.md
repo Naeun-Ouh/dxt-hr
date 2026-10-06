@@ -82,3 +82,7 @@ Apply migrations `202609300004_projects.sql` and `202609300005_team_career_read.
 ## Phase 7 company operations setup
 
 Apply all migrations through `202610060011_defer_automatic_mail.sql`. Google OAuth / Supabase Auth login stays unchanged. Keep the server-only service key for the private document proxy; Gmail OAuth and cron credentials are not required. Family registration, CEO inbox, public board, birthday privacy and saved templates remain available, but no automatic mail is queued, claimed or sent and no company-mail cron is configured. See [current v1 scope and rollout](docs/ISSUE_15_DELIVERY.md) and [historical Phase 7 implementation](docs/PHASE_7_DELIVERY.md).
+
+## Phase 4A basic leave
+
+Apply migrations through `202610060012_basic_leave.sql`. The basic leave workflow includes annual balances/ledger, requests, scoped Team Leader decisions, cancellation reversals, a reason-free team calendar and audited Admin adjustments. Import confirmed opening balances with mandatory adjustment reasons; automatic accrual boundaries and Phase 4B rules remain deferred. See [Phase 4A delivery and rollout](docs/PHASE_4A_DELIVERY.md).

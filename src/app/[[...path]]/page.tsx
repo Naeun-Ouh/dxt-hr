@@ -10,6 +10,7 @@ import { ProjectList, ProjectEditor, ProjectDetail, MyProjects, ResourceView, Ca
 import { ExpenseList, ExpenseEditor, ExpenseDetail, ExpenseImport } from "@/components/expenses/screens";
 import { AssetList,AssetEditor,VaultScreen } from "@/components/assets/screens";
 import { OperationsScreen,AnnouncementsScreen,FamilyScreen,BirthdayScreen } from "@/components/operations/screens";
+import { LeaveScreen } from "@/components/leave/screens";
 export const dynamic = "force-dynamic";
 export default async function ProtectedPage({ params, searchParams }: { params: Promise<{ path?: string[] }>; searchParams: Promise<SearchParams> }) {
   const { path = [] } = await params;
@@ -21,6 +22,8 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/leave":case "/leave/request":case "/leave/requests":case "/leave/requests/[id]":case "/leave/approvals":case "/leave/team-calendar":case "/admin/leave":case "/admin/leave/[id]":
+      screen=<LeaveScreen mode={path[0]==='admin'?'admin':path[1]==='request'?'request':path[1]==='requests'?'requests':path[1]==='approvals'?'approvals':path[1]==='team-calendar'?'calendar':'overview'} id={path[2]} query={query} principal={principal}/>;break;
     case "/admin/onboarding": case "/admin/onboarding/new": case "/admin/onboarding/[id]":
     case "/admin/offboarding": case "/admin/offboarding/new": case "/admin/offboarding/[id]":
       screen=<OperationsScreen kind={path[1]==='onboarding'?'onboarding':'offboarding'} id={path[2]==='new'?undefined:path[2]} create={path[2]==='new'} query={query} principal={principal}/>;break;

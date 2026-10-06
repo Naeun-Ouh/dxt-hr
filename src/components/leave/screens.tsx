@@ -1,0 +1,54 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import {notFound} from 'next/navigation';
+import {requireCapability} from '@/lib/auth/access';
+import {can,type Principal} from '@/lib/permissions';
+import type {SearchParams} from '@/lib/employees/data';
+import {readRows} from '@/lib/operations/data';
+import {ownEmployee,today,summary,requests,requestDetail,ledger,history,calendar,leaveRpc} from '@/lib/leave/data';
+import {UNITS,EVENT_LABELS,type LeaveRequest,type Summary} from '@/lib/leave/types';
+import {RequestForm,DecisionForm,ApprovalTable,AdjustmentForm,LeaveDrawer,LeaveBadge} from './forms';
+type Person={id:string;name:string;department_id:string|null;employment_status:string};
+const people=()=>readRows<Person>('employee','id,name,department_id,employment_status');
+function Heading({title,description,request=false}:{title:string;description:string;request?:boolean}){return <div className="heading-row"><div className="page-heading"><h1>{title}</h1><p>{description}</p></div>{request&&<Link className="button primary" href="/leave/request">휴가 신청</Link>}</div>;}
+function Saved({query}:{query:SearchParams}){return query.saved==='1'?<p role="status" className="success-banner">저장했습니다.</p>:null;}
+function yearFor(query:SearchParams,date:string){const value=String(query.year||date.slice(0,4));return /^[1-9]\d{3}$/.test(value)&&Number(value)>=1900?Number(value):Number(date.slice(0,4));}
+function Year({year}:{year:number}){return <form className="birthday-year"><label htmlFor="leave-year">연도</label><input id="leave-year" type="number" name="year" min="1900" max="9999" defaultValue={year}/><button className="button">조회</button></form>;}
+function SummaryCards({data}:{data:Summary}){return <div className="asset-summary leave-summary"><section><span>{data.year}년 당해연차 · 잔여</span><strong>{data.balance}일</strong></section><section><span>부여·조정 합계</span><strong>{data.adjusted}일</strong></section><section><span>사용 일수 (취소 반환 반영)</span><strong>{data.used}일</strong></section></div>;}
+function RequestTable({rows,names}:{rows:LeaveRequest[];names?:Record<string,string>}){return <div className="surface table-scroll"><table className="asset-table"><thead><tr>{names&&<th>직원</th>}<th>휴가 유형</th><th>시작일</th><th>종료일</th><th>사용 일수</th><th>상태</th><th>신청일</th><th>상세</th></tr></thead><tbody>{rows.toSorted((a,b)=>b.start_date.localeCompare(a.start_date)).map(r=><tr key={r.id}>{names&&<td>{names[r.employee_id]}</td>}<td>{UNITS[r.unit]}</td><td>{r.start_date}</td><td>{r.end_date}</td><td>{r.days}일</td><td><LeaveBadge status={r.status}/></td><td>{r.created_at.slice(0,10)}</td><td><Link href={'/leave/requests/'+r.id}>상세 보기</Link></td></tr>)}</tbody></table>{!rows.length&&<p className="empty-state">휴가 신청 내역이 없습니다.</p>}</div>;}
+async function LedgerView({id,year}:{id:string;year:number}){const rows=await ledger(id,year);return <section className="surface leave-ledger"><h2>연차 원장 · 변경 이력</h2><div className="table-scroll"><table className="asset-table"><thead><tr><th>처리일</th><th>구분</th><th>증감 일수</th><th>사유</th></tr></thead><tbody>{rows.map(r=><tr key={r.id}><td>{r.occurred_at.slice(0,10)}</td><td>{EVENT_LABELS[r.event_type]}</td><td>{Number(r.amount_delta)>0?'+':''}{r.amount_delta}일</td><td>{r.note||'휴가 신청 처리'} {r.request_id&&<Link href={'/leave/requests/'+r.request_id}>신청 보기</Link>}</td></tr>)}</tbody></table></div>{!rows.length&&<p className="empty-state">원장 기록이 없습니다. 관리자에게 연차 부여 내역을 확인해 주세요.</p>}</section>;}
+async function Detail({record,principal}:{record:LeaveRequest;principal:Principal}){
+ const events=await history(record.id),review=can(principal,'TEAM_LEAVE_APPROVE')&&await leaveRpc<boolean>('leave_reviewer',{p_employee:record.employee_id});
+ return <div className="leave-detail"><dl><dt>휴가 유형</dt><dd>{UNITS[record.unit]}</dd><dt>휴가 기간</dt><dd>{record.start_date} – {record.end_date}</dd><dt>사용 일수</dt><dd>{record.days}일</dd><dt>상태</dt><dd><LeaveBadge status={record.status}/></dd><dt>신청 사유</dt><dd className="prose-body">{record.reason||'—'}</dd>{record.past_reason&&<><dt>미리 신청하지 못한 사유</dt><dd className="prose-body">{record.past_reason}</dd></>}</dl>
+ {review&&record.status==='PENDING'&&<DecisionForm key={record.version} items={[{id:record.id,version:record.version}]}/>}
+ {review&&record.status==='APPROVED'?<DecisionForm key={record.version} items={[{id:record.id,version:record.version}]} cancel/>:record.status==='APPROVED'&&<p className="asset-notice">승인된 휴가는 직접 취소할 수 없습니다. 팀장 또는 관리자에게 요청해 주세요.</p>}
+ {record.status==='REJECTED'&&<p className="asset-notice">거절된 신청은 변경할 수 없습니다. 필요한 경우 새로 신청해 주세요.</p>}
+ <h3>처리 이력</h3><ol className="asset-history">{events.map(e=><li key={e.id}>{EVENT_LABELS[e.action]} · {e.occurred_at.slice(0,10)}{e.note&&<p className="prose-body">{e.note}</p>}</li>)}</ol></div>;
+}
+export async function LeaveScreen({mode,id,query,principal}:{mode:'overview'|'request'|'requests'|'approvals'|'calendar'|'admin';id?:string;query:SearchParams;principal:Principal}){
+ const date=await today(),year=yearFor(query,date);
+ if(mode==='calendar'){
+  const value=String(query.month||date.slice(0,7));if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)||Number(value.slice(0,4))<1900)notFound();
+  const rows=await calendar(value+'-01'),first=new Date(value+'-01T00:00:00Z'),offset=(first.getUTCDay()+6)%7,last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+  return <><Heading title="팀 휴가 캘린더" description="같은 소속 팀의 승인된 휴가입니다. 동료의 신청 사유는 제공하지 않습니다."/><form className="birthday-year"><label htmlFor="leave-month">월</label><input id="leave-month" type="month" name="month" defaultValue={value}/><button className="button">조회</button></form><section className="surface leave-calendar" aria-label="팀 휴가 달력"><div className="leave-weekdays">{['월','화','수','목','금','토','일'].map(d=><strong key={d}>{d}</strong>)}</div><div className="leave-calendar-grid">{Array.from({length:Math.ceil((offset+last)/7)*7},(_,i)=>{const day=i-offset+1,valid=day>0&&day<=last,key=value+'-'+String(day).padStart(2,'0');return <div className={i%7>=5?'weekend':''} key={i}>{valid&&<><time dateTime={key}>{day}</time>{i%7<5&&rows.filter(r=>r.start_date<=key&&r.end_date>=key).map((r,j)=><span className="leave-calendar-event" key={j}>{r.name} · {UNITS[r.unit]}</span>)}</>}</div>;})}</div></section></>;
+ }
+ if(mode==='admin'){
+  await requireCapability('LEAVE_MANAGE');const staff=await people(),nameMap=Object.fromEntries(staff.map(p=>[p.id,p.name]));
+  if(id){const person=staff.find(p=>p.id===id);if(!person)notFound();const data=await summary(id,year);return <><Heading title={person.name+' · 휴가 관리'} description="수동 조정과 휴가 원장을 확인합니다."/><Saved query={query}/><Year year={year}/><SummaryCards data={data}/><AdjustmentForm key={data.version+':'+year} data={data}/><LedgerView id={id} year={year}/><RequestTable rows={(await requests(id)).filter(r=>r.start_date.startsWith(String(year)))} names={nameMap}/></>;}
+  const search=String(query.q||''),department=String(query.department||''),departments=await readRows<{id:string;name:string}>('organization','id,name');
+  const visible=staff.filter(p=>p.name.includes(search)&&(!department||p.department_id===department)),data=await Promise.all(visible.map(p=>summary(p.id,year)));
+  return <><Heading title="휴가 관리" description="직원별 당해연차와 관리자 조정 이력을 관리합니다."/><Year year={year}/><aside className="asset-notice"><strong>관리자 수동 조정</strong><p>확인된 연차를 부여하거나 0.5일 단위로 조정하세요. 사유와 처리 이력은 원장에 보존됩니다.</p></aside><form className="asset-filters"><input type="hidden" name="year" value={year}/><input aria-label="직원 검색" name="q" defaultValue={search} placeholder="직원 이름 검색"/><select aria-label="소속 필터" name="department" defaultValue={department}><option value="">전체 소속</option>{departments.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select><button className="button">검색</button></form><div className="surface table-scroll"><table className="asset-table"><thead><tr><th>직원</th><th>소속</th><th>재직 상태</th><th>부여·조정</th><th>사용</th><th>잔여 연차</th><th>관리</th></tr></thead><tbody>{visible.map((p,i)=><tr key={p.id}><td>{p.name}</td><td>{departments.find(d=>d.id===p.department_id)?.name||'미배정'}</td><td>{p.employment_status}</td><td>{data[i].adjusted}일</td><td>{data[i].used}일</td><td>{data[i].balance}일</td><td><Link href={'/admin/leave/'+p.id+'?year='+year}>조정 · 원장</Link></td></tr>)}</tbody></table>{!visible.length&&<p className="empty-state">검색 결과가 없습니다.</p>}</div></>;
+ }
+ if(mode==='approvals'){
+  await requireCapability('TEAM_LEAVE_APPROVE');const rows=await requests(),staff=await people(),names=Object.fromEntries(staff.map(p=>[p.id,p.name])),pending=rows.filter(r=>r.status==='PENDING');
+  const selected=typeof query.request==='string'?await requestDetail(query.request):null;
+  if(selected&&!await leaveRpc<boolean>('leave_reviewer',{p_employee:selected.employee_id}))notFound();
+  return <><Heading title="휴가 승인" description="팀원들이 신청한 휴가를 확인하고 승인 또는 거절합니다."/><aside className="asset-notice warning leave-pending"><Image src="/figma/LeaveClock.svg" width={18} height={18} alt=""/>승인 대기 중인 휴가가 {pending.length}건 있습니다.</aside><ApprovalTable key={pending.map(r=>r.id+':'+r.version).join(',')} rows={pending} names={names}/><h2>최근 처리 내역</h2><RequestTable rows={rows.filter(r=>r.status!=='PENDING').toSorted((a,b)=>(b.decided_at||'').localeCompare(a.decided_at||'')).slice(0,5)} names={names}/><p className="muted">팀장 본인의 휴가는 별도 승인 없이 자동 승인됩니다.</p>{selected&&<LeaveDrawer><h3>{names[selected.employee_id]}</h3><Detail record={selected} principal={principal}/></LeaveDrawer>}</>;
+ }
+ if(id){const record=await requestDetail(id);return <><Heading title="휴가 신청 상세" description="신청 내용과 처리 이력을 확인합니다."/><Saved query={query}/><section className="surface leave-form"><Detail record={record} principal={principal}/></section></>;}
+ const own=await ownEmployee();if(!own)return <section className="surface empty-state"><h1>직원 정보 연결이 필요합니다</h1><p>관리자에게 계정과 직원 정보 연결을 요청해 주세요.</p></section>;
+ const data=await summary(own,year);
+ if(mode==='request')return <><Heading title="휴가 신청" description="연차 또는 오전·오후 반차를 신청합니다."/><div className="leave-columns"><RequestForm today={date} balance={(await summary(own,Number(date.slice(0,4)))).balance}/><aside className="surface leave-form"><h2>현재 내 휴가 잔여 현황</h2><p>당해연차 <strong>{data.balance}일</strong></p><p className="muted">신청 날짜가 속한 연도의 잔여 일수를 사용합니다. 연도를 넘는 휴가는 연도별로 나누어 신청하세요.</p><p className="asset-notice">과거 날짜도 신청할 수 있습니다. 미리 신청하지 못한 사유를 입력해 주세요.</p></aside></div></>;
+ const rows=(await requests(own)).filter(r=>r.start_date.startsWith(String(year)));
+ return <><Heading title={mode==='overview'?'내 휴가':'휴가 신청 내역'} description="잔여 휴가 현황과 신청·처리 이력을 확인합니다." request/><Saved query={query}/><Year year={year}/><SummaryCards data={data}/><RequestTable rows={rows}/><LedgerView id={own} year={year}/><aside className="asset-notice"><strong>연차 안내</strong><p>확인된 연차 부여 내역은 관리자가 원장에 반영합니다. 잔여 일수에 차이가 있으면 관리자에게 문의해 주세요. 이월·대체휴가·생일반차는 이번 단계에서 제공하지 않습니다.</p></aside></>;
+}

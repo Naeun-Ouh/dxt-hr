@@ -22,6 +22,8 @@ export const ROUTES: AppRoute[] = [
   managed("/projects/team", "팀 프로젝트 현황", "TEAM_PROJECT_READ", "프로젝트", "Users3"),
   managed("/admin/resources", "인력 투입 현황", "PROJECT_MANAGE", "프로젝트", "Users3"),
   employee("/leave", "내 휴가", "휴가", "CalendarCheck"),
+  employee("/leave/requests/[id]", "휴가 신청 상세"),
+  {path:"/admin/leave/[id]",title:"휴가 원장 및 조정",capability:"LEAVE_MANAGE",icon:"CalendarCog"},
   employee("/leave/request", "휴가 신청"),
   employee("/leave/team-calendar", "팀 휴가 캘린더", "휴가", "Calendar"),
   employee("/leave/requests", "휴가 신청 내역", "휴가"),
