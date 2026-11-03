@@ -11,11 +11,12 @@ Updated priority reflects current business urgency.
 5. Phase 6 — Assets / Windows Keys / Account Vault
 6. Phase 7 — Onboarding / Offboarding / Announcements / Family Events
 
+7. Scope cleanup — Google login preserved; automatic Gmail/cron disabled (Issue #15)
+8. Phase 4A — Basic Leave Management (PR #17 merged)
+
 ## Active priority
 
-7. Scope cleanup — keep Google email login, defer birthday/family-event automatic mail
-8. Phase 4A — Basic Leave Management
-9. Staging integration — Supabase Auth / RLS / Storage / Vercel deployment
+9. Issue #14 — Staging integration: real Google Auth / Supabase RLS / Storage / basic leave / Vercel deployment, with automatic mail and cron disabled
 10. Phase 4B — advanced leave rules only after basic leave is stable
 
 ## Authentication direction

@@ -43,7 +43,7 @@ Open http://localhost:3000. Without Supabase configuration, the sign-in screen s
 
 Configure a Supabase project with Google OAuth, apply all migrations in `supabase/migrations/` in filename order, and provision a membership **after the employee joins** using trusted SQL/server administration. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `APP_ORIGIN`. Register `${APP_ORIGIN}/auth/callback` in Supabase's redirect allowlist and the Supabase OAuth callback URL in Google. An authenticated Google account alone does not grant application access.
 
-Never use a Supabase service-role key as the publishable key. No service-role key is needed by this app. Membership writes are deliberately unavailable to browser clients and app users, including ADMIN.
+Never use a Supabase service-role key as the publishable key. A server-only service-role key is required by the protected resignation-document proxy; normal login uses the publishable key. Membership writes are deliberately unavailable to browser clients and app users, including ADMIN.
 
 ```sql
 -- Replace with an actual joined employee's auth.users UUID and name.
@@ -86,3 +86,7 @@ Apply all migrations through `202610060011_defer_automatic_mail.sql`. Google OAu
 ## Phase 4A basic leave
 
 Apply migrations through `202610060012_basic_leave.sql`. The basic leave workflow includes annual balances/ledger, requests, scoped Team Leader decisions, cancellation reversals, a reason-free team calendar and audited Admin adjustments. Import confirmed opening balances with mandatory adjustment reasons; automatic accrual boundaries and Phase 4B rules remain deferred. See [Phase 4A delivery and rollout](docs/PHASE_4A_DELIVERY.md).
+
+## Staging preparation
+
+Follow [the current staging runbook](docs/STAGING_RUNBOOK.md) and record real-environment results in [the acceptance checklist](docs/STAGING_ACCEPTANCE.md). Basic leave is included. Google OAuth stays required; automatic Gmail and cron stay disabled. Local fixture previews are not proof of live Supabase/Google integration.
