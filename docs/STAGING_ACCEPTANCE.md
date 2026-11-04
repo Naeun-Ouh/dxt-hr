@@ -29,25 +29,25 @@ The full Phase 4A suite previously passed at PR #17: 54 unit/database and 47 bro
 
 Fill project identifiers and sanitized evidence only. Do not put secrets, cookies, signed URLs or real HR records in this file.
 
-- Supabase staging project: **PENDING — project selection/access**
+- Supabase staging project: **CONNECTED — `dxt-hr-staging` / project ref `uqwnxlxzcoxbniockizv` / Seoul (`ap-northeast-2`) / ACTIVE_HEALTHY**
 - Vercel staging project: **PENDING — project selection/access**
 - Deployment URL and commit: **PENDING**
-- Migration history through `202610060012_basic_leave.sql`: **PENDING**
+- Migration history through `202610060012_basic_leave.sql`: **PASS — all 12 repository migrations applied in order on staging**
 - Google provider callback and application redirect allowlist: **PENDING**
 - Separate HR/Vault keyrings and server-only private-document service key: **PENDING**
-- Test accounts, employee/Auth links and direct-department mapping: **PENDING**
+- Test accounts, employee/Auth links and direct-department mapping: **PENDING — staging currently has 0 Auth users; Google OAuth/test identities not configured yet**
 - Verified test opening leave balances: **PENDING**
 
 | Acceptance group | Status | Evidence required |
 |---|---|---|
 | Real Google login, membership, revoked/inactive sessions | PENDING | Role and sanitized observed outcome |
-| Migrations, RLS and direct cross-user RPC denials | PENDING | Migration range and negative results |
-| Expense receipts and CEO-only resignation documents | PENDING | Real Storage upload/download and cross-user denial |
+| Migrations, RLS and direct cross-user RPC denials | PARTIAL | 001–012 applied; public domain tables have RLS enabled. Live cross-user JWT/RPC denial tests await real Auth identities. |
+| Expense receipts and CEO-only resignation documents | PARTIAL | `expense-evidence` and `resignation-letters` buckets exist, are private, and are capped at 10 MiB. Real role-scoped upload/download awaits Auth identities. |
 | HR/Vault encryption, explicit reveal and audit | PENDING | Authorized/unauthorized outcomes without secret values |
 | Employee/project/expense/assets/company operations | PENDING | Runbook section 8 outcomes, including real legacy workbook |
 | Basic leave, bulk rollback, stale/concurrent changes, cancellation reversal | PENDING | Role, request scenario and ledger outcome |
 | Calendar response privacy and specialist isolation | PENDING | Sanitized response field list and denial results |
-| No automatic mail or scheduler | PENDING | Deployed 410 result, revoked enqueue/claim grants, scheduler inventory |
+| No automatic mail or scheduler | PARTIAL | DB verified: service_role and authenticated cannot execute `enqueue_company_mail` or `claim_company_mail`. Deployed 410/scheduler inventory awaits Vercel. |
 | Export/restore and key recovery | PENDING | PostgreSQL restore rehearsal, object manifest, identity mapping and key custody plan |
 | Production readiness | PENDING | All live acceptance groups complete; no production migration yet |
 
@@ -60,6 +60,18 @@ Fill project identifiers and sanitized evidence only. Do not put secrets, cookie
 5. Fix any defects in focused changes; defer Phase 4B until basic leave is stable.
 
 The historical Gmail-send/cron items in Issue #14 are superseded by Issue #15 and the current runbook. They must not be reactivated to satisfy the older issue text.
+
+## Live staging progress — 2026-11-04
+
+- Supabase connector access confirmed for `dxt-hr-staging` (project ref `uqwnxlxzcoxbniockizv`), region `ap-northeast-2`, status `ACTIVE_HEALTHY`.
+- Repository migrations 001–012 were applied in order to the empty staging project and are present in migration history.
+- Public application tables created by the migrations report RLS enabled.
+- Supabase Security Advisor reported three intentional no-policy tables: `vault_secret`, `birthday_calendar`, and `company_mail_delivery`. Direct checks confirmed `anon` and `authenticated` do not have SELECT on these locked internal tables.
+- Project-level Automatic RLS created `public.rls_auto_enable()` as a SECURITY DEFINER event-trigger helper with direct anon/authenticated EXECUTE. Direct EXECUTE was revoked from PUBLIC/anon/authenticated in staging; the event-trigger mechanism remains available for its platform purpose. This is environment hardening, not application domain logic.
+- Storage buckets `expense-evidence` and `resignation-letters` exist, are private, and have 10 MiB limits.
+- Automatic company mail shutdown verified at DB privilege level: `service_role` and `authenticated` cannot execute enqueue/claim functions.
+- Auth user count is currently 0. Real Google OAuth, linked employees/memberships, role-scoped RLS tests, private Storage access, and leave workflow acceptance are still PENDING.
+- No secrets or HR data were recorded in this file.
 
 ## Resume preflight — 2026-11-03
 
