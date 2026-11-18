@@ -139,3 +139,20 @@ Every domain PR that contains employee-specific or sensitive records must includ
 - Unauthorized routes should fail permission checks server-side.
 - Unauthorized menu items should not render.
 - Do not show locked/disabled menu items to indicate inaccessible areas.
+
+## Employment contracts
+
+- `EMPLOYMENT_CONTRACT_MANAGE`: ADMIN/CEO; operational metadata, send/cancel.
+- `EMPLOYMENT_CONTRACT_PRIVATE_ACCESS`: derived from existing PRIVATE_HR_ACCESS
+  (CEO and the single designated ADMIN), never an implicit grant to every ADMIN.
+  Required for templates, creation/revision, document preview, all-employee body/PDF access.
+- `EMPLOYMENT_CONTRACT_COMPANY_SIGN`: CEO only, after employee signature.
+- An ACTIVE linked employee may read/sign their own sent contract regardless of their
+  other additive roles. ADMIN/CEO never gain the ability to sign *for another employee*.
+- TEAM_LEADER has no team contract scope. Specialist roles have no broader scope.
+- Snapshots and operational dates are visible to contract managers; encrypted versions,
+  signature evidence and PDF contents require own/private scope. Drafts are private.
+- Employee signature RPC directly joins auth.uid() to employee.auth_user_id and the
+  contract employee_id, and requires a Google identity. Client employee/role parameters
+  are never accepted for signing. Company signing uses an independent checked RPC.
+- No authenticated Storage access, including CEO: downloads reauthorize on the server.

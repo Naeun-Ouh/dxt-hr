@@ -98,3 +98,14 @@ Implement at minimum:
 ## Figma reference frames
 
 Use frame numbers 01–38 in the linked DXT HR Figma file as implementation references.
+
+## Employment contracts
+
+Reuse the shared shell, employee table, profile facts and white detail surfaces from
+Figma frames 02/08/34. `/contracts/me` shows only own contracts. `/admin/contracts`
+shows operational metadata and, for private HR administrators, searchable Employee
+Master selection (name/department/title/email), templates and individual/bulk creation.
+Employee detail adds a scoped 근로계약 tab. Detail shows immutable snapshot, versioned
+preview, deliberate consent, stage dates (Asia/Seoul), audit trail and private PDF link.
+Actual mounted employee views record first_viewed_at; link prefetch does not.
+Sending makes the request available in-app. Automatic Gmail and cron remain disabled.

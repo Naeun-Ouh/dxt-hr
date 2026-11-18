@@ -57,3 +57,10 @@ Suggested Next.js route map.
 
 - Navigation rendering and server-side authorization must both enforce permissions.
 - Do not rely on hidden navigation alone for security.
+
+## Employment contracts
+
+- `/contracts/me`, `/contracts/me/[id]` — own contracts and employee signature.
+- `/admin/contracts`, `/admin/contracts/[id]` — scoped management, preview and CEO signature.
+- Employee detail `?tab=contracts` — own or contract-manager history only.
+- `/api/contracts/[id]/pdf` — current authorization rechecked; private, no-store download.

@@ -287,3 +287,17 @@ Use for sensitive/admin writes.
 - entity_id
 - metadata_json
 - occurred_at
+
+## Employment contracts
+
+- `employment_contract_template`: immutable named revisions, encrypted body, creator/time.
+- `employment_contract`: Employee Master FK, immutable name/department/title/email/hire-date
+  snapshot, state, current version, server timestamps and completed PDF path/SHA-256.
+- `employment_contract_version`: append-only encrypted terms/body, version, SHA-256, actor/time.
+  Terms are kept together in the encrypted version; no plaintext salary term table.
+- `employment_contract_signature`: one employee and one company consent per contract,
+  auth actor, server timestamptz, exact version/hash and evidence protocol identifier.
+- `employment_contract_event`: append-only state/audit events without sensitive content.
+- Templates and versions are never overwritten; revision creates the next version and
+  returns an unsent contract to DRAFT. Once sent, body edits require cancellation and a
+  new contract. COMPLETED, CANCELLED and DECLINED are terminal.

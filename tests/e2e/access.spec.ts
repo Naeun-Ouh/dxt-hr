@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAs, cases } from "./fixtures";
 import { ROUTES } from "../../src/lib/routes";
-const employeePaths = ["/", "/people", "/organization", "/career", "/projects/me", "/leave", "/leave/team-calendar", "/leave/requests", "/expenses", "/expenses/new", "/expenses/upload", "/assets/me", "/announcements", "/family-events"];
+const employeePaths = ["/contracts/me","/", "/people", "/organization", "/career", "/projects/me", "/leave", "/leave/team-calendar", "/leave/requests", "/expenses", "/expenses/new", "/expenses/upload", "/assets/me", "/announcements", "/family-events"];
 const additions: Record<string, string[]> = {
   employee: [], leader: ["/projects/team", "/leave/approvals"], division: [], expense: ["/admin/expenses"],
   it: ["/admin/assets", "/admin/windows-licenses", "/admin/accounts"],

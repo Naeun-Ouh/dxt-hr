@@ -10,11 +10,14 @@ export interface AppRoute {
 const employee = (path: string, title: string, group?: string, icon = "CircleX"): AppRoute => ({ path, title, group, icon, capability: "EMPLOYEE_ACCESS" });
 const managed = (path: string, title: string, capability: Capability, group: string, icon: string): AppRoute => ({ path, title, capability, group, icon });
 export const ROUTES: AppRoute[] = [
+  employee("/contracts/me/[id]", "근로계약"),
+  {path:"/admin/contracts/[id]",title:"근로계약 상세",capability:"EMPLOYMENT_CONTRACT_MANAGE",icon:"FolderLock"},
   employee("/", "홈", "홈"),
   employee("/people", "직원", "인사", "Users2"),
   employee("/people/[id]", "직원 프로필"),
   employee("/organization", "조직도", "인사", "ChartNetwork"),
   employee("/career", "커리어", "인사", "ChartNetwork"),
+  employee("/contracts/me", "내 계약", "인사", "FolderLock"),
   employee("/career/new", "커리어 작성"),
   employee("/career/[id]/edit", "커리어 수정"),
   employee("/projects/assignments/[id]", "내 투입 상세"),
@@ -43,6 +46,7 @@ export const ROUTES: AppRoute[] = [
   employee("/family-events", "경조사", "회사", "Heart"),
   employee("/family-events/new", "경조사 등록"),
   managed("/admin/employees", "직원 관리", "EMPLOYEE_MANAGE", "관리", "UserCog"),
+  managed("/admin/contracts", "근로계약 관리", "EMPLOYMENT_CONTRACT_MANAGE", "관리", "FolderLock"),
   managed("/admin/projects", "프로젝트 관리", "PROJECT_MANAGE", "관리", "FolderCog"),
   managed("/admin/leave", "휴가 관리", "LEAVE_MANAGE", "관리", "CalendarCog"),
   managed("/admin/holidays", "근무 캘린더", "HOLIDAY_MANAGE", "관리", "Calendar"),
