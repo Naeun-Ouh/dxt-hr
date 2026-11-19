@@ -156,3 +156,7 @@ Every domain PR that contains employee-specific or sensitive records must includ
   contract employee_id, and requires a Google identity. Client employee/role parameters
   are never accepted for signing. Company signing uses an independent checked RPC.
 - No authenticated Storage access, including CEO: downloads reauthorize on the server.
+
+Signature evidence v2 additionally freezes the DB-authenticated email, Google provider
+and validated auth session UUID. These values cannot be supplied to signing RPCs.
+Historical v1 evidence is preserved without fabricated backfill.

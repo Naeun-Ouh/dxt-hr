@@ -30,7 +30,7 @@ export async function contractPdf(c:Contract,body:string,hash:string,signatures:
  wrap('DXT 근로계약',20);wrap(`계약 ${c.id} / 버전 ${c.current_version}`,9);
  const s=c.employee_snapshot;wrap(`${s.name} / ${s.department||'미배정'} / ${s.title}`);wrap(`${s.email} / 입사일 ${s.hire_date}`);line('');
  wrap(body);line('');wrap('전자서명 확인 기록',14);
- for(const sign of signatures){wrap(`${sign.party==='EMPLOYEE'?'직원':'회사'} 서명: ${seoulTime(sign.signed_at)} (Asia/Seoul)`);wrap(`인증 사용자: ${sign.actor_id}`,9);wrap(`동의 증빙: ${sign.evidence}`,9);}
+ for(const sign of signatures){wrap(`${sign.party==='EMPLOYEE'?'직원':'회사'} 서명: ${seoulTime(sign.signed_at)} (Asia/Seoul)`);wrap(`인증 사용자: ${sign.actor_id}`,9);wrap(`인증 이메일: ${sign.authenticated_email ?? '이전 증적: 미기록'}`,9);wrap(`인증 제공자: ${sign.auth_provider ?? '이전 증적: 미기록'}`,9);wrap(`세션 식별자: ${sign.auth_session_id ?? '이전 증적: 미기록'}`,9);wrap(`동의 증빙: ${sign.evidence}`,9);}
  wrap(`계약본문 SHA-256: ${hash}`,8);wrap('본 PDF의 SHA-256은 계약 보관 기록에서 확인할 수 있습니다.',9);
  pdf.getPages().forEach((p,i)=>p.drawText(`${i+1} / ${pdf.getPageCount()}`,{x:280,y:30,size:9,font}));
  return Buffer.from(await pdf.save());

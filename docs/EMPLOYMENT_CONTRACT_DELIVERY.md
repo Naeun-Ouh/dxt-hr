@@ -98,3 +98,39 @@ PGlite/V8 native WASM assertion during one parallel run; Node 22 completed norma
 noted above. Screenshots: contracts-employee/admin/ceo/completed/pdf in docs/screenshots.
 No live migration, real Google account signing, hosted Storage check or deployment was
 performed by this PR. Existing staging evidence files are preserved.
+
+## PR #21 signature-evidence review follow-up
+
+`20261119104141_contract_signature_evidence.sql` adds immutable `auth_session_id`,
+`authenticated_email` and `auth_provider` to the existing signature row. Both original
+RPC interfaces remain contract/version/hash/consent only. A non-exposed, execute-revoked
+private helper reads the trusted JWT session UUID, verifies its matching auth.sessions
+user and not_after, and captures confirmed auth.users.email and auth.identities.provider.
+Google OAuth AMR/provider checks remain mandatory; user_metadata and form fields are
+never evidence sources. Session IDs are identifiers, not access/refresh tokens; no tokens
+are persisted. The private PDF prints the full identifier, email and provider alongside
+actor UUID, DB time and exact document hash. No evidence values are added to logs/events.
+
+Session lookup follows the [Supabase session documentation](https://supabase.com/docs/guides/auth/sessions).
+Deleted, missing, malformed, other-user and explicitly expired sessions fail closed.
+Supabase inactivity/single-session settings still have their documented refresh-time
+semantics. Auth configuration and live Google sessions require staging verification.
+
+Signatures use evidence protocol `authenticated-google-consent-v2`. A different valid
+session/email on retry cannot rewrite the first signature or create another event.
+The session UUID deliberately has no foreign key to auth.sessions, so sign-out and
+routine session cleanup cannot erase evidence. Existing pre-upgrade signatures/PDFs
+are never rewritten or backfilled with guessed historical values. Nullable columns and
+a NOT VALID check preserve those old rows while requiring the full tuple on every new
+insert; old PDF-generation records explicitly show “이전 증적: 미기록” if unavailable.
+If legacy rows exist, do not validate that constraint or claim they have v2 evidence.
+IP/User-Agent capture is deferred: no untrusted forwarding headers are stored as evidence.
+
+Regression coverage includes both signers, missing/malformed/foreign/expired/deleted
+sessions, unconfirmed email, rejected additional RPC arguments, ignored forged HTML
+fields/user_metadata, email changes and new-session replay, immutable evidence after
+session deletion, and migration of legacy signatures. Full check results are recorded
+in the PR; all use synthetic fixtures, not live staging accounts.
+
+Review follow-up local result: lint/build/typecheck pass, 64 unit/database tests and
+52 browser tests pass. Updated PDF rasterization confirms both evidence records.
