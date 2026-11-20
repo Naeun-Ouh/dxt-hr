@@ -138,13 +138,13 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
   if(!headers)error('일자·업체명·품목·계정과목·합계·증빙종류 열을 확인해 주세요.');
   if(!result.items.length)error('등록할 경비가 없습니다.');
   if(result.items.length>500)error('한 번에 500건까지 등록할 수 있습니다.');
-  for(const i of result.items){i.import_filename=filename;result.problems.push(...itemProblems(i,result.items));if(i.usage_date.slice(0,7)!==month)error('사용일이 선택한 사용월에 포함되지 않습니다.',i.import_origin);}
+  for(const i of result.items){i.import_filename=filename;result.problems.push(...itemProblems(i,result.items));if(i.usage_date.slice(0,7)!==month)result.problems.push({severity:'ERROR',code:'MONTH',message:'사용일이 선택한 사용월에 포함되지 않습니다.',origin:i.import_origin});}
  }catch(e){error((e as Error).message||'Excel 파일을 읽을 수 없습니다.');}
  return result;
 }
-export async function templateWorkbook(month:string) {
+export async function templateWorkbook(month:string,employee='') {
  const book=new ExcelJS.Workbook();const sheet=book.addWorksheet('지출결의서');
- sheet.addRow(['사용월',month]);sheet.addRow(['안내','회식 참석자는 이메일:한도사용액을 세미콜론으로 구분합니다. 증빙은 업로드 화면에서 별도 첨부합니다.']);
+ sheet.addRow(['사용월',month,'직원',employee]);sheet.addRow(['안내','회식 참석자는 이메일:한도사용액을 세미콜론으로 구분합니다. 증빙은 업로드 화면에서 별도 첨부합니다.']);
  sheet.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)']);
  const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명']);
  for(const s of book.worksheets){s.columns.forEach(c=>c.width=24);s.views=[{state:'frozen',ySplit:s===sheet?3:1}];}
@@ -154,5 +154,12 @@ export async function exportWorkbook(rows:Record<string,string|number>[]) {
  const book=new ExcelJS.Workbook(),sheet=book.addWorksheet('경비 내역');
  if(rows.length){sheet.columns=Object.keys(rows[0]).map(key=>({header:key,key,width:22}));rows.forEach(r=>sheet.addRow(r));sheet.autoFilter={from:{row:1,column:1},to:{row:1,column:sheet.columnCount}};}
  else sheet.addRow(['제출된 경비가 없습니다.']);
+ // Keep the normalized audit/export sheet and add the two familiar DXT accounting sheets.
+ const general=book.addWorksheet('지출결의서');general.addRow(['사용월',rows[0]?.['사용월']||'','직원',rows[0]?.['직원']||'']);
+ general.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)','직원','증빙참조']);
+ const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명','직원','증빙참조']);
+ for(const r of rows){general.addRow([r['사용일'],r['업체명'],r['품목'],r['계정과목'],r['금액'],r['증빙종류'],r['비고'],r['유형'],r['결제수단'],r['참석자/한도사용액'],r['직원'],r['증빙참조']]);if(r['편도금액'])travel.addRow([r['유형'],r['사용일'],r['출장명'],r['출발지'],r['도착지'],r['편도금액'],r['횟수'],r['업체명'],r['직원'],r['증빙참조']]);}
+ general.addRow(['합계','','','',rows.reduce((s,r)=>s+Number(r['금액']||0),0)]);
+ for(const s of [general,travel]){s.columns.forEach(c=>c.width=22);s.views=[{state:'frozen',ySplit:s===general?2:1}];}
  sheet.views=[{state:'frozen',ySplit:1}];return Buffer.from(await book.xlsx.writeBuffer());
 }

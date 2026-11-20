@@ -190,3 +190,10 @@ Categories:
 - Employee may also publish on family-event board.
 - Family-event leave is separate from annual leave.
 - Do not mass-email all employees.
+
+## Expense lifecycle clarification — Issue #23
+
+The monthly Grid requirement explicitly makes SUBMITTED read-only, followed by LOCKED
+and PAID. This supersedes the older post-submission editing window above. Drafts may be
+saved before evidence is attached; submission still requires all evidence. Payment dates,
+deadline, retroactive reasons, warning/allowance rules and no-approval policy are unchanged.

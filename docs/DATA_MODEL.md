@@ -314,3 +314,11 @@ most one active row. `company_seal_event` is append-only. Company signatures sna
 `company_seal_id`, `company_name`, `representative_name` at signing, so PDF retries
 use the original image after replacement. Older signatures are not backfilled.
 See `EMPLOYMENT_CONTRACT_DELIVERY.md` for lifecycle and recovery.
+
+### Expense Grid evolution (Issue #23)
+
+`expense_account_category` provides the controlled workbook vocabulary (including the
+pre-existing OTHER fallback). Draft item evidence may be absent; submission enforces a
+ready same-claim attachment. Full-snapshot bulk save validates claim/item versions and
+versioned deletions under a transaction lock. No persistent draft domain/table is added.
+SUBMITTED/LOCKED/PAID items are read-only. See `ISSUE_23_DELIVERY.md`.

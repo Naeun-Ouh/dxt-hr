@@ -115,3 +115,11 @@ shell, typography, indigo/gray surfaces and main/rail hierarchy. The user-reques
 contract-specific A4 document, progress summary, signing rail and company seal
 management extend that style. Existing Figma shell assets are reused. Screenshots
 in `docs/screenshots/contracts-*` use synthetic data and TEST seal images.
+
+## Expense Grid — Issue #23
+
+The monthly `/expenses` Grid supersedes the upload/form-first primary UX described above.
+Excel is a menu (template / import into working copy / saved export). Explicit bulk save
+precedes evidence attachment and submission. Submitted/locked/paid views and admin review
+use read-only controls. Existing form/import URLs are compatibility surfaces, not sidebar
+entries. See `ISSUE_23_DELIVERY.md` for keyboard/paste, validation and screenshot evidence.
