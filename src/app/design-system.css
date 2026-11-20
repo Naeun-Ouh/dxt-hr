@@ -1,0 +1,154 @@
+/* Shared visual contract. Domain layout stays in globals.css. */
+:root {
+ --primary:#4f46e5; --primary-hover:#4338ca; --primary-surface:#eef2ff;
+ --text-primary:#111827; --text-secondary:#4b5563; --text-muted:#64748b;
+ --border:#e5e7eb; --surface:#fff; --background:#f9fafb;
+ --success:#166534; --success-surface:#f0fdf4; --warning:#92400e; --warning-surface:#fffbeb;
+ --error:#b91c1c; --error-surface:#fef2f2; --info:#1d4ed8; --info-surface:#eff6ff;
+ --radius-small:4px; --radius-default:6px; --radius-card:8px;
+ --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
+ --font-page:24px; --font-section:16px; --font-body:13px; --font-table:13px; --font-caption:12px;
+ --control-small:32px; --control-default:36px; --control-large:44px;
+ --brand:var(--primary); --brand-light:var(--primary-surface); --ink:var(--text-primary); --muted:var(--text-secondary); --canvas:var(--background);
+}
+body {font-size:var(--font-body);line-height:1.55}
+button,input,select,textarea {font:inherit}
+.app-shell .content-view {padding:var(--space-8);gap:var(--space-6)}
+.page-heading {width:100%;min-width:0}
+.page-heading h1 {font-size:var(--font-page);line-height:1.35;font-weight:700;letter-spacing:-.5px}
+.page-heading p {font-size:var(--font-body);line-height:1.6;color:var(--text-secondary);margin-top:var(--space-1)}
+.ui-page-header,.heading-row,.contract-list-heading {gap:var(--space-4);flex-wrap:wrap}
+.ui-page-header>div:first-child {min-width:0;flex:1}
+.page-actions,.button-row {display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.app-shell .sidebar {padding:var(--space-4);gap:var(--space-4)}
+.nav-section h2 {color:var(--text-muted);font-size:11px;padding:var(--space-3) var(--space-3) var(--space-1)}
+.app-shell .nav-link {min-height:var(--control-default);gap:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-default)}
+.nav-link.active {box-shadow:inset 3px 0 var(--primary)}
+/* Existing class-based links share exactly the same button contract. */
+:is(.app-shell,.login-page) .button.button {
+ min-height:var(--control-default);padding:6px var(--space-4);gap:var(--space-2);
+ border-radius:var(--radius-default);border:1px solid var(--border);background:var(--surface);
+ color:var(--text-primary);font-size:var(--font-body);font-weight:500;line-height:22px;
+ display:inline-flex;align-items:center;justify-content:center;text-align:center;vertical-align:middle;
+}
+:is(.app-shell,.login-page) .button:hover:not(:disabled) {color:var(--primary);border-color:var(--primary);background:var(--surface)}
+:is(.app-shell,.login-page) .button.primary {min-height:var(--control-large);background:var(--primary);border-color:var(--primary);color:white}
+:is(.app-shell,.login-page) .button.primary:hover:not(:disabled) {background:var(--primary-hover);border-color:var(--primary-hover);color:white}
+:is(.app-shell,.login-page) .button.danger {color:var(--error);border-color:var(--error);background:var(--surface)}
+:is(.app-shell,.login-page) .button.danger:hover:not(:disabled) {background:var(--error-surface)}
+:is(.app-shell,.login-page) .button.text {border-color:transparent;background:transparent;color:var(--text-secondary)}
+:is(.app-shell,.login-page) .button.size-small {min-height:var(--control-small);padding:4px var(--space-3);font-size:var(--font-caption)}
+:is(.app-shell,.login-page) :is(.page-heading .button.primary,.button.size-large,.button.contract-cta) {min-height:var(--control-large)}
+:is(.app-shell,.login-page) button:disabled {opacity:.5;cursor:not-allowed}
+:is(.app-shell,.login-page) button[aria-busy=true] {cursor:progress}
+.button-spinner {width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ui-spin .8s linear infinite}
+@keyframes ui-spin {to {transform:rotate(360deg)}}
+.app-shell :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea) {
+ border:1px solid var(--border);border-radius:var(--radius-default);background:var(--surface);
+ color:var(--text-primary);padding:6px var(--space-3);min-height:var(--control-default);font-size:var(--font-body);max-width:100%;
+}
+.app-shell textarea {min-height:96px;resize:vertical}
+.app-shell :is(input,select,textarea):disabled {color:var(--text-secondary);background:var(--background);cursor:not-allowed}
+.app-shell :is(input,select,textarea)[aria-invalid=true] {border-color:var(--error)}
+.app-shell :is(input[type=checkbox],input[type=radio]) {width:16px;height:16px;min-height:0;accent-color:var(--primary);flex-shrink:0}
+.app-shell .directory-search input {border:0;padding-left:0}
+.field {gap:var(--space-2);color:var(--text-secondary)}
+.field>label,.field>span {font-size:var(--font-body);font-weight:500;color:var(--text-primary)}
+.field small,.helper-text {font-size:var(--font-caption);line-height:1.5}
+.field-grid {gap:var(--space-4)}
+.app-shell :is(.filter-bar,.expense-filters,.asset-filters) {width:100%;display:flex;align-items:end;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-4);border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-card);margin:0}
+.app-shell :is(.filter-bar,.expense-filters,.asset-filters) label {display:flex;flex-direction:column;align-items:stretch;gap:var(--space-2)}
+.app-shell .filter-bar .directory-search {flex-direction:row;align-items:center}
+.app-shell :is(.surface,.asset-card,.project-list,.employee-table-container,.asset-table-wrap) {border-radius:var(--radius-card);box-shadow:none}
+.app-shell :is(.surface,.form-section,.leave-form,.contract-panel) {padding:var(--space-6)}
+.app-shell :is(.surface,.project-section,.contract-section-heading) h2 {font-size:var(--font-section);font-weight:600;line-height:1.5}
+.app-shell :is(.project-stats,.expense-summary,.asset-summary) {gap:var(--space-4)}
+.app-shell :is(.project-stats,.expense-summary,.asset-summary)>section {padding:var(--space-4);border-radius:var(--radius-card);border:1px solid var(--border);box-shadow:none}
+.ui-summary strong {display:inline-block;font-size:24px;line-height:1.5;margin-right:var(--space-2);font-variant-numeric:tabular-nums}
+.ui-summary p,.ui-summary span {color:var(--text-secondary);font-size:var(--font-caption)}
+/* Scroll regions retain table semantics, including touch and keyboard scrolling. */
+.app-shell :is(.table-scroll,.asset-table-wrap,.expense-table-wrap) {max-width:100%;overflow:auto}
+.app-shell :is(.employee-table,.project-table table,.expense-table,.asset-table) {width:100%;border-collapse:separate;border-spacing:0;text-align:left}
+.app-shell :is(.employee-table,.project-table table,.expense-table,.asset-table) :is(th,td) {padding:var(--space-3);line-height:20px;font-size:var(--font-table);border-bottom:1px solid var(--border);border-top:0;vertical-align:middle}
+.app-shell :is(.employee-table,.project-table table,.expense-table,.asset-table) th {height:44px;position:sticky;top:0;z-index:1;background:var(--background);color:var(--text-secondary);font-weight:600;white-space:nowrap}
+.app-shell :is(.employee-table,.project-table table,.expense-table,.asset-table) td {height:44px;color:var(--text-secondary)}
+.app-shell :is(.employee-table,.project-table table,.expense-table,.asset-table) tbody tr:hover td {background:#f5f7ff}
+.app-shell tr:has(input[type=checkbox]:checked) td {background:var(--primary-surface)}
+.numeric,.amount {text-align:right;font-variant-numeric:tabular-nums}
+.app-shell .table-footer {padding:var(--space-3) var(--space-4);gap:var(--space-3);flex-wrap:wrap;font-size:var(--font-caption)}
+.pagination :is(a,span) {min-height:var(--control-small);min-width:var(--control-small);justify-content:center;border-radius:var(--radius-default)}
+.pagination a:hover {border-color:var(--primary);color:var(--primary)}
+.ui-status {display:inline-flex;align-items:center;gap:var(--space-1);padding:2px var(--space-2);border:1px solid currentColor;border-radius:var(--radius-small);font-size:var(--font-caption);font-weight:500;line-height:18px;white-space:nowrap}
+.tone-neutral {color:var(--text-secondary);background:#f3f4f6}
+.tone-info {color:var(--info);background:var(--info-surface)}
+.tone-success {color:var(--success);background:var(--success-surface)}
+.tone-warning {color:var(--warning);background:var(--warning-surface)}
+.tone-error {color:var(--error);background:var(--error-surface)}
+.app-shell :is(.status-badge,.expense-badge,.asset-badge,.operation-badge) {border-radius:var(--radius-small);font-size:var(--font-caption);padding:2px var(--space-2);line-height:18px}
+.ui-alert {width:100%;border:1px solid currentColor;border-radius:var(--radius-default);padding:var(--space-3) var(--space-4);font-size:var(--font-body);line-height:1.6}
+.ui-alert>strong {display:block;margin-bottom:var(--space-1)}
+.app-shell :is(.table-empty,.empty-state,.contract-group-empty) {padding:var(--space-8) var(--space-6);font-size:var(--font-body);color:var(--text-secondary)}
+.app-shell :is(.employee-tabs,.contract-section-nav) {gap:0;overflow-x:auto;flex-wrap:nowrap}
+.app-shell :is(.employee-tabs,.contract-section-nav) a {padding:var(--space-3) var(--space-4);white-space:nowrap;font-size:var(--font-body)}
+.app-shell :is(.leave-confirm,dialog) {border:1px solid var(--border);border-radius:var(--radius-card);padding:var(--space-6);max-width:calc(100vw - 32px)}
+.app-shell dialog::backdrop {background:rgb(17 24 39 / 35%)}
+.app-shell .leave-drawer {border-radius:0;max-width:100vw}
+.contract-section-heading h2 {font-size:var(--font-section)}
+.contract-list-card h3 {font-size:var(--font-section)}
+/* Future Grid uses shared tokens without importing its independent business slice. */
+.expense-grid {font-size:var(--font-table)}
+.expense-grid th {background:var(--background);color:var(--text-secondary)}
+@media(max-width:1000px) {
+ .form-columns,.leave-columns {grid-template-columns:minmax(0,1fr)}
+ .contract-detail-layout {grid-template-columns:minmax(0,1fr)}
+ .contract-signing-sidebar {position:static}
+}
+@media(max-width:760px) {
+ .app-shell .content-view {padding:var(--space-4);gap:var(--space-4)}
+ .app-shell .surface {padding:var(--space-4)}
+ .page-heading h1 {font-size:21px}
+ .page-actions {width:100%}
+ .app-shell :is(.filter-bar,.expense-filters,.asset-filters)>* {max-width:100%}
+ .field-grid,.contract-summary-facts,.seal-layout {grid-template-columns:minmax(0,1fr)}
+ .contract-stepper {overflow-x:auto;grid-template-columns:repeat(5,minmax(90px,1fr))}
+ .heading-row>*,.contract-list-heading>* {min-width:0;max-width:100%}
+}
+@media(prefers-reduced-motion:reduce) {*,*::before,*::after {scroll-behavior:auto;animation:none;transition:none}}
+.contract-list-heading>.ui-page-header {flex:1}
+.app-shell table.project-table {border-collapse:separate;border-spacing:0}
+.app-shell table.project-table :is(th,td) {padding:var(--space-3);line-height:20px;font-size:var(--font-table);height:44px;border-bottom:1px solid var(--border);border-top:0}
+.app-shell table.project-table th {position:sticky;top:0;background:var(--background);z-index:1;font-weight:600}
+.app-shell table.project-table tbody tr:hover td {background:#f5f7ff}
+.app-shell .expense-list-table {padding:0}
+@media(min-width:761px) {
+ .app-shell .sidebar {position:sticky;top:0;height:100dvh}
+ .navigation-panel {min-height:0;overflow-y:auto;scrollbar-width:thin}
+ .user-card {flex-shrink:0}
+}
+/* Compatibility bridges: keep pending asset/expense PRs' JSX untouched. */
+.app-shell :is(.asset-badge,.expense-badge) {border:1px solid currentColor;font-weight:500}
+.app-shell :is(.asset-badge.IN_USE,.asset-badge.AVAILABLE) {color:var(--success);background:var(--success-surface)}
+.app-shell .asset-badge.REPAIR {color:var(--warning);background:var(--warning-surface)}
+.app-shell .asset-badge.LOST {color:var(--error);background:var(--error-surface)}
+.app-shell .expense-badge {color:var(--text-secondary);background:var(--background)}
+.app-shell .expense-badge.success {color:var(--info);background:var(--info-surface)}
+.app-shell .expense-badge.warning {color:var(--warning);background:var(--warning-surface)}
+.app-shell .expense-badge.error {color:var(--error);background:var(--error-surface)}
+.app-shell .expense-summary>.surface {padding:var(--space-4)}
+.heading-row:has(>.page-heading)>.page-heading {flex:1;width:auto}
+
+.app-shell :is(.table-scroll,.asset-table-wrap) {max-height:640px}
+.app-shell .expense-grid td :is(input:not([type=checkbox]),select) {min-height:var(--control-small);padding:4px var(--space-2);background:transparent;border-color:transparent;border-radius:var(--radius-small)}
+.app-shell .expense-grid td :is(input,select):focus {background:var(--surface);border-color:var(--primary)}
+.app-shell .expense-grid th {padding:var(--space-3) var(--space-2);font-size:var(--font-caption)}
+.app-shell .expense-grid tbody tr:hover td {background-color:var(--background)}
+.app-shell .expense-grid .grid-selected td {background-color:var(--primary-surface)}
+.app-shell :is(.leave-APPROVED,.project-active) {color:var(--success);background:var(--success-surface)}
+.app-shell .leave-PENDING {color:var(--warning);background:var(--warning-surface)}
+.app-shell .leave-REJECTED {color:var(--error);background:var(--error-surface)}
+/* Remove empty admin-table filler and align accounting figures in legacy tables. */
+.app-shell .asset-table-wrap {min-height:0}
+.expense-list-table table:has(th:nth-child(9)) :is(th,td):nth-child(5),
+.expense-list-table table:not(:has(th:nth-child(9))) :is(th,td):nth-child(4) {text-align:right;font-variant-numeric:tabular-nums}
+.app-shell .heading-row a.button[href^="/api/expenses/"] {background:var(--surface);color:var(--text-primary);border-color:var(--border);min-height:var(--control-default)}
+.app-shell .heading-row a.button[href^="/api/expenses/"]:hover {color:var(--primary);border-color:var(--primary)}

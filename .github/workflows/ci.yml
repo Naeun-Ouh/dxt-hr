@@ -26,5 +26,5 @@ jobs:
         with:
           name: browser-evidence
           path: |
-            docs/screenshots/*.png
+            docs/screenshots/**/*.png
             test-results/

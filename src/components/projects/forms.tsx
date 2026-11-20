@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/primitives';
 import { Children, cloneElement, Fragment, isValidElement, useActionState, useId, useState } from 'react';
 import Link from 'next/link';
 import { saveProjectRecord, deleteProjectRecord } from '@/app/actions/projects';
@@ -22,7 +23,7 @@ export function ProjectForm({project,employees}:{project?:Project;employees:Empl
  <Field name="pm_employee_id" label="PM" state={state}><select name="pm_employee_id" required defaultValue={project?.pm_employee_id || ''}><option value="">직원 선택</option>{employees.map(e=><option key={e.id} value={e.id}>{e.name}{e.employment_status==='INACTIVE'?' (퇴사)':''}</option>)}</select></Field>
  <Field name="status" label="상태" state={state}><StatusField value={project?.status}/></Field>
  {project && <Field name="reason" label="종료일 변경 사유 (선택)" state={state}><input name="reason" maxLength={1000}/></Field>}
- </div><p className="project-note">유상 외부 고객 계약 프로젝트만 등록합니다. 종료일 변경 시 이전 날짜와 변경 이력이 보존됩니다.</p><div className="button-row"><Link className="button" href={project?`/admin/projects/${project.id}`:'/admin/projects'}>취소</Link><button className="button primary" disabled={pending}>프로젝트 저장</button></div></form>;
+ </div><p className="project-note">유상 외부 고객 계약 프로젝트만 등록합니다. 종료일 변경 시 이전 날짜와 변경 이력이 보존됩니다.</p><div className="button-row"><Link className="button" href={project?`/admin/projects/${project.id}`:'/admin/projects'}>취소</Link><Button variant="primary" loading={pending}>프로젝트 저장</Button></div></form>;
 }
 export function AssignmentForm({project,assignment,employees}:{project:Project;assignment?:Assignment;employees:Employee[]}) {
  const [state,action,pending]=useActionState(saveProjectRecord.bind(null,'assignment',assignment?.id || null),{});
@@ -31,18 +32,18 @@ export function AssignmentForm({project,assignment,employees}:{project:Project;a
  <Field name="role" label="투입 역할" state={state}><input required name="role" maxLength={100} defaultValue={assignment?.role}/></Field>
  {(['start_date','end_date'] as const).map(key=><Field key={key} name={key} label={key==='start_date'?'투입 시작일':'투입 종료일'} state={state}><input type="date" required min={project.start_date} max={project.current_end_date} name={key} defaultValue={assignment?.[key] || (key==='start_date'?project.start_date:project.current_end_date)}/></Field>)}
  <Field name="status" label="투입 상태" state={state}><StatusField value={assignment?.status}/></Field></div>
- <p className="project-note">프로젝트 기간 내에서 투입 기간을 입력하세요. 다른 프로젝트와 기간이 겹쳐도 등록할 수 있습니다.</p><div className="button-row"><Link className="button" href={`/admin/projects/${project.id}`}>취소</Link><button className="button primary" disabled={pending}>투입 저장</button></div></form>;
+ <p className="project-note">프로젝트 기간 내에서 투입 기간을 입력하세요. 다른 프로젝트와 기간이 겹쳐도 등록할 수 있습니다.</p><div className="button-row"><Link className="button" href={`/admin/projects/${project.id}`}>취소</Link><Button variant="primary" loading={pending}>투입 저장</Button></div></form>;
 }
 export function ExtensionForm({project}:{project:Project}) {
  const [state,action,pending]=useActionState(saveProjectRecord.bind(null,'project',project.id),{});
  return <form action={action} className="extension-form"><Feedback state={state}/>{Object.entries(project).filter(([key])=>!['id','current_end_date'].includes(key)).map(([key,value])=><input type="hidden" name={key} value={value} key={key}/>)}
  <Field name="previous" label="현재 종료일" state={state}><input readOnly value={project.current_end_date}/></Field>
  <Field name="current_end_date" label="새 종료일" state={state}><input name="current_end_date" type="date" required min={project.start_date} defaultValue={project.current_end_date}/></Field>
- <Field name="reason" label="사유 (선택)" state={state}><input name="reason" maxLength={1000}/></Field><button className="button primary" disabled={pending}>종료일 변경</button></form>;
+ <Field name="reason" label="사유 (선택)" state={state}><input name="reason" maxLength={1000}/></Field><Button variant="primary" loading={pending}>종료일 변경</Button></form>;
 }
 export function DeleteRecord({kind,id,projectId,version}:{kind:'project'|'assignment';id:string;projectId:string;version:number}) {
  const [state,action,pending]=useActionState(deleteProjectRecord.bind(null,kind,id,projectId),{});
- return <details className="delete-record"><summary>삭제</summary><form action={action}><input type="hidden" name="version" value={version}/><p>삭제하시겠습니까? 연결된 이력이 있으면 삭제할 수 없습니다.</p><Feedback state={state}/><button className="button danger" disabled={pending}>삭제 확인</button></form></details>;
+ return <details className="delete-record"><summary>삭제</summary><form action={action}><input type="hidden" name="version" value={version}/><p>삭제하시겠습니까? 연결된 이력이 있으면 삭제할 수 없습니다.</p><Feedback state={state}/><Button variant="danger" loading={pending}>삭제 확인</Button></form></details>;
 }
 export function CareerForm({career,assignments,projects,name}:{career?:Career;assignments:Assignment[];projects:Project[];name:string}) {
  const [state,action,pending]=useActionState(saveProjectRecord.bind(null,'career',career?.id || null),{});
@@ -58,7 +59,7 @@ export function CareerForm({career,assignments,projects,name}:{career?:Career;as
  <Field name="job_function" label="직무" state={state}><input required maxLength={100} name="job_function" value={job} onChange={e=>setJob(e.target.value)}/></Field>
  <Field name="role" label="역할" state={state}><input required maxLength={100} name="role" value={role} onChange={e=>setRole(e.target.value)}/></Field>
  <Field name="responsibilities" label="주요 업무" state={state}><textarea required maxLength={10000} name="responsibilities" value={responsibilities} onChange={e=>setResponsibilities(e.target.value)}/></Field>
- <div className="field"><span>기술 / 경험</span><div className="skill-tags">{skills.map(s=><button type="button" className="status-badge" aria-label={`${s} 삭제`} key={s} onClick={()=>setSkills(skills.filter(x=>x!==s))}>{s} ×</button>)}</div><div className="button-row"><input aria-label="기술 입력" value={skill} maxLength={100} onChange={e=>setSkill(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addSkill();}}}/><button className="button" type="button" onClick={addSkill}>+ 기술 추가</button></div><small>기술명을 입력한 후 추가하세요. 쉼표로 구분한 기술도 저장 시 분리됩니다.</small><input type="hidden" name="skills" value={skills.join(',')}/>{state.fields?.skills && <small className="field-error">{state.fields.skills}</small>}</div>
- <p className="project-note">커리어는 직원 본인이 작성하며 관리자 승인 없이 저장됩니다.</p><div className="button-row"><Link className="button" href="/career">목록</Link><button className="button primary" disabled={pending || !assignment}>커리어 저장</button></div></div>
+ <div className="field"><span>기술 / 경험</span><div className="skill-tags">{skills.map(s=><button type="button" className="status-badge" aria-label={`${s} 삭제`} key={s} onClick={()=>setSkills(skills.filter(x=>x!==s))}>{s} ×</button>)}</div><div className="button-row"><input aria-label="기술 입력" value={skill} maxLength={100} onChange={e=>setSkill(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addSkill();}}}/><Button  type="button" onClick={addSkill}>+ 기술 추가</Button></div><small>기술명을 입력한 후 추가하세요. 쉼표로 구분한 기술도 저장 시 분리됩니다.</small><input type="hidden" name="skills" value={skills.join(',')}/>{state.fields?.skills && <small className="field-error">{state.fields.skills}</small>}</div>
+ <p className="project-note">커리어는 직원 본인이 작성하며 관리자 승인 없이 저장됩니다.</p><div className="button-row"><Link className="button" href="/career">목록</Link><Button variant="primary"  disabled={pending || !assignment}>커리어 저장</Button></div></div>
  <aside className="surface career-preview" aria-label="프로필 미리보기"><h2>프로필 미리보기</h2><h3>{name}</h3><p>{job || '직무'} · {role || '역할'}</p><hr/><h4>{project?.name || '프로젝트 선택'}</h4><p>{project?.customer_name} | {period}</p><h5>주요 업무</h5><p className="responsibilities">{responsibilities || '프로젝트에서 수행한 업무를 기록해 주세요.'}</p><h5>기술 / 경험</h5><div className="skill-tags">{skills.map(s=><span className="status-badge" key={s}>{s}</span>)}</div></aside></form>;
 }
