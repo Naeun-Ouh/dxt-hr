@@ -107,3 +107,14 @@ Recommended current deployment:
 - Next.js hosting on a replaceable runtime such as Vercel
 
 This is an operational choice, not a permanent architecture commitment.
+
+## Employment contract storage and signatures
+
+Contract ciphertext uses the existing application HR AES-256-GCM keyring, with contract
+ID and version as AAD. Preserve the keyring together with exported database records.
+`src/lib/contracts/storage.ts` isolates object upload/download; only logical paths are
+stored. `pdf.ts` is a portable Node renderer (pdf-lib/fontkit with pinned OFL Noto Sans
+KR dependency), without hosted conversion services, network fonts or a browser runtime.
+Auth-to-employee linkage and Google-identity verification are explicit database boundaries;
+a replacement identity provider must preserve or migrate that verification and signature
+actor references. Signature evidence is authenticated consent, not provider-specific PKI.
