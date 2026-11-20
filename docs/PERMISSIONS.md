@@ -167,3 +167,9 @@ checked RPCs perform mutations. The private `company-seals` bucket exposes no di
 authenticated reads/writes. Only a manager-authorized server preview returns raw PNG;
 employees see a seal solely inside their authorized final contract PDF. This does
 not broaden contract body, signature or employee-history access.
+
+Expense Grid preserves owner-only authoring. EXPENSE_MANAGE allows review/export/lock/pay,
+never writing another employee's Grid. Bulk mutation repeats identity, claim/item ownership,
+version and DRAFT-state checks in PostgreSQL. Evidence may be absent while drafting but is
+required on submit. SUBMITTED retains the existing payment-date edit window, including legacy writer RPCs.
+LOCKED/PAID, locked_at and elapsed payment periods deny all employee writers.

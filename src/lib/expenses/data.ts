@@ -9,6 +9,14 @@ export async function expenseRows<T>(table:string,columns:string,filters:Record<
  const client=await employeeClient(),rows:T[]=[];
  for(let offset=0;;offset+=500){let request=client.from(table).select(columns).order(table==='expense_attendee'||table==='vehicle_travel_detail'?'item_id':'id').range(offset,offset+499);for(const [key,value]of Object.entries(filters))request=request.eq(key,value);const {data,error}=await request;if(error)throw new Error('Expense service unavailable');rows.push(...data as T[]);if(data.length<500)return rows;}
 }
+async function children<T>(table:'expense_attendee'|'vehicle_travel_detail',columns:string,ids:string[]) {
+ const client=await employeeClient(),rows:T[]=[];
+ for(let start=0;start<ids.length;start+=100)for(let offset=0;;offset+=500){
+  const {data,error}=await client.from(table).select(columns).in('item_id',ids.slice(start,start+100)).order('item_id').range(offset,offset+499);
+  if(error)throw new Error('Expense detail unavailable');rows.push(...data as T[]);if(data.length<500)break;
+ }
+ return rows;
+}
 export async function expenseData(admin=false) {
  const principal=await requireCapability(admin?'EXPENSE_MANAGE':'EMPLOYEE_ACCESS');
  const {data:selfId,error}=await (await employeeClient()).rpc('current_employee_id');if(error)throw new Error('Employee link unavailable');
@@ -25,7 +33,8 @@ export async function expenseDetail(id:string,admin=false) {
  const claims=await expenseRows<Claim>('expense_claim',CLAIM_COLUMNS,{id});const claim=claims[0];
  if(!claim||(!admin&&claim.employee_id!==selfId)||(admin&&!can(principal,'EXPENSE_MANAGE')))notFound();
  const [items,attachments]=await Promise.all([expenseRows<Item>('expense_item',ITEM_COLUMNS,{claim_id:id}),expenseRows<Attachment>('expense_attachment',ATTACHMENT_COLUMNS,{claim_id:id})]);
- for(const item of items){item.attendees=await expenseRows<Attendee>('expense_attendee','item_id,employee_id,allocated_amount',{item_id:item.id});item.vehicle=(await expenseRows<Vehicle>('vehicle_travel_detail',VEHICLE_COLUMNS,{item_id:item.id}))[0];}
+ const [attendees,vehicles]=await Promise.all([children<Attendee>('expense_attendee','item_id,employee_id,allocated_amount',items.map(i=>i.id)),children<Vehicle>('vehicle_travel_detail',VEHICLE_COLUMNS,items.map(i=>i.id))]);
+ for(const item of items){item.attendees=attendees.filter(a=>a.item_id===item.id);item.vehicle=vehicles.find(v=>v.item_id===item.id);}
  return {claim,items,attachments};
 }
 export async function expenseOptions() {
@@ -33,5 +42,6 @@ export async function expenseOptions() {
  const employees=await expenseRows<{id:string;name:string;company_email:string;employment_status:string}>('employee','id,name,company_email,employment_status');
  const assignments=selfId?await expenseRows<{id:string;project_id:string}>('project_assignment','id,project_id',{employee_id:selfId}):[];
  const projects=(await expenseRows<{id:string;name:string}>('project','id,name')).filter(p=>assignments.some(a=>a.project_id===p.id));
- return {employees,projects,selfId:selfId as string|null};
+ const {data:accounts,error:accountError}=await client.from('expense_account_category').select('name,position').order('position');if(accountError)throw new Error('Expense categories unavailable');
+ return {employees,projects,accounts:accounts.map(a=>a.name as string),selfId:selfId as string|null};
 }
