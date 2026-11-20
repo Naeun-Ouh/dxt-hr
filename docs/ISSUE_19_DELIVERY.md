@@ -106,3 +106,14 @@ copies. Do not rewrite existing applied contract/seal migrations.
 
 Full local results and remote CI links are recorded in the PR, with the updated head
 SHA. Synthetic fixture checks remain distinct from hosted staging acceptance.
+
+## DXT Design System rebase verification (2026-11-20)
+
+Rebased onto main `521ea36` (#25). Adopted shared PageHeader, Button loading states,
+StatusTag, SummaryCard, Alert and keyboard-scrollable history tables. Transfer layout
+uses shared spacing/type tokens. Asset authorization, actions, RPCs and migration
+are unchanged; contract/seal code and tests are unchanged from main.
+
+Lint/build/typecheck pass; 74 unit/DB and 59 browser tests pass on synthetic data.
+Updated issue19 screenshots cover incoming/outgoing/history/admin/mobile.
+Hosted staging and multi-connection race checks remain separate acceptance steps.

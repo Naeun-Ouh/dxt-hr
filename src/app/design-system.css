@@ -152,3 +152,22 @@ button,input,select,textarea {font:inherit}
 .expense-list-table table:not(:has(th:nth-child(9))) :is(th,td):nth-child(4) {text-align:right;font-variant-numeric:tabular-nums}
 .app-shell .heading-row a.button[href^="/api/expenses/"] {background:var(--surface);color:var(--text-primary);border-color:var(--border);min-height:var(--control-default)}
 .app-shell .heading-row a.button[href^="/api/expenses/"]:hover {color:var(--primary);border-color:var(--primary)}
+
+/* Asset transfer layout; presentation uses shared DXT tokens. */
+
+.asset-section { width: 100%; min-width: 0; }
+.asset-section .asset-table-wrap { min-height: 0; }
+.asset-section .asset-card + .asset-card { margin-top: var(--space-4); }
+.asset-section > h2 { font-size: var(--font-section); margin-bottom: var(--space-4); }
+.asset-section > h2 > span { color: var(--muted); font-size: var(--font-caption); margin-left: 6px; }
+.asset-card h3 { font-size: var(--font-section); margin: var(--space-4) 0; }
+.transfer-form, .transfer-resolution { margin-top: var(--space-4); }
+.transfer-form summary, .transfer-resolution summary { cursor: pointer; color: var(--brand); font-weight: 600; }
+.transfer-form form, .transfer-resolution form { padding-top: var(--space-3); }
+.transfer-memo { white-space: pre-wrap; overflow-wrap: anywhere; }
+.asset-table td small { display: block; }
+
+.asset-transfer-table { min-height: 0; }
+.asset-section .asset-table { min-width: 640px; }
+.asset-card dl { row-gap: var(--space-3); }
+.asset-card .transfer-memo { margin-top: var(--space-3); }
