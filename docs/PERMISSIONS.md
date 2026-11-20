@@ -160,3 +160,10 @@ Every domain PR that contains employee-specific or sensitive records must includ
 Signature evidence v2 additionally freezes the DB-authenticated email, Google provider
 and validated auth session UUID. These values cannot be supplied to signing RPCs.
 Historical v1 evidence is preserved without fabricated backfill.
+
+Company seal management uses `EMPLOYMENT_CONTRACT_MANAGE` (ADMIN/CEO), including the
+ordinary ADMIN without private contract access. RLS restricts seal metadata/events;
+checked RPCs perform mutations. The private `company-seals` bucket exposes no direct
+authenticated reads/writes. Only a manager-authorized server preview returns raw PNG;
+employees see a seal solely inside their authorized final contract PDF. This does
+not broaden contract body, signature or employee-history access.

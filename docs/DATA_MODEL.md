@@ -305,3 +305,12 @@ Use for sensitive/admin writes.
 Signature evidence v2 additionally freezes the DB-authenticated email, Google provider
 and validated auth session UUID. These values cannot be supplied to signing RPCs.
 Historical v1 evidence is preserved without fabricated backfill.
+
+### Company seals
+
+`company_seal` is an immutable uploaded-image version (private object path + SHA-256,
+company/representative names, uploader/time), with mutable ready/active flags and at
+most one active row. `company_seal_event` is append-only. Company signatures snapshot
+`company_seal_id`, `company_name`, `representative_name` at signing, so PDF retries
+use the original image after replacement. Older signatures are not backfilled.
+See `EMPLOYMENT_CONTRACT_DELIVERY.md` for lifecycle and recovery.

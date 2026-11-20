@@ -109,3 +109,9 @@ Employee detail adds a scoped 근로계약 tab. Detail shows immutable snapshot,
 preview, deliberate consent, stage dates (Asia/Seoul), audit trail and private PDF link.
 Actual mounted employee views record first_viewed_at; link prefetch does not.
 Sending makes the request available in-app. Automatic Gmail and cron remain disabled.
+
+Contract UX follow-up: existing Figma HR-private detail (node `43:2`) supplies the
+shell, typography, indigo/gray surfaces and main/rail hierarchy. The user-requested
+contract-specific A4 document, progress summary, signing rail and company seal
+management extend that style. Existing Figma shell assets are reused. Screenshots
+in `docs/screenshots/contracts-*` use synthetic data and TEST seal images.
