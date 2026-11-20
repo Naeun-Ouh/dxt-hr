@@ -134,3 +134,69 @@ in the PR; all use synthetic fixtures, not live staging accounts.
 
 Review follow-up local result: lint/build/typecheck pass, 64 unit/database tests and
 52 browser tests pass. Updated PDF rasterization confirms both evidence records.
+
+## Document UX and company seals (2026-11-20)
+
+The detail view now pairs an A4-style document with a summary, five-step progress
+indicator and a signing rail. Employee lists separate required signatures, company
+signature waiting, completed and past contracts. Admin lists prioritize pre-send
+review and active signatures. Explicit consent enables the signing CTA; pending
+submissions disable it. Completion shows both Seoul signing times and integrity
+information. Existing private-body and own-contract boundaries are unchanged.
+
+`/admin/contracts/seals` uses EMPLOYMENT_CONTRACT_MANAGE (ADMIN/CEO, including ordinary
+ADMIN). This does not grant contract-body access. The new private `company-seals`
+bucket has no authenticated object policies; even managers use the authorized,
+`private, no-store` server preview. Employees see only the image baked into their
+own final PDF. No public/signed URL is stored or minted.
+
+Apply `20261120030704_company_seals.sql` after the existing contract/evidence
+migrations and before deploying the application. Existing migrations are unchanged.
+`company_seal` stores a random object path, normalized PNG digest, company/representative
+names, DB upload timestamp, actor and ready/active flags. Metadata is immutable;
+activation/deactivation events are append-only. Authenticated clients have SELECT
+with manager RLS and no direct mutation grants. Checked RPCs reserve and activate
+records; activation requires the reserving manager, uploaded object and expected
+previous active ID. A partial unique index and shared transaction advisory lock
+serialize activation/deactivation with company signing. Stale replacement fails.
+
+The existing CEO signing RPC remains separate from employee signing. A DB trigger
+snapshots the active seal ID and company/representative names into the immutable
+company signature in that transaction. PDF retries load that exact seal, verify its
+SHA-256, and never consult the latest active seal. Even replacement between signing
+and storage finalization cannot change the selected image. Completed PDF generation
+returns immediately; the existing first-writer-only finalization and pointer/hash
+immutability remain. Downloads verify the original PDF digest. Pre-migration
+signatures retain null seal fields; they are not retroactively stamped.
+
+Upload accepts PNG only, at most 1 MiB and 2048 pixels per dimension. Server decoding
+rejects malformed/excessive images and APNG, then re-encodes to strip metadata and
+trailing content before hashing/uploading with `upsert:false`. The private bucket
+caps normalized output at 2 MiB. See the [Sharp constructor bounds](https://sharp.pixelplumbing.com/api-constructor/)
+and [PNG output documentation](https://sharp.pixelplumbing.com/api-output/#png).
+No seal is required: with none active, new company signatures retain the DXT label
+and DB-linked signer name. Uploaded seal names are explicitly entered by a manager.
+There is no real production seal seeded; screenshot/test seals say TEST.
+
+Limitations and rollout checks:
+
+- Local PGlite/mock-auth/Storage browser results are separate from real staging;
+  hosted Google OAuth, bucket/RLS and Vercel native Sharp runtime still require
+  staging acceptance with synthetic accounts. No production data was used.
+- Storage and DB cannot commit together. Upload failure or stale activation can
+  leave an inactive pending record/object; PDF retry can leave an orphan PDF.
+  Operator cleanup must check references. Never delete historical referenced seals.
+  No automatic Gmail or cron operation is enabled.
+- A seal image is visual evidence, not a certificate/PAdES signature, timestamp
+  authority or independent proof of company authorization. Existing authenticated
+  consent evidence is retained; legal wording/retention remain owner decisions.
+- Managers can replace the active seal while a CEO has a page open; the transaction
+  records the active seal at actual signing, not at page render. The frozen record
+  and final PDF are authoritative. No additional seal-approval workflow is invented.
+
+Seal/UX local verification: lint, production build and typecheck pass; 68 unique
+unit/database tests pass (67-test full run plus the added legacy-seal migration
+regression, followed by all four seal tests). Full browser suite: 53 passed.
+Final-build seal browser flow was rerun separately. Screenshots were visually checked,
+and the synthetic sealed PDF was rasterized and reviewed. GitHub CI results are
+recorded in the PR; these checks do not claim live staging acceptance.

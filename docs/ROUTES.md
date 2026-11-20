@@ -64,3 +64,8 @@ Suggested Next.js route map.
 - `/admin/contracts`, `/admin/contracts/[id]` — scoped management, preview and CEO signature.
 - Employee detail `?tab=contracts` — own or contract-manager history only.
 - `/api/contracts/[id]/pdf` — current authorization rechecked; private, no-store download.
+
+- `/admin/contracts/seals`: ADMIN/CEO company seal upload, replacement, deactivation,
+  private preview and preserved upload history (`EMPLOYMENT_CONTRACT_MANAGE`).
+- `/api/contracts/seals/[id]`: manager-authorized PNG preview; private, no-store;
+  no employee access or permanent object URL.

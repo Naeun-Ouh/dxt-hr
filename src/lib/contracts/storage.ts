@@ -3,13 +3,18 @@ import { createHash,randomUUID } from 'node:crypto';
 import { operationsService } from '../operations/service';
 import { contractDetail } from './data';
 import { contractPdf } from './pdf';
+import {sealBytes} from './seals';
+import {SEAL_COLUMNS,type CompanySeal} from './types';
 // Provider API is isolated here; domain records store only path and digest.
 export async function finalizeContract(id:string){
  const {c,body,version,signatures}=await contractDetail(id,true);
  if(c.status==='COMPLETED')return;
  if(!c.company_signed_at||!version||!body||signatures.length!==2)throw new Error('Contract not signed');
- const bytes=await contractPdf(c,body,version.body_sha256,signatures),hash=createHash('sha256').update(bytes).digest('hex');
- const objectPath=`${id}/${randomUUID()}.pdf`,service=operationsService();
+ const service=operationsService(),company=signatures.find(s=>s.party==='COMPANY');
+ let seal:Buffer|undefined;
+ if(company?.company_seal_id){const {data,error}=await service.from('company_seal').select(SEAL_COLUMNS).eq('id',company.company_seal_id).single();if(error||!data)throw new Error('Seal unavailable');seal=await sealBytes(data as CompanySeal);}
+ const bytes=await contractPdf(c,body,version.body_sha256,signatures,seal),hash=createHash('sha256').update(bytes).digest('hex');
+ const objectPath=`${id}/${randomUUID()}.pdf`;
  const {error}=await service.storage.from('employment-contracts').upload(objectPath,bytes,{contentType:'application/pdf',upsert:false});if(error)throw new Error('Contract storage unavailable');
  const {error:finish}=await service.rpc('complete_employment_contract',{p_id:id,p_version:c.current_version,p_path:objectPath,p_hash:hash});if(finish)throw new Error('Contract finalization unavailable');
 }

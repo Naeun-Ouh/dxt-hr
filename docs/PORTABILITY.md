@@ -118,3 +118,9 @@ KR dependency), without hosted conversion services, network fonts or a browser r
 Auth-to-employee linkage and Google-identity verification are explicit database boundaries;
 a replacement identity provider must preserve or migrate that verification and signature
 actor references. Signature evidence is authenticated consent, not provider-specific PKI.
+
+Company seal images use the same replaceable private-object adapter boundary as
+contract PDFs (`src/lib/contracts/seals.ts`, `storage.ts`). Domain rows contain
+object paths and SHA-256, not provider URLs. PNG normalization and PDF embedding run
+server-side with pinned Sharp/pdf-lib; deploying outside Vercel requires their Node
+native dependencies and the traced Korean font. No cron/service scheduling is needed.

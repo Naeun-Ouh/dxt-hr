@@ -10,6 +10,7 @@ export interface AppRoute {
 const employee = (path: string, title: string, group?: string, icon = "CircleX"): AppRoute => ({ path, title, group, icon, capability: "EMPLOYEE_ACCESS" });
 const managed = (path: string, title: string, capability: Capability, group: string, icon: string): AppRoute => ({ path, title, capability, group, icon });
 export const ROUTES: AppRoute[] = [
+  {path:"/admin/contracts/seals",title:"회사 직인 관리",capability:"EMPLOYMENT_CONTRACT_MANAGE",icon:"FolderLock"},
   employee("/contracts/me/[id]", "근로계약"),
   {path:"/admin/contracts/[id]",title:"근로계약 상세",capability:"EMPLOYMENT_CONTRACT_MANAGE",icon:"FolderLock"},
   employee("/", "홈", "홈"),
