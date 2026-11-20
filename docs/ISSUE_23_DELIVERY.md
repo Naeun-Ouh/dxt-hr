@@ -40,8 +40,9 @@ merge order. Existing permissions/capability functions, RLS and Storage policies
   account, numeric/type constraints and cumulative attendee limits are checked again.
 - Duplicate, overtime and overall dining overages remain warnings. Retroactive reasons,
   first-weekend deadline and payment-cycle calculations retain their existing semantics.
-- **Explicit Issue #23 lifecycle requirement supersedes the older Phase 5 edit window:**
-  SUBMITTED is now read-only immediately, as are LOCKED/PAID. `expense_editable` governs
+- **DXT payment/lock policy preserved (PR #24 review correction):**
+  SUBMITTED stays editable through payment_date (inclusive, Asia/Seoul). LOCKED/PAID,
+  locked_at or an elapsed payment period make it read-only. `expense_editable` governs
   legacy writers, receipt reservation/finalization and new bulk saves consistently.
   No approval, rejection or reopening workflow was added.
 - Audit events contain actor/action/claim reference only; no receipt contents are logged.
@@ -96,3 +97,26 @@ migration before the UI. Failed uploads can leave unused private attachment rese
 no automatic object deletion or cron was introduced. Working copies are memory-only and
 must be saved before leaving; browser unload and month changes warn about dirty state.
 No historic data migration, automatic Gmail, cron, Phase 4B or corporate-card workflow.
+
+## Review correction: existing payment/lock policy
+
+Rebased on main `521ea36` (merged DXT Design System). The existing Grid migration is
+unchanged. Apply `20261120135814_restore_expense_payment_edit_window.sql` after it:
+`expense_editable` again admits the owner in DRAFT or SUBMITTED, through payment_date
+inclusive in Asia/Seoul, unless locked_at is set. LOCKED/PAID always deny editing.
+All legacy writers, Grid saves and receipt reservations/finalization share this helper.
+The new trigger preserves mandatory evidence on submitted item edits; draft evidence
+remains optional. Server actions repeat ownership/editability and evidence checks.
+Payment scheduling, first submitted_at, claim state, optimistic versions and atomic
+Grid snapshots are preserved. No approval/reject/reopen workflow is introduced.
+
+The UI now explains the post-submit edit window, saves changes directly to the same
+submitted claim and uses DXT StatusTag for state. It does not offer a redundant submit
+button after submission. Admin review remains read-only with its existing lock/pay
+controls. Tests cover inclusive payment day, elapsed payment period, explicit locks,
+paid state, evidence and cross-user denial, plus a stale open editor after admin lock.
+
+A separate synthetic compatibility run applied PR #20's asset-transfer migration before
+both expense migrations: all 6 asset-transfer database tests passed. Their timestamps
+are ordered; no PR #20 merge or applied-migration edits are needed for this update.
+Hosted Supabase advisors/staging were not run; this task does not touch a hosted database.

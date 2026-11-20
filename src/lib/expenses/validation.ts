@@ -5,7 +5,7 @@ export function localDate(value:string) { return /^\d{4}-\d{2}-\d{2}$/.test(valu
 export function today() { return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date()); }
 export function monthAge(month:string,now=today()) { return (Number(now.slice(0,4))-Number(month.slice(0,4)))*12+Number(now.slice(5,7))-Number(month.slice(5,7)); }
 export function deadline(month:string) { const d=new Date(`${month.slice(0,7)}-01T00:00:00Z`); d.setUTCMonth(d.getUTCMonth()+1); d.setUTCDate(1+(7-d.getUTCDay())%7); return d.toISOString().slice(0,10); }
-export function editable(c:Claim,now=today()) { return c.status==='DRAFT'&&!c.locked_at&&(!c.payment_date||now<=c.payment_date); }
+export function editable(c:Claim,now=today()) { return ['DRAFT','SUBMITTED'].includes(c.status)&&!c.locked_at&&(!c.payment_date||now<=c.payment_date); }
 export function itemProblems(item:ItemInput, existing:ItemInput[]=[], now=today()):Problem[] {
  const out:Problem[]=[]; const add=(severity:Problem['severity'],code:string,message:string)=>out.push({severity,code,message,origin:item.import_origin});
  if(!validDate(item.usage_date)||item.usage_date>now) add('ERROR','DATE','사용일을 올바르게 입력해 주세요. 미래 사용일은 등록할 수 없습니다.');

@@ -88,10 +88,11 @@ export async function saveExpenseGrid(payload:string) {
   if(payload.length>1500000)throw new Error('입력 데이터가 너무 큽니다.');
   const value=JSON.parse(payload);
   if(!value||Object.keys(value).some(k=>!['claimId','month','version','items','deleted','reason'].includes(k))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.month)||!Number.isInteger(value.version)||value.version<0||typeof value.reason!=='string'||value.reason.length>2000||!Array.isArray(value.items)||value.items.length>500||!Array.isArray(value.deleted)||value.deleted.length>500)throw new Error('일괄 저장 형식을 확인해 주세요.');
-  if(value.claimId)await ownClaim(value.claimId);
+  const claim=value.claimId?await ownClaim(value.claimId):null;
   const {gridProblems}=await import('@/lib/expenses/grid');
   const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
   for(const row of value.items){if(!row||Object.keys(row).some(k=>!keys.includes(k))||!isUuid(row.id)||!Number.isInteger(row.version)||row.version<0||!Array.isArray(row.attendees)||['usage_date','merchant','description','account_category','notes','trip_context'].some(k=>typeof row[k]!=='string'))throw new Error('행 입력 형식을 확인해 주세요.');}
+  if(claim?.status==='SUBMITTED'&&value.items.some((row:ItemInput)=>!isUuid(row.attachment_id)))throw new Error('제출된 경비는 모든 항목에 증빙이 필요합니다. 증빙을 연결한 뒤 저장해 주세요.');
   const errors=[...claimProblems(value.month,value.reason),...value.items.flatMap((r:ItemInput)=>gridProblems(r,value.items,value.month))].filter(p=>p.severity==='ERROR');
   if(errors.length)throw new Error(errors.map(p=>p.message).join(' '));
   const {data:id,error}=await(await employeeClient()).rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;

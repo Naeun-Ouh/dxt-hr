@@ -120,6 +120,6 @@ in `docs/screenshots/contracts-*` use synthetic data and TEST seal images.
 
 The monthly `/expenses` Grid supersedes the upload/form-first primary UX described above.
 Excel is a menu (template / import into working copy / saved export). Explicit bulk save
-precedes evidence attachment and submission. Submitted/locked/paid views and admin review
-use read-only controls. Existing form/import URLs are compatibility surfaces, not sidebar
+precedes evidence attachment and submission. Submitted claims retain editing through the payment/lock cutoff. Locked/paid, expired
+payment periods and admin review use read-only controls. Existing form/import URLs are compatibility surfaces, not sidebar
 entries. See `ISSUE_23_DELIVERY.md` for keyboard/paste, validation and screenshot evidence.

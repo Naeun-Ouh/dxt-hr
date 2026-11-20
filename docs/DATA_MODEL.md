@@ -321,4 +321,4 @@ See `EMPLOYMENT_CONTRACT_DELIVERY.md` for lifecycle and recovery.
 pre-existing OTHER fallback). Draft item evidence may be absent; submission enforces a
 ready same-claim attachment. Full-snapshot bulk save validates claim/item versions and
 versioned deletions under a transaction lock. No persistent draft domain/table is added.
-SUBMITTED/LOCKED/PAID items are read-only. See `ISSUE_23_DELIVERY.md`.
+SUBMITTED items remain editable until the existing payment/lock cutoff; LOCKED/PAID are read-only. See `ISSUE_23_DELIVERY.md`.

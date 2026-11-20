@@ -16,6 +16,7 @@ import { PROJECT_COLUMNS, ASSIGNMENT_COLUMNS, CAREER_COLUMNS, EXTENSION_COLUMNS 
 async function main() {
 const db = await contractsDatabase();
 await db.exec(readFileSync('supabase/migrations/20261120124228_expense_grid_workspace.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261120135814_restore_expense_payment_edit_window.sql','utf8'));
 const files=new Map<string,Buffer>([[`${claimId}/${receiptId}`,Buffer.from('%PDF-1.4 own')],[`${otherClaimId}/${otherReceiptId}`,Buffer.from('%PDF-1.4 other')]]);
 files.set(`${offboardingId}/${documentId}`,Buffer.from(letter));
 const tables: Record<string,string[]> = {
