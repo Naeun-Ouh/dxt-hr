@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
+import "./design-system.css";
 export const metadata: Metadata = {
   title: { default: "DXT People & Operations", template: "%s · DXT" },
   description: "디엑스티 임직원 운영 관리 시스템", robots: { index: false, follow: false },
