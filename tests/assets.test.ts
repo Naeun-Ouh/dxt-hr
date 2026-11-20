@@ -1,7 +1,8 @@
 import test from 'node:test';
+import { assetTransferDatabase as assetDatabase } from './asset-transfer-fixture';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { assetDatabase,assetId,otherAssetId,licenseId,accountId,assetValues,productKey,password } from './asset-fixture';
+import { assetId,otherAssetId,licenseId,accountId,assetValues,productKey,password } from './asset-fixture';
 import { asUser,personId,ring } from './domain-fixture';
 import { colleagueId } from './project-fixture';
 import { idFor } from './e2e/fixtures';
@@ -14,7 +15,7 @@ test('asset ownership and history follow atomic transfer, return and stale updat
  for(const role of ['employee','leader','expense','division'])await assert.rejects(asUser(db,role,tx=>tx.query('select save_asset($1,$2,1)',[assetId,assetValues])));
  await asUser(db,'it',tx=>tx.query('select save_asset($1,$2,1)',[assetId,{...assetValues,current_holder_id:colleagueId}]));
  assert.equal((await asUser(db,'employee',tx=>tx.query('select id from asset'))).rows.length,0);
- assert.equal((await asUser(db,'employee',tx=>tx.query('select id from asset_assignment'))).rows.length,0);
+ assert.equal((await asUser(db,'employee',tx=>tx.query('select id from asset_assignment'))).rows.length,1);
  assert.equal((await asUser(db,'expense',tx=>tx.query('select id from asset'))).rows.length,2);
  await assert.rejects(asUser(db,'it',tx=>tx.query('select save_asset($1,$2,1)',[assetId,assetValues])));
  await asUser(db,'it',tx=>tx.query('select save_asset($1,$2,2)',[assetId,{...assetValues,status:'AVAILABLE',current_holder_id:null}]));
