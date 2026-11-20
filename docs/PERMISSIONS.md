@@ -167,3 +167,21 @@ checked RPCs perform mutations. The private `company-seals` bucket exposes no di
 authenticated reads/writes. Only a manager-authorized server preview returns raw PNG;
 employees see a seal solely inside their authorized final contract PDF. This does
 not broaden contract body, signature or employee-history access.
+
+## Asset possession and transfers (Issue #19)
+
+- Employee: current asset row only while current holder; own assignment periods,
+  including closed history; transfer rows only when sender or recipient.
+- Historical and incoming equipment use metadata snapshots. They do not grant access
+  to the current asset row, other holders' assignments or management-only asset events.
+- Creating a transfer requires the caller's linked ACTIVE employee identity to match
+  the current holder and exact open assignment. An ACTIVE recipient must differ from sender.
+- Only the intended recipient can confirm normally. The sender cannot impersonate receipt.
+- ASSET_MANAGE (ADMIN / CEO / IT_ADMIN): all asset history; explicit force-confirm or
+  cancel; corrections retain periods and events. Pending transfers must be resolved
+  before ordinary metadata/holder edits. New assignments still require an ACTIVE employee.
+- No employee cancellation/recipient rejection policy is introduced; refer corrections
+  to an asset manager. No additional approval chain is added.
+- `/assets/me`, including manager sessions, applies explicit own filters server-side.
+  RLS and checked RPCs independently enforce scope. Direct authenticated table writes
+  remain revoked; all mutation identities are derived from `auth.uid()`.

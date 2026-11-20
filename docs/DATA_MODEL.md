@@ -208,6 +208,31 @@ Authoritative transaction ledger.
 - assigned_at
 - returned_at?
 
+### asset_transfer (Issue #19)
+- id (request idempotency key)
+- asset_id, assignment_id (the sender's exact open period)
+- sender_id, recipient_id (distinct employees)
+- handoff_date, optional memo
+- state: PENDING | CONFIRMED | CANCELLED
+- requested_at/by, confirmed_at or cancelled_at, resolved_by, forced
+- participant names and type/model/serial snapshots
+
+`asset_assignment.state` is generated from the existing period: ACTIVE while
+`returned_at` is null, RETURNED after closing. A separate PENDING transfer represents
+TRANSFER_PENDING without changing `asset.status` or prematurely changing the holder.
+Only one open assignment and one pending transfer may exist per asset.
+
+Assignments retain their original IDs, start/end dates and actor references. New
+snapshot fields (type/model/serial) support own historical reads without exposing the
+asset's future holder; `end_reason` distinguishes return, confirmed handoff and admin
+correction. Closed periods cannot be rewritten/deleted. Existing historical snapshots
+use metadata available at migration time; older metadata cannot be reconstructed.
+
+Confirmation closes the sender period and starts the recipient period at the handoff
+date in Asia/Seoul (clamped to the original start timestamp for same-day handoffs).
+Confirmation time is recorded separately. Event types distinguish assignment, return,
+status change, transfer request/confirmation/cancellation and administrative correction.
+
 ### windows_license
 - id
 - edition

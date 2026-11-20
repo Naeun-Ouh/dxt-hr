@@ -115,3 +115,13 @@ shell, typography, indigo/gray surfaces and main/rail hierarchy. The user-reques
 contract-specific A4 document, progress summary, signing rail and company seal
 management extend that style. Existing Figma shell assets are reused. Screenshots
 in `docs/screenshots/contracts-*` use synthetic data and TEST seal images.
+
+## Asset handoff extension (Issue #19)
+
+Preserve Figma frames 22/23 and the existing cards, table, notices and shared shell.
+`/assets/me` separates 현재 장비, 인계 확인 대기 중, 받을 장비 and 과거 장비.
+Pending outgoing equipment is removed from the current-use section until resolved;
+show “인계 완료 / 상대 확인 대기”. Incoming equipment offers deliberate 인수 확인.
+Admin asset detail adds transfer participants, requested/handoff/confirmed dates,
+force-confirm/cancel controls and full assignment/event history. Use 현재 보유자 or
+지급자, not legal-ownership terminology.

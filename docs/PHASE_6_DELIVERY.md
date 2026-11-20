@@ -2,6 +2,9 @@
 
 Implements Issue #6 and its latest implementation comment against Figma frames 22–25.
 
+The original current-only possession behavior below is superseded by
+[Issue #19 asset transfers](ISSUE_19_DELIVERY.md). Vault behavior is unchanged.
+
 ## Routes and workflow
 
 - `/assets/me` and `/assets/me/[id]`: current employee's assigned equipment only; no management controls.
