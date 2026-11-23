@@ -80,3 +80,46 @@ export async function importExpenses(_state:ExpenseState,form:FormData):Promise<
  }catch(e){return failure(e);}
  revalidatePath('/','layout');redirect(`/expenses/${target}?saved=1`);
 }
+
+// Grid mutations reauthorize on every invocation; the database repeats ownership/version checks.
+export async function saveExpenseGrid(payload:string) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try {
+  if(payload.length>1500000)throw new Error('입력 데이터가 너무 큽니다.');
+  const value=JSON.parse(payload);
+  if(!value||Object.keys(value).some(k=>!['claimId','month','version','items','deleted','reason'].includes(k))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.month)||!Number.isInteger(value.version)||value.version<0||typeof value.reason!=='string'||value.reason.length>2000||!Array.isArray(value.items)||value.items.length>500||!Array.isArray(value.deleted)||value.deleted.length>500)throw new Error('일괄 저장 형식을 확인해 주세요.');
+  const claim=value.claimId?await ownClaim(value.claimId):null;
+  const {gridProblems}=await import('@/lib/expenses/grid');
+  const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
+  for(const row of value.items){if(!row||Object.keys(row).some(k=>!keys.includes(k))||!isUuid(row.id)||!Number.isInteger(row.version)||row.version<0||!Array.isArray(row.attendees)||['usage_date','merchant','description','account_category','notes','trip_context'].some(k=>typeof row[k]!=='string'))throw new Error('행 입력 형식을 확인해 주세요.');}
+  if(claim?.status==='SUBMITTED'&&value.items.some((row:ItemInput)=>!isUuid(row.attachment_id)))throw new Error('제출된 경비는 모든 항목에 증빙이 필요합니다. 증빙을 연결한 뒤 저장해 주세요.');
+  const errors=[...claimProblems(value.month,value.reason),...value.items.flatMap((r:ItemInput)=>gridProblems(r,value.items,value.month))].filter(p=>p.severity==='ERROR');
+  if(errors.length)throw new Error(errors.map(p=>p.message).join(' '));
+  const {data:id,error}=await(await employeeClient()).rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;
+  revalidatePath('/expenses');return {detail:await expenseDetail(id)};
+ }catch(e){return failure(e);}
+}
+export async function previewExpenseGrid(form:FormData) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try{
+  const file=form.get('workbook'),month=String(form.get('month')||'');
+  if(!(file instanceof File)||file.size>5242880||(!file.name.toLowerCase().endsWith('.xlsx')||file.name.length>200)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('귀속월과 5MB 이하 xlsx 파일을 확인해 주세요.');
+  const options=await expenseOptions();
+  return {preview:await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'))};
+ }catch(e){return failure(e);}
+}
+export async function uploadGridReceipt(claimId:string,form:FormData) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try{await ownClaim(claimId);const file=await receiptFile(form.get('receipt'));if(!file)throw new Error('증빙 파일을 선택해 주세요.');const id=await attach(claimId,file);return {id,filename:file.file.name};}catch(e){return failure(e);}
+}
+export async function submitExpenseGrid(claimId:string,version:number,reason:string) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try{
+  await ownClaim(claimId);const detail=await expenseDetail(claimId);
+  const problems=[...claimProblems(detail.claim.usage_month,reason),...detail.items.flatMap(i=>itemProblems(i,detail.items))];
+  if(problems.some(p=>p.severity==='ERROR'))throw new Error(problems.filter(p=>p.severity==='ERROR').map(p=>p.message).join(' '));
+  if(detail.items.some(i=>!detail.attachments.some(a=>a.id===i.attachment_id&&a.ready)))throw new Error('모든 항목의 증빙을 첨부하고 저장해 주세요.');
+  const {error}=await(await employeeClient()).rpc('submit_expense_claim',{p_claim:claimId,p_version:version,p_reason:reason});if(error)throw error;
+  revalidatePath('/expenses');return {detail:await expenseDetail(claimId)};
+ }catch(e){return failure(e);}
+}

@@ -124,3 +124,9 @@ contract PDFs (`src/lib/contracts/seals.ts`, `storage.ts`). Domain rows contain
 object paths and SHA-256, not provider URLs. PNG normalization and PDF embedding run
 server-side with pinned Sharp/pdf-lib; deploying outside Vercel requires their Node
 native dependencies and the traced Korean font. No cron/service scheduling is needed.
+
+Expense Grid (Issue #23) uses React/HTML working state, the existing ExcelJS adapter,
+and standard PostgreSQL tables/constraints/PLpgSQL transactions. No grid vendor, hosted
+spreadsheet or paid runtime is introduced. Private receipt objects continue through the
+existing storage adapter; only logical attachment IDs/paths are persisted. Export adds
+DXT's two familiar accounting sheets alongside complete normalized records.
