@@ -193,7 +193,8 @@ Categories:
 
 ## Expense lifecycle clarification — Issue #23
 
-The monthly Grid requirement explicitly makes SUBMITTED read-only, followed by LOCKED
-and PAID. This supersedes the older post-submission editing window above. Drafts may be
-saved before evidence is attached; submission still requires all evidence. Payment dates,
+The Grid preserves the existing post-submission edit window: SUBMITTED remains editable
+through its payment date (15th, Asia/Seoul), unless locked or paid earlier. LOCKED/PAID,
+locked_at, and an elapsed payment_date make it read-only. Drafts may be saved before
+evidence is attached; submission and subsequent edits require evidence. Payment dates,
 deadline, retroactive reasons, warning/allowance rules and no-approval policy are unchanged.
