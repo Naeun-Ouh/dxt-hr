@@ -125,3 +125,11 @@ show “인계 완료 / 상대 확인 대기”. Incoming equipment offers delib
 Admin asset detail adds transfer participants, requested/handoff/confirmed dates,
 force-confirm/cancel controls and full assignment/event history. Use 현재 보유자 or
 지급자, not legal-ownership terminology.
+
+## Expense Grid — Issue #23
+
+The monthly `/expenses` Grid supersedes the upload/form-first primary UX described above.
+Excel is a menu (template / import into working copy / saved export). Explicit bulk save
+precedes evidence attachment and submission. Submitted/locked/paid views and admin review
+use read-only controls. Existing form/import URLs are compatibility surfaces, not sidebar
+entries. See `ISSUE_23_DELIVERY.md` for keyboard/paste, validation and screenshot evidence.

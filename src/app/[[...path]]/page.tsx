@@ -79,7 +79,7 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
 function Home({ principal }: { principal: Principal }) {
   const shortcuts = [
     { path: "/leave/request", description: "휴가 신청과 내 휴가 내역을 확인하세요." },
-    { path: "/expenses/new", description: "사용한 경비를 등록하고 관리하세요." },
+    { path: "/expenses", description: "사용한 경비를 등록하고 관리하세요." },
     { path: "/projects/me", description: "내가 참여하는 프로젝트를 확인하세요." },
     { path: "/people", description: "함께 일하는 동료를 찾아보세요." },
     { path: "/leave/approvals", description: "팀원의 휴가 신청을 확인하세요." },
