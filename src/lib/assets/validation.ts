@@ -21,3 +21,9 @@ export function vaultInput(form:FormData,kind:VaultKind,isNew:boolean){
  if((isNew&&!secret)||secret.length>4096||(kind==='windows'&&secret&&!/^[A-Z0-9]{5}(-[A-Z0-9]{5}){4}$/.test(secret)))throw new Error(kind==='windows'?'제품키는 5자리씩 하이픈으로 구분한 25자입니다.':'비밀번호를 1~4096자로 입력해 주세요.');
  return {secret,values:{name,login_id,url,memo,device_asset_id:kind==='windows'?uuidField(form,'device_asset_id'):null,assigned_employee_id:kind==='windows'?uuidField(form,'assigned_employee_id'):null,key_suffix:kind==='windows'&&secret?secret.slice(-5):''}};
 }
+
+export function transferInput(form:FormData){
+ const recipient=uuidField(form,'recipient_id'),date=textField(form,'handoff_date',10,true),memo=textField(form,'memo',2000);
+ if(!recipient||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date)throw new Error('수신자와 인계일을 확인해 주세요.');
+ return {recipient,date,memo};
+}
