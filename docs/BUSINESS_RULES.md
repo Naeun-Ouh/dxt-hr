@@ -196,5 +196,12 @@ Categories:
 The Grid preserves the existing post-submission edit window: SUBMITTED remains editable
 through its payment date (15th, Asia/Seoul), unless locked or paid earlier. LOCKED/PAID,
 locked_at, and an elapsed payment_date make it read-only. Drafts may be saved before
-evidence is attached; submission and subsequent edits require evidence. Payment dates,
+evidence is attached; submission requires at least one ready monthly attachment. Payment dates,
 deadline, retroactive reasons, warning/allowance rules and no-approval policy are unchanged.
+
+## Expense monthly attachments — Issue #26
+
+Monthly claim attachments replace per-item evidence requirements in the primary Grid.
+Submission requires at least one ready active claim attachment. Existing item links
+remain for compatibility. Grid and attachment edits follow the same existing payment/lock
+window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.

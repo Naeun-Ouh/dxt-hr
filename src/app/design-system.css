@@ -171,3 +171,37 @@ button,input,select,textarea {font:inherit}
 .asset-section .asset-table { min-width: 640px; }
 .asset-card dl { row-gap: var(--space-3); }
 .asset-card .transfer-memo { margin-top: var(--space-3); }
+
+/* Expense workspace: compact local search and monthly private attachments. */
+.expense-searchbar { display:flex; flex-wrap:wrap; gap:var(--space-2); align-items:center; padding:16px; border-bottom:1px solid var(--border); }
+.expense-searchbar input { flex:1; min-width:240px; max-width:480px; }
+.expense-searchbar select { width:170px; }
+.expense-filter-panel { display:flex; flex-wrap:wrap; gap:12px; padding:12px 16px; background:var(--background); border-bottom:1px solid var(--border); }
+.expense-filter-panel label { display:grid; gap:4px; font-size:12px; width:155px; }
+.expense-grid { min-width:1120px; }
+.expense-grid input[type=date] { min-width:140px; color-scheme:light; }
+.expense-grid input[aria-invalid=true] { border-color:var(--error); }
+.expense-attachments { padding:20px 24px; }
+.expense-attachments h2 { font-size:16px; margin:0 0 4px; }
+.expense-attachments p { color:var(--text-secondary); font-size:13px; }
+.expense-file-picker { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:16px; margin:12px 0; border:1px dashed var(--border); border-radius:6px; }
+.expense-file-picker label { display:grid; gap:6px; }
+.expense-file-picker span { flex:1; font-size:12px; color:var(--text-secondary); }
+.expense-file-list { list-style:none; padding:0; margin:0; }
+.expense-file-list li { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:10px 0; border-bottom:1px solid var(--border); }
+.expense-file-list li>span { flex:1; min-width:160px; overflow-wrap:anywhere; }
+.expense-workspace>.surface:has(.expense-searchbar) { padding:0; }
+.expense-workspace .expense-searchbar { padding:var(--space-3) var(--space-4); }
+.expense-workspace .expense-searchbar input { flex:1; max-width:480px; }
+.expense-workspace .expense-searchbar select { width:170px; }
+.expense-workspace .expense-grid { table-layout:fixed; min-width:1104px; }
+.expense-grid th:nth-child(1),.expense-grid th:nth-child(2) { width:32px; }
+.expense-grid th:nth-child(3) { width:145px; }
+.expense-grid th:nth-child(4),.expense-grid th:nth-child(5),.expense-grid th:nth-child(8) { width:110px; }
+.expense-grid th:nth-child(6) { width:140px; }
+.expense-grid th:nth-child(7) { width:150px; }
+.expense-grid th:nth-child(9) { width:120px; }
+.expense-grid th:nth-child(10) { width:90px; }
+.expense-grid th:nth-child(11) { width:65px; }
+.expense-workspace .expense-grid td input:not([type=checkbox]),.expense-workspace .expense-grid td select { min-width:0; padding:6px 4px; }
+.expense-workspace .expense-grid td .button { padding:4px 8px; }

@@ -133,3 +133,10 @@ Excel is a menu (template / import into working copy / saved export). Explicit b
 precedes evidence attachment and submission. Submitted claims retain editing through the payment/lock cutoff. Locked/paid, expired
 payment periods and admin review use read-only controls. Existing form/import URLs are compatibility surfaces, not sidebar
 entries. See `ISSUE_23_DELIVERY.md` for keyboard/paste, validation and screenshot evidence.
+
+## Expense monthly attachments — Issue #26
+
+Monthly claim attachments replace per-item evidence requirements in the primary Grid.
+Submission requires at least one ready active claim attachment. Existing item links
+remain for compatibility. Grid and attachment edits follow the same existing payment/lock
+window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.

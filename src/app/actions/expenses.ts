@@ -28,8 +28,11 @@ async function receiptFile(file:FormDataEntryValue|null) {
 async function attach(claimId:string,receipt:NonNullable<Awaited<ReturnType<typeof receiptFile>>>) {
  await ownClaim(claimId);const client=await employeeClient();const {file,bytes}=receipt;
  const {data:id,error}=await client.rpc('reserve_expense_attachment',{p_claim:claimId,p_filename:file.name,p_mime:file.type,p_size:file.size});if(error)throw error;
- const {error:uploadError}=await client.storage.from('expense-evidence').upload(`${claimId}/${id}`,bytes,{contentType:file.type,upsert:false});if(uploadError)throw new Error('증빙 업로드에 실패했습니다. 다시 시도해 주세요.');
- const {error:finishError}=await client.rpc('finish_expense_attachment',{p_id:id});if(finishError)throw finishError;return id as string;
+ try {
+  const {error:uploadError}=await client.storage.from('expense-evidence').upload(`${claimId}/${id}`,bytes,{contentType:file.type,upsert:false});if(uploadError)throw new Error('증빙 업로드에 실패했습니다. 다시 시도해 주세요.');
+  const {error:finishError}=await client.rpc('finish_expense_attachment',{p_id:id});if(finishError)throw finishError;return id as string;
+ }catch(e){await client.rpc('remove_expense_attachment',{p_claim:claimId,p_id:id});throw e;}
+
 }
 export async function saveExpense(claimId:string|null,itemId:string|null,_state:ExpenseState,form:FormData):Promise<ExpenseState> {
  await requireCapability('EMPLOYEE_ACCESS');let target=claimId;
@@ -88,11 +91,10 @@ export async function saveExpenseGrid(payload:string) {
   if(payload.length>1500000)throw new Error('입력 데이터가 너무 큽니다.');
   const value=JSON.parse(payload);
   if(!value||Object.keys(value).some(k=>!['claimId','month','version','items','deleted','reason'].includes(k))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.month)||!Number.isInteger(value.version)||value.version<0||typeof value.reason!=='string'||value.reason.length>2000||!Array.isArray(value.items)||value.items.length>500||!Array.isArray(value.deleted)||value.deleted.length>500)throw new Error('일괄 저장 형식을 확인해 주세요.');
-  const claim=value.claimId?await ownClaim(value.claimId):null;
+  if(value.claimId)await ownClaim(value.claimId);
   const {gridProblems}=await import('@/lib/expenses/grid');
   const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
   for(const row of value.items){if(!row||Object.keys(row).some(k=>!keys.includes(k))||!isUuid(row.id)||!Number.isInteger(row.version)||row.version<0||!Array.isArray(row.attendees)||['usage_date','merchant','description','account_category','notes','trip_context'].some(k=>typeof row[k]!=='string'))throw new Error('행 입력 형식을 확인해 주세요.');}
-  if(claim?.status==='SUBMITTED'&&value.items.some((row:ItemInput)=>!isUuid(row.attachment_id)))throw new Error('제출된 경비는 모든 항목에 증빙이 필요합니다. 증빙을 연결한 뒤 저장해 주세요.');
   const errors=[...claimProblems(value.month,value.reason),...value.items.flatMap((r:ItemInput)=>gridProblems(r,value.items,value.month))].filter(p=>p.severity==='ERROR');
   if(errors.length)throw new Error(errors.map(p=>p.message).join(' '));
   const {data:id,error}=await(await employeeClient()).rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;
@@ -108,9 +110,30 @@ export async function previewExpenseGrid(form:FormData) {
   return {preview:await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'))};
  }catch(e){return failure(e);}
 }
-export async function uploadGridReceipt(claimId:string,form:FormData) {
+export async function uploadExpenseAttachments(claimId:string,form:FormData) {
  await requireCapability('EMPLOYEE_ACCESS');
- try{await ownClaim(claimId);const file=await receiptFile(form.get('receipt'));if(!file)throw new Error('증빙 파일을 선택해 주세요.');const id=await attach(claimId,file);return {id,filename:file.file.name};}catch(e){return failure(e);}
+ try {
+  await ownClaim(claimId);
+  if([...form.keys()].some(k=>k!=='files'))throw new Error('파일 요청 형식을 확인해 주세요.');
+  const files=form.getAll('files');
+  if(!files.length||files.length>20||files.some(f=>!(f instanceof File))||files.reduce((n,f)=>n+(f as File).size,0)>15728640)throw new Error('한 번에 20개, 15MB 이하로 업로드해 주세요. 파일별 최대 10MB, 월별 최대 20개·100MB입니다.');
+  const results:{name:string;ok:boolean;error?:string}[]=[];
+  for(const entry of files){
+   try{const receipt=await receiptFile(entry);if(!receipt)throw new Error('빈 파일은 업로드할 수 없습니다.');await attach(claimId,receipt);results.push({name:(entry as File).name,ok:true});}
+   catch(e){results.push({name:(entry as File).name,ok:false,error:failure(e).error});}
+  }
+  const detail=await expenseDetail(claimId);revalidatePath('/expenses');return {attachments:detail.attachments,results};
+ }catch(e){return failure(e);}
+}
+export async function removeExpenseAttachment(claimId:string,id:string) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try {
+  await ownClaim(claimId);if(!isUuid(id))throw new Error('첨부파일을 찾을 수 없습니다.');
+  const client=await employeeClient();const {data:a}=await client.from('expense_attachment').select('id').eq('id',id).eq('claim_id',claimId).maybeSingle();
+  if(!a)throw new Error('첨부파일을 찾을 수 없습니다.');
+  const {error}=await client.rpc('remove_expense_attachment',{p_claim:claimId,p_id:id});if(error)throw error;
+  revalidatePath('/expenses');return {attachments:(await expenseDetail(claimId)).attachments};
+ }catch(e){return failure(e);}
 }
 export async function submitExpenseGrid(claimId:string,version:number,reason:string) {
  await requireCapability('EMPLOYEE_ACCESS');
@@ -118,7 +141,7 @@ export async function submitExpenseGrid(claimId:string,version:number,reason:str
   await ownClaim(claimId);const detail=await expenseDetail(claimId);
   const problems=[...claimProblems(detail.claim.usage_month,reason),...detail.items.flatMap(i=>itemProblems(i,detail.items))];
   if(problems.some(p=>p.severity==='ERROR'))throw new Error(problems.filter(p=>p.severity==='ERROR').map(p=>p.message).join(' '));
-  if(detail.items.some(i=>!detail.attachments.some(a=>a.id===i.attachment_id&&a.ready)))throw new Error('모든 항목의 증빙을 첨부하고 저장해 주세요.');
+  if(!detail.attachments.some(a=>a.ready))throw new Error('월별 첨부파일을 최소 1개 업로드해 주세요.');
   const {error}=await(await employeeClient()).rpc('submit_expense_claim',{p_claim:claimId,p_version:version,p_reason:reason});if(error)throw error;
   revalidatePath('/expenses');return {detail:await expenseDetail(claimId)};
  }catch(e){return failure(e);}

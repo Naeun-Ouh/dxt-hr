@@ -188,6 +188,13 @@ not broaden contract body, signature or employee-history access.
 
 Expense Grid preserves owner-only authoring. EXPENSE_MANAGE allows review/export/lock/pay,
 never writing another employee's Grid. Bulk mutation repeats identity, claim/item ownership,
-version and DRAFT-state checks in PostgreSQL. Evidence may be absent while drafting but is
+version and payment/lock checks in PostgreSQL. Monthly evidence may be absent while drafting but at least one ready file is
 required on submit. SUBMITTED retains the existing payment-date edit window, including legacy writer RPCs.
 LOCKED/PAID, locked_at and elapsed payment periods deny all employee writers.
+
+## Expense monthly attachments — Issue #26
+
+Monthly claim attachments replace per-item evidence requirements in the primary Grid.
+Submission requires at least one ready active claim attachment. Existing item links
+remain for compatibility. Grid and attachment edits follow the same existing payment/lock
+window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.

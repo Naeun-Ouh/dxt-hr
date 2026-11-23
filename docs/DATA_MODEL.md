@@ -343,7 +343,14 @@ See `EMPLOYMENT_CONTRACT_DELIVERY.md` for lifecycle and recovery.
 ### Expense Grid evolution (Issue #23)
 
 `expense_account_category` provides the controlled workbook vocabulary (including the
-pre-existing OTHER fallback). Draft item evidence may be absent; submission enforces a
-ready same-claim attachment. Full-snapshot bulk save validates claim/item versions and
+pre-existing OTHER fallback). Item evidence links are retained for compatibility; submission enforces at least one
+ready active monthly claim attachment. Full-snapshot bulk save validates claim/item versions and
 versioned deletions under a transaction lock. No persistent draft domain/table is added.
 SUBMITTED items remain editable until the existing payment/lock cutoff; LOCKED/PAID are read-only. See `ISSUE_23_DELIVERY.md`.
+
+## Expense monthly attachments — Issue #26
+
+Monthly claim attachments replace per-item evidence requirements in the primary Grid.
+Submission requires at least one ready active claim attachment. Existing item links
+remain for compatibility. Grid and attachment edits follow the same existing payment/lock
+window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.

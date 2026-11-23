@@ -1,14 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
-import {contractsDatabase} from './contracts-fixture';
+import {monthlyExpenseDatabase as database} from './expense-monthly-fixture';
 import {asUser} from './domain-fixture';
 import {claimId,otherClaimId,itemId,otherItemId,receiptId,otherReceiptId,currentMonth,expenseValues} from './expense-fixture';
 import {blankRow,duplicateRow,importRows,pasteRows,gridProblems} from '../src/lib/expenses/grid';
 import type {ItemInput} from '../src/lib/expenses/types';
-const migration=readFileSync('supabase/migrations/20261120124228_expense_grid_workspace.sql','utf8');
-async function database(){const db=await contractsDatabase();await db.exec(migration);await db.exec(readFileSync('supabase/migrations/20261120135814_restore_expense_payment_edit_window.sql','utf8'));return db;}
 const row=expenseValues as ItemInput;
 const save=(db:Awaited<ReturnType<typeof database>>,items:unknown[],deleted:unknown[]=[],version=1,claim=claimId,user='employee')=>asUser(db,user,tx=>tx.query('select save_expense_grid($1,$2,$3,$4,$5,$6)',[claim,currentMonth+'-01',version,JSON.stringify(items),JSON.stringify(deleted),'']));
 test('grid paste preserves persisted rows, validates malformed data, duplicates/imports/reset remain local',()=>{
@@ -26,7 +23,9 @@ test('grid snapshot atomically creates/updates/deletes, rejects stale replay and
  assert.equal((await db.query('select * from expense_item where claim_id=$1',[claimId])).rows.length,2);
  await assert.rejects(save(db,[row,fresh]));
  await assert.rejects(save(db,[{...row,version:2}],[],2));
+ await db.query('update expense_attachment set ready=false where claim_id=$1',[claimId]);
  await assert.rejects(asUser(db,'employee',tx=>tx.query("select submit_expense_claim($1,2,'')",[claimId])));
+ await db.query('update expense_attachment set ready=true where claim_id=$1',[claimId]);
  await save(db,[{...fresh,version:1,attachment_id:receiptId}],[{id:itemId,version:2}],2);
  assert.equal((await db.query('select * from expense_item where claim_id=$1',[claimId])).rows.length,1);
  await asUser(db,'employee',tx=>tx.query("select submit_expense_claim($1,3,'')",[claimId]));
@@ -79,9 +78,8 @@ test('submitted Grid edits retain payment window, evidence, ownership and versio
  const db=await database();try{
   await db.exec(`create or replace function public.expense_today() returns date language sql stable as $$select '${currentMonth}-15'::date$$`);
   await db.query("update expense_claim set status='SUBMITTED',submitted_at=now(),payment_date=$1 where id=$2",[currentMonth+'-15',claimId]);
-  await save(db,[{...row,amount:11000}]);
+  await save(db,[{...row,amount:11000,attachment_id:''}]);
   await assert.rejects(save(db,[row])); // stale version still fails after submission
-  await assert.rejects(save(db,[{...row,version:2,attachment_id:''}],[],2));
   await assert.rejects(save(db,[{...row,version:2,attachment_id:otherReceiptId}],[],2));
   await assert.rejects(save(db,[{...row,version:2}],[],2,claimId,'leader'));
   await asUser(db,'employee',tx=>tx.query("select save_expense_items($1,$2,'')",[claimId,JSON.stringify([{...row,version:2,amount:10000}])]));
