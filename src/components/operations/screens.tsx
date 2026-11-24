@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/ui/primitives';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { can,type Principal } from '@/lib/permissions';
@@ -6,7 +7,7 @@ import { assets } from '@/lib/assets/data';
 import { operationCases,operationDetail,operationPeople,resignationDocuments,announcements,announcement,familyPosts,familyRegistrations,familyRegistration,birthdayTemplate,readRows } from '@/lib/operations/data';
 import { TASK_LABELS,TASK_STATES,EVENT_CATEGORIES,type OperationKind } from '@/lib/operations/types';
 import { OperationStart,TaskEditor,CaseControls,ResignationReason,ResignationUpload,AnnouncementEditor,FamilyEditor,FamilyPublication,BirthdayEditor } from './forms';
-function Heading({title,description,href,action}:{title:string;description:string;href?:string;action?:string}){return <div className="heading-row"><div className="page-heading"><h1>{title}</h1><p>{description}</p></div>{href&&<Link className="button primary" href={href}>{action}</Link>}</div>;}
+function Heading({title,description,href,action}:{title:string;description:string;href?:string;action?:string}){return <PageHeader title={title} description={description} actions={href&&<Link className="button primary" href={href}>{action}</Link>}/>;}
 function Saved({query}:{query:SearchParams}){return query.saved?<p className="success-banner" role="status">저장했습니다.</p>:null;}
 function Badge({children,done=false}:{children:React.ReactNode;done?:boolean}){return <span className={`operation-badge ${done?'done':''}`}>{children}</span>;}
 const date=(value:string)=>new Date(value).toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'});

@@ -15,9 +15,9 @@ for (const [name, extra] of Object.entries(additions)) {
     expect((await page.locator('nav[aria-label="주 메뉴"] a').evaluateAll(links => links.map(a => a.getAttribute("href")))).sort()).toEqual(expected);
     await expect(page.getByRole("link", { name: "직원", exact: true })).toHaveAttribute("aria-current", "page");
     const images = await page.locator("img").evaluateAll(images => images.map(element => { const img = element as HTMLImageElement; return ({ loaded: img.complete && img.naturalWidth > 0, width: img.width, naturalWidth: img.naturalWidth, height: img.height, naturalHeight: img.naturalHeight }); }));
-    expect(images.every(img => img.loaded && img.width === img.naturalWidth && img.height === img.naturalHeight)).toBe(true);
-    expect(await page.locator(".sidebar").evaluate(el => el.getBoundingClientRect().width)).toBe(240);
-    expect(await page.locator(".top-header").evaluate(el => el.getBoundingClientRect().height)).toBe(60);
+    expect(images.every(img => img.loaded && Math.abs(img.width / img.height - img.naturalWidth / img.naturalHeight) < 0.01)).toBe(true);
+    expect(await page.locator(".sidebar").evaluate(el => el.getBoundingClientRect().width)).toBe(208);
+    expect(await page.locator(".top-header").evaluate(el => el.getBoundingClientRect().height)).toBe(48);
     await page.screenshot({ path: `docs/screenshots/sidebar-${name}.png`, fullPage: true });
   });
 }

@@ -23,9 +23,10 @@ test('monthly grid paste, edit, duplicate, delete, reset, import, vehicle, evide
  await page.getByRole('button',{name:'Grid 미리보기'}).click();await expect(page.getByText('Excel 가져옴')).toHaveCount(2);
  await page.getByRole('button',{name:'Grid 미리보기'}).click();await expect(page.getByText('Excel 가져옴')).toHaveCount(4);
  await page.getByLabel('가져오기 방식').selectOption('replace');await page.getByRole('button',{name:'Grid 미리보기'}).click();await expect(page.getByText('Excel 가져옴')).toHaveCount(2);
+ await page.getByRole('button',{name:'Excel 가져오기 닫기',exact:true}).click();
  await expect(page.getByRole('button',{name:'일괄 저장',exact:true})).toBeDisabled();await page.getByLabel('4행 사용일',{exact:true}).fill(month+'-03');await page.getByLabel('4행 사용처',{exact:true}).fill('수정한 식당');await expect(page.getByRole('button',{name:'일괄 저장',exact:true})).toBeEnabled();await page.screenshot({path:'docs/screenshots/issue23-import-grid.png',fullPage:true});
  await page.getByRole('row').filter({has:page.getByLabel('3행 사용일',{exact:true})}).getByRole('button',{name:'상세',exact:true}).click();await page.getByLabel('횟수',{exact:true}).fill('3');await expect(page.getByText('계산 금액 7,200원')).toBeVisible();await page.screenshot({path:'docs/screenshots/issue23-vehicle-detail.png',fullPage:true});
- await page.getByRole('button',{name:'상세 닫기'}).click();await page.getByRole('button',{name:'일괄 저장',exact:true}).click();await expect(page.getByRole('status')).toHaveText('저장 완료');
+ await page.getByRole('button',{name:'경비 행 상세 닫기',exact:true}).click();await page.getByRole('button',{name:'일괄 저장',exact:true}).click();await expect(page.getByRole('status')).toHaveText('저장 완료');
  await page.getByLabel('파일 선택 (여러 개)').setInputFiles(pdf);await page.getByRole('button',{name:/^파일 업로드/}).click();await expect(page.getByRole('status')).toContainText('업로드 결과');
 
  const exportUrl=await page.getByRole('link',{name:'Excel Export (저장된 내역)'}).getAttribute('href');const exported=await context.request.get(exportUrl!);expect(exported.status()).toBe(200);const xlsx=new ExcelJS.Workbook();await xlsx.xlsx.load(await exported.body() as never);expect(xlsx.getWorksheet('주유비,통행비')!.getCell('G2').value).toBe(3);
