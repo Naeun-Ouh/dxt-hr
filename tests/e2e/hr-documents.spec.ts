@@ -57,3 +57,17 @@ test('bankbook, resident copy and private-only other HR files retain own scope a
  await expect(page.getByRole('row').filter({hasText:'synthetic-bank.png'})).toBeVisible();await expect(page.getByRole('row').filter({hasText:'synthetic-resident.jpg'})).toBeVisible();await expect(page.getByText('synthetic-private.pdf')).toHaveCount(0);expect((await context.request.get(privateHref)).status()).toBe(404);
  await expect(page.getByRole('link',{name:'인사정보',exact:true})).toHaveCount(0);
 });
+test('4 MiB original PDF roundtrips; valid 5/10 MiB selection fails locally before Server Action',async({page,context})=>{
+ const {syntheticHrPdf}=await import('../hr-document-boundary-fixture');
+ await loginAs(context,'designated');await page.goto(`/admin/employees/${employee}?tab=documents`);await page.getByRole('button',{name:'서류 추가 / 새 버전'}).click();
+ await expect(page.getByText(/서류 제출은 선택사항/)).toBeAttached();await expect(page.getByText(/불필요한 주민번호·가족·계좌정보/)).toBeVisible();
+ let actions=0;page.on('request',req=>{if(req.headers()['next-action'])actions++;});
+ for(const size of [4*1024*1024+1,5*1024*1024,10*1024*1024]){
+  await page.getByLabel('파일',{exact:true}).setInputFiles({name:'synthetic-oversize.pdf',mimeType:'application/pdf',buffer:await syntheticHrPdf(size)});
+  await page.getByRole('button',{name:'서류 등록',exact:true}).click();await expect(page.locator('.form-error[role=alert]')).toContainText('4 MiB');expect(actions).toBe(0);
+ }
+ const bytes=await syntheticHrPdf(4*1024*1024);
+ await page.getByLabel('파일',{exact:true}).setInputFiles({name:'synthetic-4mib.pdf',mimeType:'application/pdf',buffer:bytes});await page.getByRole('button',{name:'서류 등록',exact:true}).click();await expect(page.getByRole('status')).toContainText('인사서류가 등록되었습니다');await page.getByRole('button',{name:'인사서류 등록 닫기'}).click();
+ const href=(await page.getByRole('row').filter({hasText:'synthetic-4mib.pdf'}).getByRole('link',{name:'다운로드'}).getAttribute('href'))!;
+ const response=await context.request.get(href);expect(response.status()).toBe(200);expect(response.headers()['cache-control']).toBe('private, no-store');expect(await response.body()).toEqual(bytes);
+});

@@ -20,7 +20,7 @@ await db.exec(readFileSync('supabase/migrations/20261120124228_expense_grid_work
 await db.exec(readFileSync('supabase/migrations/20261120135814_restore_expense_payment_edit_window.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261123141334_expense_monthly_attachments.sql','utf8'));
 await db.exec(readFileSync('supabase/migrations/20261124125833_expense_payment_cards.sql','utf8'));
-await db.exec(readFileSync('supabase/migrations/20261124134708_employee_hr_documents.sql','utf8'));
+await db.exec(readFileSync('supabase/migrations/20261124134708_employee_hr_documents.sql','utf8'));await db.exec(readFileSync('supabase/migrations/20261124220933_hr_document_v1_transport_limit.sql','utf8'));
 // Synthetic elapsed-payment fixture exercises read-only attachment controls through HTTP.
 await db.exec(`insert into public.expense_claim(id,employee_id,usage_month,status,payment_date)
  values('61000000-0000-4000-8000-000000000026','10000000-0000-4000-8000-000000000001',date_trunc('month',public.expense_today()-interval '4 months'),'SUBMITTED',public.expense_today()-1);

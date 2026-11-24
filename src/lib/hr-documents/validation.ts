@@ -1,9 +1,11 @@
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {PDFDocument} from 'pdf-lib';
-export const MAX_DOCUMENT_BYTES=10*1024*1024;
+import {MAX_DOCUMENT_BYTES,DOCUMENT_SIZE_MESSAGE} from './types';
+export {MAX_DOCUMENT_BYTES} from './types';
 export async function validateDocument(file:File){
- if(!file.size||file.size>MAX_DOCUMENT_BYTES||!file.name||file.name.length>200||/[\x00-\x1f\x7f/\\]/.test(file.name))throw new Error('파일명과 용량을 확인해 주세요. 파일당 최대 10MB입니다.');
+ if(file.size>MAX_DOCUMENT_BYTES)throw new Error(DOCUMENT_SIZE_MESSAGE);
+ if(!file.size||!file.name||file.name.length>200||/[\x00-\x1f\x7f/\\]/.test(file.name))throw new Error('파일명과 파일 내용을 확인해 주세요.');
  const bytes=Buffer.from(await file.arrayBuffer());
  const extension=file.name.split('.').pop()?.toLowerCase();
  if(file.type==='application/pdf'&&extension==='pdf'&&bytes.subarray(0,5).toString()==='%PDF-'){

@@ -29,7 +29,7 @@ A private employee-hr-documents bucket has no authenticated/anonymous object pol
 The server uses a server-only service adapter after authorization; no browser upload,
 Storage URL, reusable signed URL or object overwrite is provided. The DB generates
 an employee/document UUID path; the client cannot supply it. Supported PDF/PNG/JPEG
-are limited to 10 MiB each, with filename/extension/MIME/magic and parser/decode checks.
+are limited to 4 MiB (4,194,304 bytes) each, with filename/extension/MIME/magic and parser/decode checks.
 SHA-256 and size are verified again on read. Files retain original bytes.
 
 Reserve/archive RPCs require PRIVATE_HR_ACCESS. Finish is service-role only and checks
@@ -59,19 +59,94 @@ issue33-self-documents.png (synthetic documents only).
 
 ## Hosted staging and remaining limits
 
-No production data or hosted database/storage was accessed or migrated. Hosted staging
+No production data was used and no hosted database/storage was modified. A read-only
+configuration/schema preflight is recorded in STAGING_ACCEPTANCE.md. Hosted staging
 must apply migrations, configure the server-only service key, verify real role sessions,
-Storage rejection and the hosting request-size ceiling (a 10 MiB application limit may
-exceed a provider's request-body limit). Malware scanning, OCR and automatic retention
+Storage rejection and the hosting request-size ceiling (the 4 MiB application limit leaves room for normal multipart fields under the default hosting request limit). Malware scanning, OCR and automatic retention
 are not implemented. Sandbox preview reduces active-document execution in the browser;
 it is not antivirus certification of downloaded documents. Interrupted uploads may
 leave hidden reservations/objects for authorized manual reconciliation; no cleanup cron.
 Preserve database rows, private objects and existing HR encryption keys in backups.
 Google login is unchanged; automatic Gmail and cron remain disabled.
 
-### Local regression result
+### Initial implementation regression result (before review follow-up)
 
 - lint / production build / typecheck: passed.
 - Unit + PostgreSQL/RLS: 94 passed.
 - Full Chrome browser suite: 78 passed; affected employee/document tests rerun after
   the final upload-form state reset. GitHub CI status is recorded in the PR.
+
+
+## Review follow-up — optional collection and 4 MiB v1
+
+PR #34 product decision supersedes the earlier 10 MiB requirement. HR documents are
+optional, particularly bankbook/resident copies: no onboarding gate or bulk collection.
+The UI states the purpose (account verification / necessary HR facts / career evidence)
+and asks the uploader to mask unnecessary resident, family and account information.
+No OCR or extraction. Only synthetic files may be used for testing.
+
+`20261124220933_hr_document_v1_transport_limit.sql` follows the initial document
+migration. Client preflight, server validator, DB byte-size constraint and bucket now
+agree on 4,194,304 bytes. Original bytes remain unchanged. Client rejects oversized
+files before a Server Action request; server/DB independently reject bypasses. PDF
+responses are bounded by the same metadata limit and verify actual size/hash.
+The global Server Action allowance remains unchanged for unrelated expense workflows.
+
+Migration preflight (trusted operator, counts only): check for employee_hr_document
+rows with byte_size > 4194304. The migration intentionally fails transactionally if
+any exist; it does not delete/truncate them. Resolve with the authorized HR owner and
+approved export/replacement/retention instructions before retrying. Do not turn on
+unbounded downloads or public Storage as a workaround.
+
+### Recovery, archive and retention
+
+New same-type uploads do NOT automatically archive older records. HR reviews the new
+version, then explicitly archives obsolete versions. Archive removes normal/self
+visibility but is not erasure and is not a promise of indefinite retention.
+
+For failed reservations, a trusted operator inventories ID/path/hash/size/uploader/time
+without reading sensitive content, reconciles object existence against the DB row and
+application audit, and records an incident/recovery reference. A verified object may
+be re-published only after current HR authorization, exact size/hash/MIME/decode checks
+and audit; otherwise retry as a new upload and retain the incomplete reservation for
+approved reconciliation. No browser recovery endpoint or direct client finish grant.
+
+An eventual purge requires an agreed purpose-specific retention schedule/legal basis,
+HR owner approval, legal-hold check, preview manifest and dual confirmation. Proposed
+workflow: append PURGE_APPROVED event (actor/reason/IDs, no content), delete only the
+approved object versions through a trusted worker, append PURGE_COMPLETED or
+PURGE_FAILED with operation ID, and retain minimal non-content audit/tombstone records.
+Account for backups and failed partial operations before claiming erasure. Current
+immutable metadata/event guards must not be bypassed ad hoc: a reviewed additive
+migration/service-only procedure is required to introduce this workflow. Retention
+periods, legal basis and backup erasure policy are company decisions still pending;
+no automatic destructive purge, cron or indefinite-storage commitment is introduced.
+
+### Synthetic hosted acceptance (separate gate)
+
+On the exact PR preview with confirmed dedicated staging Auth/DB/Storage:
+1. Use dedicated synthetic employee A/B, Team Leader, ordinary ADMIN, designated HR ADMIN.
+2. Generate valid synthetic PDFs at 4 MiB, 4 MiB + 1 byte, 5 MiB and 10 MiB using
+   tests/hr-document-boundary-fixture.ts. Never upload real bankbook/resident records.
+3. Upload exactly 4 MiB as authorized HR, download/preview via private proxy, compare
+   original byte count/SHA-256 and verify private,no-store and nosniff headers.
+4. Select each oversized file: clear 4 MiB error, no upload request in browser network.
+   Independently probe the reservation RPC with oversized metadata: DB constraint denial.
+5. A can read own allowed file; B/Team Leader/ordinary ADMIN cannot fetch A's UUID/path.
+   Direct Storage is denied for all browser roles, including HR. Archive then verify own
+   denial and HR history access; new version must not alter old bytes.
+6. Record deployment/HEAD, migration order, synthetic identity labels, expected/actual
+   outcomes and sanitized evidence. No tokens, file contents or real identifiers in Git.
+
+Local boundary tests do not establish hosted acceptance; record live access blockers
+and unexecuted cases separately. A successful Vercel build is not authenticated UAT.
+
+### Review follow-up local verification
+
+- lint, production build and typecheck passed; unit/DB **95/95 passed**.
+- All four HR-document browser scenarios passed, including the exact 4 MiB roundtrip
+  and local rejection of 4 MiB + 1 byte / 5 MiB / 10 MiB valid PDFs.
+- The full 79-case local browser run did not complete: macOS disk exhaustion (`ENOSPC`)
+  interrupted trace/context writes; a trace-disabled retry also failed creating its
+  result directory. Do not count this as a full local pass. GitHub CI runs the complete
+  suite independently; exact result/HEAD will be recorded in the PR.

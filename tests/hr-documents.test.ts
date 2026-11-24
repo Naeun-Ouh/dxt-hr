@@ -8,7 +8,7 @@ import {asUser,personId} from './domain-fixture';
 import {asService} from './operations-fixture';
 import {colleagueId} from './project-fixture';
 import {validateDocument} from '../src/lib/hr-documents/validation';
-async function setup(){const db=await contractsDatabase();await db.exec(readFileSync('supabase/migrations/20261124134708_employee_hr_documents.sql','utf8'));return db;}
+async function setup(){const db=await contractsDatabase();await db.exec(readFileSync('supabase/migrations/20261124134708_employee_hr_documents.sql','utf8'));await db.exec(readFileSync('supabase/migrations/20261124220933_hr_document_v1_transport_limit.sql','utf8'));return db;}
 async function reserve(db:Awaited<ReturnType<typeof setup>>,employee=personId,type='RESUME',role='designated'){
  const r=await asUser(db,role,tx=>tx.query<{id:string}>("select reserve_hr_document($1,$2,'synthetic.pdf','application/pdf',20,repeat('a',64),null,null) id",[employee,type]));
  const id=r.rows[0].id;
@@ -71,3 +71,14 @@ test('unpublished files stay hidden; finish requires a stored validated object a
   assert.deepEqual((await db.query('select * from storage.objects where name=$1',[personId+'/'+id])).rows,before);
  }
 }finally{await db.close();}});
+test('v1 4 MiB boundary preserves exact PDF bytes and rejects valid 5/10 MiB files before decoding',async()=>{
+ const {syntheticHrPdf}=await import('./hr-document-boundary-fixture');
+ const max=4*1024*1024,bytes=await syntheticHrPdf(max);
+ const valid=await validateDocument(new File([bytes],'synthetic-boundary.pdf',{type:'application/pdf'}));assert.deepEqual(valid.bytes,bytes);
+ for(const size of [max+1,5*1024*1024,10*1024*1024])await assert.rejects(()=>syntheticHrPdf(size).then(b=>validateDocument(new File([b],'synthetic-oversize.pdf',{type:'application/pdf'}))),/4 MiB/);
+ const db=await setup();try{
+  assert.equal((await db.query<{file_size_limit:number}>("select file_size_limit from storage.buckets where id='employee-hr-documents'")).rows[0].file_size_limit,max);
+  for(const size of [max+1,5*1024*1024,10*1024*1024])await assert.rejects(()=>asUser(db,'ceo',tx=>tx.query("select reserve_hr_document($1,'RESUME','size.pdf','application/pdf',$2,repeat('a',64),null,null)",[personId,size])));
+  await asUser(db,'ceo',tx=>tx.query("select reserve_hr_document($1,'RESUME','boundary.pdf','application/pdf',$2,repeat('a',64),null,null)",[personId,max]));
+ }finally{await db.close();}
+});
