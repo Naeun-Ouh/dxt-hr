@@ -1,11 +1,13 @@
 'use server';
+import { writableItem } from '@/lib/expenses/grid';
+import { cardValues } from '@/lib/expenses/cards';
 import { randomUUID } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { requireCapability } from '@/lib/auth/access';
 import { employeeClient } from '@/lib/employees/data';
 import { isUuid, versionFrom } from '@/lib/employees/validation';
-import { expenseDetail, expenseOptions, expenseRows } from '@/lib/expenses/data';
+import { expenseDetail, expenseOptions, expenseRows, ownPaymentCards } from '@/lib/expenses/data';
 import { CLAIM_COLUMNS, type Claim, type ExpenseState, type ItemInput } from '@/lib/expenses/types';
 import { claimProblems, editable, fromForm, itemProblems } from '@/lib/expenses/validation';
 import { parseWorkbook } from '@/lib/expenses/workbook';
@@ -67,7 +69,7 @@ export async function importExpenses(_state:ExpenseState,form:FormData):Promise<
   const file=form.get('workbook'),month=String(form.get('month')||''),reason=String(form.get('late_reason')||'').trim();
   if(!(file instanceof File)||!file.size||file.size>5242880||!file.name.toLowerCase().endsWith('.xlsx')||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('사용월과 5MB 이하 xlsx 파일을 선택해 주세요.');
   const options=await expenseOptions();if(!options.selfId)throw new Error('직원 계정 연결이 필요합니다.');
-  const preview=await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'));
+  const preview=await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'),await ownPaymentCards());
   preview.problems.push(...claimProblems(month,reason));
   const receipt=await receiptFile(form.get('receipt'));if(!receipt)preview.problems.push({severity:'ERROR',code:'EVIDENCE',message:'전체 경비의 영수증·지도·통행료 증빙을 PDF 또는 이미지로 첨부해 주세요.'});
   const client=await employeeClient();const claims=await expenseRows<Claim>('expense_claim',CLAIM_COLUMNS,{employee_id:options.selfId,usage_month:month+'-01'});
@@ -78,7 +80,7 @@ export async function importExpenses(_state:ExpenseState,form:FormData):Promise<
   }
   if(form.get('intent')!=='register'||preview.problems.some(p=>p.severity==='ERROR'))return {preview};
   const {data,error}=await client.rpc('ensure_expense_claim',{p_month:month+'-01'});if(error)throw error;target=data as string;await ownClaim(target);
-  const attachmentId=await attach(target,receipt!);const items:ItemInput[]=preview.items.map(i=>({...i,attachment_id:attachmentId}));
+  const attachmentId=await attach(target,receipt!);const items:ItemInput[]=preview.items.map(i=>({...writableItem(i),attachment_id:attachmentId}));
   const {error:saveError}=await client.rpc('save_expense_items',{p_claim:target,p_items:items,p_reason:reason});if(saveError)return {...failure(saveError),preview};
  }catch(e){return failure(e);}
  revalidatePath('/','layout');redirect(`/expenses/${target}?saved=1`);
@@ -93,8 +95,10 @@ export async function saveExpenseGrid(payload:string) {
   if(!value||Object.keys(value).some(k=>!['claimId','month','version','items','deleted','reason'].includes(k))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.month)||!Number.isInteger(value.version)||value.version<0||typeof value.reason!=='string'||value.reason.length>2000||!Array.isArray(value.items)||value.items.length>500||!Array.isArray(value.deleted)||value.deleted.length>500)throw new Error('일괄 저장 형식을 확인해 주세요.');
   if(value.claimId)await ownClaim(value.claimId);
   const {gridProblems}=await import('@/lib/expenses/grid');
-  const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
+  const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','payment_card_id','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
   for(const row of value.items){if(!row||Object.keys(row).some(k=>!keys.includes(k))||!isUuid(row.id)||!Number.isInteger(row.version)||row.version<0||!Array.isArray(row.attendees)||['usage_date','merchant','description','account_category','notes','trip_context'].some(k=>typeof row[k]!=='string'))throw new Error('행 입력 형식을 확인해 주세요.');}
+  const cards=await ownPaymentCards();
+  for(const row of value.items)if(row.payment_card_id&&!cards.some(c=>c.id===row.payment_card_id&&c.active))throw new Error('본인의 활성 카드를 선택해 주세요. 비활성 카드는 새 저장에 사용할 수 없습니다.');
   const errors=[...claimProblems(value.month,value.reason),...value.items.flatMap((r:ItemInput)=>gridProblems(r,value.items,value.month))].filter(p=>p.severity==='ERROR');
   if(errors.length)throw new Error(errors.map(p=>p.message).join(' '));
   const {data:id,error}=await(await employeeClient()).rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;
@@ -107,7 +111,7 @@ export async function previewExpenseGrid(form:FormData) {
   const file=form.get('workbook'),month=String(form.get('month')||'');
   if(!(file instanceof File)||file.size>5242880||(!file.name.toLowerCase().endsWith('.xlsx')||file.name.length>200)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('귀속월과 5MB 이하 xlsx 파일을 확인해 주세요.');
   const options=await expenseOptions();
-  return {preview:await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'))};
+  return {preview:await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'),await ownPaymentCards())};
  }catch(e){return failure(e);}
 }
 export async function uploadExpenseAttachments(claimId:string,form:FormData) {
@@ -144,5 +148,18 @@ export async function submitExpenseGrid(claimId:string,version:number,reason:str
   if(!detail.attachments.some(a=>a.ready))throw new Error('월별 첨부파일을 최소 1개 업로드해 주세요.');
   const {error}=await(await employeeClient()).rpc('submit_expense_claim',{p_claim:claimId,p_version:version,p_reason:reason});if(error)throw error;
   revalidatePath('/expenses');return {detail:await expenseDetail(claimId)};
+ }catch(e){return failure(e);}
+}
+
+export async function savePaymentCard(id:string|null,version:number,value:unknown) {
+ await requireCapability('EMPLOYEE_ACCESS');
+ try {
+  const values=cardValues(value);
+  if((id&&!isUuid(id))||!Number.isInteger(version)||version<0)throw new Error('카드 요청을 확인해 주세요.');
+  const cards=await ownPaymentCards();
+  if(id&&!cards.some(c=>c.id===id))throw new Error('본인의 카드만 수정할 수 있습니다.');
+  const {error}=await(await employeeClient()).rpc('save_expense_payment_card',{p_id:id,p_version:version,p_values:values});
+  if(error)throw error;
+  revalidatePath('/expenses');return {cards:await ownPaymentCards()};
  }catch(e){return failure(e);}
 }

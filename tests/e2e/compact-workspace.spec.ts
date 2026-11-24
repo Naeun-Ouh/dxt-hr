@@ -21,8 +21,9 @@ test('native modal and drawer trap focus, Escape restores focus, row expansion i
  await dialog.getByRole('button',{name:'Excel 가져오기 닫기',exact:true}).focus();await page.keyboard.press('Shift+Tab');expect(await dialog.evaluate(el=>el.contains(document.activeElement))).toBeTruthy();
  await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible();await expect(trigger).toBeFocused();
  await page.getByRole('button',{name:'+ 행 추가',exact:true}).click();
- const detail=page.getByRole('button',{name:'상세',exact:true}).last();await detail.click();
- const drawer=page.getByRole('dialog',{name:'경비 행 상세',exact:true});await expect(drawer).toBeVisible();
+ await page.getByRole('combobox',{name:/행 경비 유형$/}).last().selectOption('FUEL');
+ const detail=page.getByRole('button',{name:'이동 상세 입력',exact:true}).last();await detail.click();
+ const drawer=page.getByRole('dialog',{name:'이동 상세 입력 / 수정',exact:true});await expect(drawer).toBeVisible();
  await page.screenshot({path:'docs/screenshots/issue29/after-expense-drawer.png'});
  await page.keyboard.press('Escape');await expect(drawer).not.toBeVisible();await expect(detail).toBeFocused();
  await loginAs(context,'ceo');await page.goto('/admin/projects');

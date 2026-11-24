@@ -1,3 +1,5 @@
+import { cardLabel } from './cards';
+import type { PaymentCard } from './types';
 import { inflateRawSync } from 'node:zlib';
 import ExcelJS from 'exceljs';
 import { randomUUID } from 'node:crypto';
@@ -41,8 +43,16 @@ function dateValue(value:unknown,month:string):string {
 const numberValue=(v:unknown)=>typeof v==='number'?v:/^\d[\d,]*$/.test(String(v))?Number(String(v).replaceAll(',','')):NaN;
 function purpose(value:string):Purpose { return (Object.entries(PURPOSES).find(([,label])=>clean(label)===clean(value))?.[0]||(/야근|식대/.test(value)?'OVERTIME':/회식/.test(value)?'DINING':/주유|유류/.test(value)?'FUEL':/통행|톨/.test(value)?'TOLL':'OTHER')) as Purpose; }
 function base(month:string):ItemInput { return {id:randomUUID(),version:0,usage_date:`${month}-01`,expense_type:'OTHER',merchant:'',description:'',account_category:'기타',amount:0,evidence_type:'개인카드',payment_method:'PERSONAL_CARD',project_id:null,trip_context:'',notes:'',attachment_id:'',attendees:[]}; }
-export async function parseWorkbook(bytes:Buffer,filename:string,month:string,vehicleDate:string,employees:{id:string;name:string;company_email:string}[]):Promise<Preview> {
+export async function parseWorkbook(bytes:Buffer,filename:string,month:string,vehicleDate:string,employees:{id:string;name:string;company_email:string}[],cards:PaymentCard[]=[]):Promise<Preview> {
  const result:Preview={filename,month,items:[],problems:[]};
+ const mapCard=(i:ItemInput,value:unknown)=>{
+    const selectedCard=String(value).trim();
+    if(i.payment_method==='PERSONAL_CARD'&&selectedCard&&selectedCard!=='개인카드(미지정)'){
+     const matches=cards.filter(c=>c.active&&cardLabel(c)===selectedCard);
+     if(matches.length===1){i.payment_card_id=matches[0].id;i.payment_card_label=cardLabel(matches[0]);}
+     else {i.payment_card_error=matches.length?'결제카드 표시명이 중복됩니다. Grid에서 카드를 선택해 주세요.':'등록된 활성 카드와 일치하지 않습니다. Grid에서 결제카드를 선택해 주세요.';result.problems.push({severity:'ERROR',code:'CARD',message:i.payment_card_error,origin:i.import_origin});}
+    }
+ };
  const error=(message:string,origin?:string)=>result.problems.push({severity:'ERROR',code:'SCHEMA',message,origin});
  try {
   checkArchive(bytes); const book=new ExcelJS.Workbook(); await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
@@ -88,7 +98,7 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
       if(!get('유형')&&!get('프로젝트명/출장명'))continue;
       const i=base(month),type=purpose(String(get('유형')));if(!['FUEL','TOLL'].includes(type))throw new Error('차량 상세 유형은 주유비 또는 통행비여야 합니다.');
       i.expense_type=type;i.usage_date=dateValue(get('사용일')||vehicleDate,month);i.merchant=String(get('업체명')||get('프로젝트명/출장명'));i.description=PURPOSES[type];i.account_category=ACCOUNTS[type];i.trip_context=String(get('프로젝트명/출장명'));
-      i.vehicle={project_or_trip_name:i.trip_context,origin:String(get('출발지')),destination:String(get('도착지')),one_way_amount:numberValue(get('편도금액')),trip_count:numberValue(get('횟수'))};i.amount=i.vehicle.one_way_amount*i.vehicle.trip_count;i.import_origin=`주유비,통행비!${n}`;result.items.push(i);
+      i.vehicle={project_or_trip_name:i.trip_context,origin:String(get('출발지')),destination:String(get('도착지')),one_way_amount:numberValue(get('편도금액')),trip_count:numberValue(get('횟수'))};i.amount=i.vehicle.one_way_amount*i.vehicle.trip_count;i.import_origin=`주유비,통행비!${n}`;i.payment_method=get('결제수단')==='현금'?'CASH':'PERSONAL_CARD';i.evidence_type=i.payment_method==='CASH'?'현금영수증':'개인카드';mapCard(i,get('결제카드'));result.items.push(i);
      }catch(e){error((e as Error).message,`주유비,통행비!${n}`);}
     }
    } else {
@@ -111,23 +121,24 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
   let headers:Record<string,number>|undefined;
   sheet.eachRow((row,n)=>{
    const labels:Record<string,number>={};row.eachCell((cell,col)=>{if(!cell.isMerged||cell.master.address===cell.address)labels[clean(cell.text)]=col;});
-   if((labels['일자']||labels['사용일'])&&labels['업체명']&&labels['합계']) {headers=labels;return;}
+   if((labels['일자']||labels['사용일'])&&labels['업체명']&&(labels['합계']||labels['금액'])) {headers=labels;return;}
    if(!headers)return;
    try {
     const get=(key:string)=>headers![key]?scalar(row.getCell(headers![key])):'';
-    const description=String(get('품목')),merchant=String(get('업체명'));
+    const description=String(get('품목')||get('품목/사용내역')),merchant=String(get('업체명'));
     if(/^(합계|총계|계)$/.test(description)||/합계|총계/.test(String(row.getCell(1).text)))return;
     if(!description&&!merchant)return;
-    const type=purpose(String(get('유형')||description));
+    const type=purpose(String(get('유형')||get('경비유형')||description));
     if(['FUEL','TOLL'].includes(type)) {
      if(result.items.some(i=>i.expense_type===type&&i.vehicle))return;
      // Actual legacy rows 12–13 are prefilled examples/manual summaries, not evidence of usage.
      if(legacyVehicleLayout){result.problems.push({severity:'WARNING',code:'LEGACY_SUMMARY_IGNORED',message:'기존 양식의 차량 요약은 가져오지 않습니다. 두 번째 시트의 실제 입력 영역에 사용 내역을 입력해 주세요.',origin:`지출결의서!${n}`});return;}
     }
 
-    const i=base(month);Object.assign(i,{usage_date:dateValue(get('일자')||get('사용일'),month),expense_type:type,merchant,description,account_category:String(get('계정과목')||ACCOUNTS[type]),amount:numberValue(get('합계')),evidence_type:String(get('증빙종류')||''),notes:String(get('비고')||''),import_origin:`지출결의서!${n}`});
+    const i=base(month);Object.assign(i,{usage_date:dateValue(get('일자')||get('사용일'),month),expense_type:type,merchant,description,account_category:String(get('계정과목')||ACCOUNTS[type]),amount:numberValue(get('합계')||get('금액')),evidence_type:String(get('증빙종류')||(get('결제수단')==='현금'?'현금영수증':'개인카드')),notes:String(get('비고')||''),import_origin:`지출결의서!${n}`});
     if(['FUEL','TOLL'].includes(type)){i.legacy_summary=true;if(!i.merchant)i.merchant=PURPOSES[type];}
     i.payment_method=get('결제수단')==='현금'?'CASH':i.evidence_type==='개인카드'?'PERSONAL_CARD':'CASH';
+    mapCard(i,get('결제카드'));
     if(type==='DINING') {
      const entries=String(get('참석자(이메일:한도사용액)')).split(';').filter(Boolean);
      i.attendees=entries.map(entry=>{const [email,amount]=entry.split(':');const matches=employees.filter(e=>e.company_email.toLowerCase()===email.trim().toLowerCase());if(matches.length!==1)throw new Error('회식 참석자는 직원 이메일과 한도 사용액으로 입력해 주세요.');return {employee_id:matches[0].id,allocated_amount:numberValue(amount)};});
@@ -142,11 +153,14 @@ export async function parseWorkbook(bytes:Buffer,filename:string,month:string,ve
  }catch(e){error((e as Error).message||'Excel 파일을 읽을 수 없습니다.');}
  return result;
 }
-export async function templateWorkbook(month:string,employee='') {
+export async function templateWorkbook(month:string,employee='',cards:PaymentCard[]=[]) {
  const book=new ExcelJS.Workbook();const sheet=book.addWorksheet('지출결의서');
  sheet.addRow(['사용월',month,'직원',employee]);sheet.addRow(['안내','회식 참석자는 이메일:한도사용액을 세미콜론으로 구분합니다. 증빙은 업로드 화면에서 별도 첨부합니다.']);
- sheet.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)']);
- const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명']);
+ sheet.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)','결제카드']);
+ const choices=book.addWorksheet('카드선택목록');choices.addRow(['표시명','카드사','별칭','끝4자리']);
+ cards.filter(c=>c.active).forEach(c=>choices.addRow([cardLabel(c),c.issuer,c.nickname,c.last4]));
+ choices.addRow(['안내: 결제카드에는 표시명을 그대로 입력합니다. 중복된 표시명은 카드 관리에서 별칭을 바꿔 주세요.']);
+ const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명','결제수단','결제카드']);
  for(const s of book.worksheets){s.columns.forEach(c=>c.width=24);s.views=[{state:'frozen',ySplit:s===sheet?3:1}];}
  return Buffer.from(await book.xlsx.writeBuffer());
 }
@@ -156,9 +170,9 @@ export async function exportWorkbook(rows:Record<string,string|number>[]) {
  else sheet.addRow(['제출된 경비가 없습니다.']);
  // Keep the normalized audit/export sheet and add the two familiar DXT accounting sheets.
  const general=book.addWorksheet('지출결의서');general.addRow(['사용월',rows[0]?.['사용월']||'','직원',rows[0]?.['직원']||'']);
- general.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)','직원','증빙참조']);
- const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명','직원','증빙참조']);
- for(const r of rows){general.addRow([r['사용일'],r['업체명'],r['품목'],r['계정과목'],r['금액'],r['증빙종류'],r['비고'],r['유형'],r['결제수단'],r['참석자/한도사용액'],r['직원'],r['증빙참조']]);if(r['편도금액'])travel.addRow([r['유형'],r['사용일'],r['출장명'],r['출발지'],r['도착지'],r['편도금액'],r['횟수'],r['업체명'],r['직원'],r['증빙참조']]);}
+ general.addRow(['일자','업체명','품목','계정과목','합계','증빙종류','비고','유형','결제수단','참석자(이메일:한도사용액)','직원','증빙참조','결제카드']);
+ const travel=book.addWorksheet('주유비,통행비');travel.addRow(['유형','사용일','프로젝트명/출장명','출발지','도착지','편도금액','횟수','업체명','직원','증빙참조','결제카드','결제수단']);
+ for(const r of rows){general.addRow([r['사용일'],r['업체명'],r['품목'],r['계정과목'],r['금액'],r['증빙종류'],r['비고'],r['유형'],r['결제수단'],r['참석자/한도사용액'],r['직원'],r['증빙참조'],r['결제카드']||'']);if(r['편도금액'])travel.addRow([r['유형'],r['사용일'],r['출장명'],r['출발지'],r['도착지'],r['편도금액'],r['횟수'],r['업체명'],r['직원'],r['증빙참조'],r['결제카드']||'',r['결제수단']]);}
  general.addRow(['합계','','','',rows.reduce((s,r)=>s+Number(r['금액']||0),0)]);
  for(const s of [general,travel]){s.columns.forEach(c=>c.width=22);s.views=[{state:'frozen',ySplit:s===general?2:1}];}
  sheet.views=[{state:'frozen',ySplit:1}];return Buffer.from(await book.xlsx.writeBuffer());

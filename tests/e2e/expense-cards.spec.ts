@@ -1,0 +1,41 @@
+import {test,expect} from '@playwright/test';
+import ExcelJS from 'exceljs';
+import {loginAs,tokenFor} from './fixtures';
+import {today} from '../../src/lib/expenses/validation';
+const month=today().slice(0,7);
+const api='http://localhost:54329/rest/v1/';
+test('own card registration, Grid selection, save/reload, history, template and scoped card security',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/expenses');
+ await page.getByRole('button',{name:'카드 관리',exact:true}).click();const dialog=page.getByRole('dialog',{name:'카드 관리',exact:true});
+ await dialog.getByRole('button',{name:'+ 카드 등록'}).click();await dialog.getByLabel('카드사',{exact:true}).fill('현대카드');await dialog.getByLabel('카드 별칭').fill('브라우저 경비');await dialog.getByLabel('끝 4자리').fill('0123');await page.screenshot({path:'docs/screenshots/issue28-card-register.png'});await dialog.getByRole('button',{name:'카드 저장',exact:true}).click();
+ await expect(dialog.getByText('현대카드 · 브라우저 경비 · 0123',{exact:false})).toBeVisible();await page.screenshot({path:'docs/screenshots/issue28-card-management.png'});await page.keyboard.press('Escape');
+ await page.getByLabel('1행 결제수단',{exact:true}).selectOption({label:'현대카드 · 브라우저 경비 · 0123'});await page.getByRole('button',{name:'일괄 저장',exact:true}).click();await expect(page.getByRole('status')).toHaveText('저장 완료');await page.reload();await expect(page.getByLabel('1행 결제수단',{exact:true}).locator('option:checked')).toHaveText('현대카드 · 브라우저 경비 · 0123');
+ const template=await context.request.get(`/api/expenses/template?month=${month}`);expect(template.headers()['cache-control']).toBe('private, no-store');const book=new ExcelJS.Workbook();await book.xlsx.load(await template.body() as never);expect(book.getWorksheet('카드선택목록')!.getCell('A2').text).toBe('현대카드 · 브라우저 경비 · 0123');
+ const cards=await(await context.request.get(api+'expense_payment_card?select=id',{headers:{Authorization:`Bearer ${tokenFor('employee')}`}})).json();const id=cards[0].id;
+ const other=await context.request.get(api+`expense_payment_card?select=id&id=eq.${id}`,{headers:{Authorization:`Bearer ${tokenFor('expense')}`}});expect(await other.json()).toEqual([]);
+ const forged=await context.request.post(api+'rpc/save_expense_payment_card',{headers:{Authorization:`Bearer ${tokenFor('expense')}`},data:{p_id:id,p_version:1,p_values:{issuer:'현대카드',nickname:'위조',last4:'0123',active:false}}});expect(forged.status()).toBe(400);
+ await page.getByRole('button',{name:'카드 관리',exact:true}).click();await dialog.getByRole('button',{name:/0123 수정/}).click();await dialog.getByLabel('활성 카드').uncheck();await dialog.getByRole('button',{name:'카드 저장',exact:true}).click();await expect(dialog.getByText('비활성',{exact:true})).toBeVisible();await page.keyboard.press('Escape');await page.reload();await expect(page.getByLabel('1행 결제수단',{exact:true}).locator('option:checked')).toContainText('현대카드 · 브라우저 경비 · 0123');
+ await page.getByLabel('1행 결제수단',{exact:true}).selectOption('CASH');await page.getByRole('button',{name:'일괄 저장',exact:true}).click();await expect(page.getByRole('status')).toHaveText('저장 완료');
+});
+test('validation reasons are keyboard/touch readable, field-specific and clear after correction',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/expenses');await page.getByRole('button',{name:'+ 행 추가',exact:true}).click();
+ const row=page.locator('tr[data-row-id]').last();const status=row.getByRole('button',{name:'! 오류',exact:true});await status.focus();await page.keyboard.press('Enter');
+ const reasons=page.getByRole('region',{name:'2행 검증 사유'});await expect(reasons).toContainText('금액은 1원 이상');await expect(reasons).toContainText('사용처를 입력');await expect(reasons).toContainText('사용내역을 입력');
+ await page.getByLabel('2행 사용처',{exact:true}).fill('검증 테스트');await expect(reasons).not.toContainText('사용처를 입력');await expect(page.getByLabel('2행 사용처',{exact:true}).locator('..')).not.toHaveClass('grid-error');
+ await page.getByLabel('2행 사용내역',{exact:true}).fill('검증 테스트');await page.getByLabel('2행 금액',{exact:true}).fill('1000');await page.getByLabel('2행 사용처',{exact:true}).click();await expect(reasons).toHaveCount(0);
+ await page.getByLabel('2행 선택',{exact:true}).check();await page.getByRole('button',{name:'선택 행 복제'}).click();const warning=page.locator('tr[data-row-id]').last().getByRole('button',{name:'△ 확인',exact:true});await warning.click();await expect(page.getByRole('region',{name:'3행 검증 사유'})).toContainText('중복 등록');await page.screenshot({path:'docs/screenshots/issue28-validation.png',fullPage:true});
+ await expect(page.getByRole('button',{name:'상세',exact:true})).toHaveCount(0);await expect(page.getByRole('heading',{name:/영수증 증빙파일 업로드/})).toBeVisible();
+});
+test('import preview is isolated, cancel does not mutate, unknown cards remain blocking until corrected',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/expenses');
+ const headers={Authorization:`Bearer ${tokenFor('employee')}`};const registered=await context.request.post(api+'rpc/save_expense_payment_card',{headers,data:{p_id:null,p_version:0,p_values:{issuer:'신한카드',nickname:'Import 카드',last4:'5678',active:true}}});expect(registered.status()).toBe(200);
+ await page.reload();const template=await context.request.get(`/api/expenses/template?month=${month}`);const book=new ExcelJS.Workbook();await book.xlsx.load(await template.body() as never);
+ const sheet=book.getWorksheet('지출결의서')!;sheet.addRow([month+'-01','Excel 카드 식당','사용내역','기타',7000,'개인카드','','기타','개인카드','','신한카드 · Import 카드 · 5678']);sheet.addRow([month+'-01','알 수 없는 카드','사용내역','기타',8000,'개인카드','','기타','개인카드','','위조 카드']);
+ const file={name:'cards.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(await book.xlsx.writeBuffer())};
+ await page.locator('summary').filter({hasText:'Excel'}).click();await page.getByRole('button',{name:'Excel Import',exact:true}).click();await page.getByLabel('Excel 파일 (.xlsx)').setInputFiles(file);await page.getByRole('button',{name:'Grid 미리보기',exact:true}).click();const preview=page.getByRole('region',{name:'Excel 미리보기'});await expect(preview).toContainText('2행 · 오류 1');await expect(preview).toContainText('등록된 활성 카드와 일치하지 않습니다');await page.screenshot({path:'docs/screenshots/issue28-import-preview.png'});
+ await page.keyboard.press('Escape');await expect(page.locator('tr[data-row-id]')).toHaveCount(1);
+ await page.getByRole('button',{name:'Excel Import',exact:true}).click();await page.getByLabel('Excel 파일 (.xlsx)').setInputFiles(file);await page.getByRole('button',{name:'Grid 미리보기',exact:true}).click();await page.getByRole('button',{name:'Grid에 반영',exact:true}).click();await expect(page.getByRole('dialog',{name:'Excel 가져오기'})).not.toBeVisible();await expect(page.locator('tr[data-row-id]')).toHaveCount(3);await expect(page.getByRole('button',{name:'일괄 저장',exact:true})).toBeDisabled();await expect(page.getByLabel('2행 결제수단',{exact:true}).locator('option:checked')).toHaveText('신한카드 · Import 카드 · 5678');await page.getByLabel('3행 결제수단',{exact:true}).selectOption('CASH');await expect(page.getByRole('button',{name:'일괄 저장',exact:true})).toBeEnabled();await page.locator('summary').filter({hasText:'Excel'}).click();await page.locator('.expense-grid-scroll').evaluate(el=>{el.scrollLeft=el.scrollWidth;});await page.screenshot({path:'docs/screenshots/issue28-grid.png',fullPage:true});
+});
+test('stale card management session cannot edit another employee card through the server action',async({page,context})=>{
+ await context.request.post(api+'rpc/save_expense_payment_card',{headers:{Authorization:`Bearer ${tokenFor('employee')}`},data:{p_id:null,p_version:0,p_values:{issuer:'테스트카드',nickname:'세션 테스트',last4:'9999',active:true}}});await loginAs(context,'employee');await page.goto('/expenses');await page.getByRole('button',{name:'카드 관리',exact:true}).click();const dialog=page.getByRole('dialog',{name:'카드 관리',exact:true});await dialog.getByRole('button',{name:/세션 테스트.*수정/}).click();await dialog.getByLabel('카드 별칭').fill('다른 직원 세션의 변경');await loginAs(context,'expense');await dialog.getByRole('button',{name:'카드 저장',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('본인의 카드만');
+});

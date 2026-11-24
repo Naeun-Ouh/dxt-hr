@@ -354,3 +354,16 @@ Monthly claim attachments replace per-item evidence requirements in the primary 
 Submission requires at least one ready active claim attachment. Existing item links
 remain for compatibility. Grid and attachment edits follow the same existing payment/lock
 window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.
+
+### Expense payment cards — Issue #28
+
+`expense_payment_card` stores employee-owned issuer, nickname, last4, active status,
+version and server timestamps. No PAN/CVC/PIN or provider integration. There is no hard
+remove API: deactivation preserves references. The checked own-card RPC records
+REGISTER/UPDATE/DEACTIVATE audit events without card values.
+
+`expense_item.payment_card_id` is nullable for historical compatibility; cash requires
+null. `payment_card_label` is a DB-generated identification snapshot. The same card
+retains its original snapshot across edits; selecting a different card snapshots that
+card. Renaming/deactivating a card never rewrites existing expense items. Existing
+migrations/data are not rewritten or backfilled with invented card IDs.
