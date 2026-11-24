@@ -20,3 +20,9 @@ export function FilterBar({className='',...props}:React.ComponentProps<'form'>) 
 export function FormField({label,required,children,hint,error,name}:{label:ReactNode;required?:boolean;children:ReactNode;hint?:ReactNode;error?:ReactNode;name:string}) {
  return <label className="field"><span>{label}{required && <span className="required"> *</span>}</span>{children}{hint && <small id={`${name}-hint`}>{hint}</small>}{error && <small className="field-error" id={`${name}-error`}>{error}</small>}</label>;
 }
+
+export const DataGrid = DataTable;
+export const KPIStat = SummaryCard;
+export function SummaryStrip({children,label='업무 요약'}:{children:ReactNode;label?:string}) {return <div className="summary-strip" role="group" aria-label={label}>{children}</div>;}
+/** URL-backed navigation; caller filters links using existing capabilities. */
+export function CompactTabs({children,label}:{children:ReactNode;label:string}) {return <nav className="compact-tabs employee-tabs" aria-label={label}>{children}</nav>;}

@@ -1,3 +1,4 @@
+import { NavigationPanel } from "./ui/navigation-panel";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Brand } from "./brand";
@@ -11,7 +12,7 @@ export function AppShell({ principal, route, children }: { principal: Principal;
   return <div className="app-shell">
     <a className="skip-link" href="#main">본문으로 건너뛰기</a>
     <aside className="sidebar"><Brand />
-      <details className="navigation-panel" open><summary>메뉴</summary><nav aria-label="주 메뉴">
+      <NavigationPanel><nav aria-label="주 메뉴">
         {groups.map(group => <section className="nav-section" key={group} aria-label={group}>
           {group !== "홈" && <h2>{group}</h2>}
           {navigation.filter(item => item.group === group).map(item => {
@@ -21,7 +22,7 @@ export function AppShell({ principal, route, children }: { principal: Principal;
             </Link>;
           })}
         </section>)}
-      </nav></details>
+      </nav></NavigationPanel>
       <div className="user-card"><img src="/figma/Avatar.svg" alt="" /><div><strong>{principal.name}</strong><div className="role-tags">{principal.roles.map(role => <span key={role} className={role === "TEAM_LEADER" ? "team" : ""}>{ROLE_LABELS[role]}</span>)}</div></div></div>
     </aside>
     <div className="main-view"><header className="top-header">
