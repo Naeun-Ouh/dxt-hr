@@ -27,7 +27,7 @@ export function pasteRows(rows:ItemInput[],text:string,targetId:string,column:nu
   if(!next[index]){index=next.length;next.push(blankRow(month,uuid()));}
   cells[n].forEach((value,c)=>{const key=GRID_COLUMNS[column+c];let s=value.trim();
    if(key==='usage_date'){if(/^\d{1,2}-\d{1,2}$/.test(s))s=month.slice(0,4)+'-'+s.split('-').map(v=>v.padStart(2,'0')).join('-');if(/^\d{1,2}$/.test(s))s=month+'-'+s.padStart(2,'0');}
-   if(key==='amount')next[index].amount=/^\d+(,\d{3})*$/.test(s)?Number(s.replaceAll(',','')):0;
+   if(key==='amount')next[index].amount=/^\d+(,\d{3})*$/.test(s)?Number(s.replaceAll(',','')):Number.NaN;
    else if(key==='expense_type')next[index].expense_type=(Object.entries(PURPOSES).find(([v,l])=>s===v||s===l)?.[0]||s) as Purpose;
    else next[index][key]=s;
   });
