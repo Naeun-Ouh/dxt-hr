@@ -1,3 +1,4 @@
+import { PageHeader } from '@/components/ui/primitives';
 import Link from 'next/link';
 import Image from 'next/image';
 import {notFound} from 'next/navigation';
@@ -10,7 +11,7 @@ import {UNITS,EVENT_LABELS,type LeaveRequest,type Summary} from '@/lib/leave/typ
 import {RequestForm,DecisionForm,ApprovalTable,AdjustmentForm,LeaveDrawer,LeaveBadge} from './forms';
 type Person={id:string;name:string;department_id:string|null;employment_status:string};
 const people=()=>readRows<Person>('employee','id,name,department_id,employment_status');
-function Heading({title,description,request=false}:{title:string;description:string;request?:boolean}){return <div className="heading-row"><div className="page-heading"><h1>{title}</h1><p>{description}</p></div>{request&&<Link className="button primary" href="/leave/request">휴가 신청</Link>}</div>;}
+function Heading({title,description,request=false}:{title:string;description:string;request?:boolean}){return <PageHeader title={title} description={description} actions={request&&<Link className="button primary" href="/leave/request">휴가 신청</Link>}/>;}
 function Saved({query}:{query:SearchParams}){return query.saved==='1'?<p role="status" className="success-banner">저장했습니다.</p>:null;}
 function yearFor(query:SearchParams,date:string){const value=String(query.year||date.slice(0,4));return /^[1-9]\d{3}$/.test(value)&&Number(value)>=1900?Number(value):Number(date.slice(0,4));}
 function Year({year}:{year:number}){return <form className="birthday-year"><label htmlFor="leave-year">연도</label><input id="leave-year" type="number" name="year" min="1900" max="9999" defaultValue={year}/><button className="button">조회</button></form>;}

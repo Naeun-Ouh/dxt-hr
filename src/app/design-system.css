@@ -294,3 +294,4 @@ button,input,select,textarea {font:inherit}
 .app-shell :is(.table-scroll,.asset-table-wrap) td .button{min-height:32px;padding:4px 8px;line-height:20px}
 .expense-workspace .grid-overview{margin:12px 0}
 .app-shell .expense-searchbar>label{flex-direction:row;align-items:center;gap:8px}
+@media(max-width:760px){.expense-workspace .expense-searchbar .work-search{flex:1 1 200px;min-width:200px}}
