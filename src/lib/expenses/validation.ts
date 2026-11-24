@@ -7,10 +7,11 @@ export function monthAge(month:string,now=today()) { return (Number(now.slice(0,
 export function deadline(month:string) { const d=new Date(`${month.slice(0,7)}-01T00:00:00Z`); d.setUTCMonth(d.getUTCMonth()+1); d.setUTCDate(1+(7-d.getUTCDay())%7); return d.toISOString().slice(0,10); }
 export function editable(c:Claim,now=today()) { return ['DRAFT','SUBMITTED'].includes(c.status)&&!c.locked_at&&(!c.payment_date||now<=c.payment_date); }
 export function itemProblems(item:ItemInput, existing:ItemInput[]=[], now=today()):Problem[] {
- const out:Problem[]=[]; const add=(severity:Problem['severity'],code:string,message:string)=>out.push({severity,code,message,origin:item.import_origin});
+ const out:Problem[]=[]; const add=(severity:Problem['severity'],code:string,message:string,field?:string)=>out.push({severity,code,message,field,origin:item.import_origin});
  if(!validDate(item.usage_date)||item.usage_date>now) add('ERROR','DATE','사용일을 올바르게 입력해 주세요. 미래 사용일은 등록할 수 없습니다.');
  if(!Object.hasOwn(PURPOSES,item.expense_type)) add('ERROR','TYPE','경비 유형을 선택해 주세요.');
- for(const [key,max] of [['merchant',200],['description',500],['account_category',100]] as const) if(!item[key]?.trim()||item[key].length>max) add('ERROR','REQUIRED','사용처와 품목 등 필수 항목을 확인해 주세요.');
+ if(item.payment_card_id&&(!isUuid(item.payment_card_id)||item.payment_method!=='PERSONAL_CARD'))add('ERROR','CARD','본인의 활성 카드 또는 현금을 선택해 주세요.');
+ for(const [key,max] of [['merchant',200],['description',500],['account_category',100]] as const) if(!item[key]?.trim()||item[key].length>max) add('ERROR','REQUIRED',`${key==='merchant'?'사용처를':key==='description'?'사용내역을':'계정과목을'} 입력해 주세요 (최대 ${max}자).`,key);
  if(!Number.isSafeInteger(item.amount)||item.amount<1||item.amount>1000000000) add('ERROR','AMOUNT','금액은 1원 이상 정수로 입력해 주세요.');
  if(!['PERSONAL_CARD','CASH'].includes(item.payment_method)||!['개인카드','현금영수증','간이영수증'].includes(item.evidence_type)) add('ERROR','PAYMENT','개인카드/현금 결제수단과 증빙 종류를 선택해 주세요.');
  if(item.project_id&&!isUuid(item.project_id)) add('ERROR','PROJECT','프로젝트를 목록에서 선택해 주세요.');

@@ -198,3 +198,10 @@ Monthly claim attachments replace per-item evidence requirements in the primary 
 Submission requires at least one ready active claim attachment. Existing item links
 remain for compatibility. Grid and attachment edits follow the same existing payment/lock
 window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.
+
+Expense card registration is employee self-service, not an admin capability. Both
+server actions and checked RPCs derive the employee from the authenticated identity.
+RLS allows only own-card reads, and direct table writes are revoked. Expense managers
+see only the frozen issuer/nickname/last4 label on already authorized expense items;
+they cannot browse or manage another employee's card master. Grid saves validate own,
+ACTIVE card references under a card row lock. Cash cannot carry a card reference.

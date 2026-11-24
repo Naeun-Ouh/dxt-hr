@@ -150,3 +150,11 @@ capability-filtered navigation and domain-specific A4 contract surface.
 Use 208px desktop navigation, 20px page inset, 16px page gaps and 32–36px controls.
 Toolbars sit next to tables, summaries are small, secondary work uses native
 Modal/Drawer or RowExpansion. URL-backed employee tabs preserve scope checks.
+
+### Expense contextual UX — Issue #28
+
+Reuse v2 Modal/Drawer and the existing compact monthly workspace. Validation opens
+inline reasons; Excel preview is isolated until explicit Grid application. Replace
+ordinary-row 상세 with 이동 상세 입력/수정 or 참석자 설정 only where applicable.
+Own-card management stays in a compact Drawer. Grid payment/notes controls and the
+renamed 영수증 증빙파일 업로드 area extend only the expense surface.

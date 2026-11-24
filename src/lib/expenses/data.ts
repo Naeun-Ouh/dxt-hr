@@ -4,7 +4,7 @@ import { requireCapability } from '../auth/access';
 import { employeeClient } from '../employees/data';
 import { isUuid } from '../employees/validation';
 import { can } from '../permissions';
-import { ATTACHMENT_COLUMNS, CLAIM_COLUMNS, ITEM_COLUMNS, VEHICLE_COLUMNS, type Attachment, type Attendee, type Claim, type Item, type Vehicle } from './types';
+import { CARD_COLUMNS, type PaymentCard, ATTACHMENT_COLUMNS, CLAIM_COLUMNS, ITEM_COLUMNS, VEHICLE_COLUMNS, type Attachment, type Attendee, type Claim, type Item, type Vehicle } from './types';
 export async function expenseRows<T>(table:string,columns:string,filters:Record<string,string>={}) {
  const client=await employeeClient(),rows:T[]=[];
  for(let offset=0;;offset+=500){let request=client.from(table).select(columns).order(table==='expense_attendee'||table==='vehicle_travel_detail'?'item_id':'id').range(offset,offset+499);for(const [key,value]of Object.entries(filters))request=request.eq(key,value);const {data,error}=await request;if(error)throw new Error('Expense service unavailable');rows.push(...data as T[]);if(data.length<500)return rows;}
@@ -44,4 +44,11 @@ export async function expenseOptions() {
  const projects=(await expenseRows<{id:string;name:string}>('project','id,name')).filter(p=>assignments.some(a=>a.project_id===p.id));
  const {data:accounts,error:accountError}=await client.from('expense_account_category').select('name,position').order('position');if(accountError)throw new Error('Expense categories unavailable');
  return {employees,projects,accounts:accounts.map(a=>a.name as string),selfId:selfId as string|null};
+}
+
+export async function ownPaymentCards():Promise<PaymentCard[]> {
+ await requireCapability('EMPLOYEE_ACCESS');
+ const {data:self,error}=await(await employeeClient()).rpc('current_employee_id');
+ if(error||!self)throw new Error('직원 계정 연결이 필요합니다.');
+ return expenseRows<PaymentCard>('expense_payment_card',CARD_COLUMNS,{employee_id:self});
 }

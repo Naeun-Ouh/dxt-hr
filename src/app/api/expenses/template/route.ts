@@ -1,8 +1,8 @@
-import { expenseOptions } from '@/lib/expenses/data';
+import { expenseOptions, ownPaymentCards } from '@/lib/expenses/data';
 import { requireCapability } from '@/lib/auth/access';
 import { templateWorkbook } from '@/lib/expenses/workbook';
 import { today } from '@/lib/expenses/validation';
 export async function GET(request:Request) {
  await requireCapability('EMPLOYEE_ACCESS');const value=new URL(request.url).searchParams.get('month');const month=value&&/^\d{4}-(0[1-9]|1[0-2])$/.test(value)?value:today().slice(0,7);
- return new Response(new Uint8Array(await templateWorkbook(month,await expenseOptions().then(o=>o.employees.find(e=>e.id===o.selfId)?.name||''))),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="DXT_Expense_Template.xlsx"','Cache-Control':'private, no-store'}});
+ return new Response(new Uint8Array(await templateWorkbook(month,await expenseOptions().then(o=>o.employees.find(e=>e.id===o.selfId)?.name||''),await ownPaymentCards())),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="DXT_Expense_Template.xlsx"','Cache-Control':'private, no-store'}});
 }

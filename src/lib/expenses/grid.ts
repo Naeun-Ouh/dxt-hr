@@ -5,6 +5,7 @@ export const GRID_COLUMNS=['usage_date','expense_type','account_category','merch
 export function blankRow(month:string,id:string):ItemInput {return {id,version:0,usage_date:month+'-01',expense_type:'OTHER',account_category:'기타',merchant:'',description:'',amount:0,payment_method:'PERSONAL_CARD',evidence_type:'개인카드',project_id:null,trip_context:'',notes:'',attachment_id:'',attendees:[]};}
 export function gridProblems(row:ItemInput,rows:ItemInput[],month:string) {
  const result=itemProblems(row,rows);
+ if(row.payment_card_error)result.push({severity:"ERROR",code:"CARD",message:row.payment_card_error});
  if(['FUEL','TOLL'].includes(row.expense_type)&&row.legacy_summary&&!row.version)result.push({severity:'ERROR',code:'VEHICLE',message:'차량 합계만 있는 신규 행은 상세에서 편도 금액과 횟수를 입력해 주세요.'});
  if(row.usage_date.slice(0,7)!==month)result.push({severity:'ERROR',code:'DATE',message:'사용일은 선택한 귀속월이어야 합니다.'});
  if(!ACCOUNT_CATEGORIES.includes(row.account_category))result.push({severity:'ERROR',code:'ACCOUNT',message:'계정과목을 목록에서 선택해 주세요.'});
@@ -35,4 +36,9 @@ export function pasteRows(rows:ItemInput[],text:string,targetId:string,column:nu
  if(next.length>500)throw new Error('월별 Grid는 최대 500행입니다.');return next;
 }
 export function changePurpose(row:ItemInput,type:Purpose):ItemInput {return {...row,expense_type:type,account_category:ACCOUNTS[type],legacy_summary:false,vehicle:['FUEL','TOLL'].includes(type)?row.vehicle||{project_or_trip_name:row.trip_context,origin:'',destination:'',one_way_amount:0,trip_count:1}:undefined,attendees:type==='DINING'?row.attendees:[]};}
-export function cleanItem(row:ItemInput):ItemInput {const {id,version,usage_date,expense_type,merchant,description,account_category,amount,evidence_type,payment_method,project_id,trip_context,notes,attachment_id,attendees,vehicle,legacy_summary,import_filename,import_origin}=row;return {id,version,usage_date,expense_type,merchant,description,account_category,amount,evidence_type,payment_method,project_id,trip_context,notes,attachment_id:attachment_id||'',attendees:attendees.map(({employee_id,allocated_amount})=>({employee_id,allocated_amount})),vehicle:vehicle?{project_or_trip_name:vehicle.project_or_trip_name,origin:vehicle.origin,destination:vehicle.destination,one_way_amount:vehicle.one_way_amount,trip_count:vehicle.trip_count}:undefined,legacy_summary,import_filename,import_origin};}
+export function cleanItem(row:ItemInput):ItemInput {const {id,version,usage_date,expense_type,merchant,description,account_category,amount,evidence_type,payment_method,payment_card_id,payment_card_label,project_id,trip_context,notes,attachment_id,attendees,vehicle,legacy_summary,import_filename,import_origin}=row;return {id,version,usage_date,expense_type,merchant,description,account_category,amount,evidence_type,payment_method,payment_card_id,payment_card_label,project_id,trip_context,notes,attachment_id:attachment_id||'',attendees:attendees.map(({employee_id,allocated_amount})=>({employee_id,allocated_amount})),vehicle:vehicle?{project_or_trip_name:vehicle.project_or_trip_name,origin:vehicle.origin,destination:vehicle.destination,one_way_amount:vehicle.one_way_amount,trip_count:vehicle.trip_count}:undefined,legacy_summary,import_filename,import_origin};}
+
+/** Preview/display metadata is never accepted as mutation authority. */
+export function writableItem(row:ItemInput):ItemInput {
+ const input={...row};delete input.payment_card_label;delete input.payment_card_error;return input;
+}

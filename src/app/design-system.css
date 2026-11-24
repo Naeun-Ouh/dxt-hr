@@ -295,3 +295,29 @@ button,input,select,textarea {font:inherit}
 .expense-workspace .grid-overview{margin:12px 0}
 .app-shell .expense-searchbar>label{flex-direction:row;align-items:center;gap:8px}
 @media(max-width:760px){.expense-workspace .expense-searchbar .work-search{flex:1 1 200px;min-width:200px}}
+
+/* Expense-only extensions of the v2 compact workspace. */
+.expense-row-problems { padding: 8px 12px; background: var(--surface-subtle, #f8fafc); display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.expense-row-problems ul {margin:0; padding-left:18px;}
+.expense-card-list {list-style:none;padding:0;}
+.expense-card-list li {display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e2e8f0;gap:12px;}
+.expense-card-list small {color:#64748b;}
+.expense-card-form {margin-top:16px;}
+.expense-card-form fieldset {display:grid;gap:12px;}
+.expense-workspace .expense-grid td:last-child {min-width:120px;}
+.grid-import-panel .table-scroll {max-height:240px;overflow:auto;}
+.expense-workspace .expense-grid {min-width:1690px;}
+.expense-workspace .expense-grid th:nth-child(10) {width:190px;}
+.expense-workspace .expense-grid th:nth-child(11) {width:140px;}
+.expense-workspace .expense-grid th:nth-child(12),.expense-workspace .expense-grid th:nth-child(13) {width:110px;}
+.expense-workspace .expense-grid th:nth-child(14) {width:140px;}
+.expense-workspace .expense-grid tr[data-row-id] td:last-child {position:sticky;right:0;background:var(--surface);box-shadow:-1px 0 var(--border);}
+.expense-workspace .expense-grid th:last-child {right:0;z-index:3;}
+.work-dialog .grid-import-panel {padding:0;margin:0;display:grid;gap:12px;}
+.grid-import-panel > button {justify-self:start;}
+.grid-import-panel section {display:grid;gap:12px;}
+.grid-import-panel table {width:100%;border-collapse:collapse;font-size:13px;}
+.grid-import-panel th,.grid-import-panel td {padding:8px;text-align:left;border-bottom:1px solid var(--border);}
+.grid-import-panel th {background:var(--background);white-space:nowrap;}
+.expense-grid .grid-text-button.expense-warning {padding:2px 4px;margin:0;border:0;background:transparent;color:var(--warning);font-size:12px;}
+.expense-row-problems :is(.expense-warning,.form-error) {padding:4px 8px;margin:0;}
