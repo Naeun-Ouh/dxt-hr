@@ -140,3 +140,13 @@ Monthly claim attachments replace per-item evidence requirements in the primary 
 Submission requires at least one ready active claim attachment. Existing item links
 remain for compatibility. Grid and attachment edits follow the same existing payment/lock
 window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.
+
+## Compact enterprise workspaces — Issue #29
+
+The user-approved Issue 29 direction supersedes the earlier spacious layout and
+Ant-first reference: DaouOffice composition/density, DXT identity and original
+components. See `ISSUE_29_DESIGN.md`. Preserve the existing Figma assets, brand,
+capability-filtered navigation and domain-specific A4 contract surface.
+Use 208px desktop navigation, 20px page inset, 16px page gaps and 32–36px controls.
+Toolbars sit next to tables, summaries are small, secondary work uses native
+Modal/Drawer or RowExpansion. URL-backed employee tabs preserve scope checks.
