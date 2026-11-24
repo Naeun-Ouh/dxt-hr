@@ -1,3 +1,5 @@
+import {hrDocuments} from '@/lib/hr-documents/data';
+import {HrDocumentsPanel} from '@/components/hr-documents/panel';
 import { DisclosurePanel } from '@/components/ui/workspace';
 import { CompactTabs, Button, FilterBar, PageHeader, SectionCard, StatusTag } from '@/components/ui/primitives';
 import { EmployeeContractTab } from "../contracts/screens";
@@ -45,15 +47,21 @@ export async function EmployeeEditor({ id, principal }: { id?: string; principal
 export async function EmployeeDetail({ id, admin, principal, query }: { id: string; admin: boolean; principal: Principal; query: SearchParams }) {
   const [employee, departments] = await Promise.all([getEmployee(id), organizations()]);
   const careerVisible = await canViewEmployeeCareer(id);
+  const ownId=(await (await employeeClient()).rpc("current_employee_id")).data;
+  const privateVisible=can(principal,"PRIVATE_HR_ACCESS"), documentsVisible=privateVisible||ownId===id;
+  if((query.tab==='private'&&!privateVisible)||(query.tab==='documents'&&!documentsVisible))notFound();
+  const docs=query.tab==='documents'?await hrDocuments(id,query.history==='1'):null;
+  const privateData=query.tab==='private'?await privateRecord(id):null;
+  const privateBirth=query.tab==='private'?await birthRecord(id):null;
   const contractsVisible = can(principal,"EMPLOYMENT_CONTRACT_MANAGE") || (await (await employeeClient()).rpc("current_employee_id")).data === id;
   if(query.tab === "contracts" && !contractsVisible)notFound();
-  const tab = ["projects", "career", "assets", "contracts"].includes(String(query.tab)) ? String(query.tab) : "profile";
+  const tab = ["projects", "career", "assets", "contracts", "private", "documents"].includes(String(query.tab)) ? String(query.tab) : "profile";
   const base = `${admin ? "/admin/employees" : "/people"}/${id}`;
   return <>
     {query.saved === "1" && <p role="status" className="success-notice">프로필이 저장되었습니다.</p>}
-    <SectionCard className="profile-summary"><span className="person-avatar large">{employee.name.slice(0, 1)}</span><div className="profile-meta"><div className="button-row"><h1>{employee.name}</h1><Status status={employee.employment_status} /></div><p>{employee.company_email}<span>｜</span>{departments.find(d => d.id === employee.department_id)?.name || "미배정"}<span>｜</span>{employee.title}</p></div>{admin && <Link className="button" href={`${base}/edit`}>프로필 수정</Link>}</SectionCard>
-    <CompactTabs label="직원 상세 탭">{[["profile", "프로필"], ["projects", "프로젝트"], ["career", "커리어"], ["assets", "장비"], ["contracts", "근로계약"]].filter(([key]) => (key !== "contracts" || contractsVisible) && (key !== "career" || careerVisible)).map(([key, label]) => <Link key={key} href={`${base}?tab=${key}`} aria-current={tab === key ? "page" : undefined}>{label}</Link>)}{can(principal, "PRIVATE_HR_ACCESS") && <Link href={`/admin/employees/${id}/private`}>HR Private</Link>}</CompactTabs>
-    {tab === "contracts" ? <EmployeeContractTab id={id} principal={principal}/> : tab === "profile" ? <SectionCard><h2>기본 / 근무 정보</h2><dl className="profile-facts">{[["역할", employee.roles.map(role => EMPLOYEE_ROLE_LABELS[role]).join(" · ")], ["이름", employee.name], ["영문명", employee.english_name], ["회사 이메일", employee.company_email], ["휴대폰 번호", employee.phone], ["부서", departments.find(d => d.id === employee.department_id)?.name], ["직책", employee.title], ["입사일", employee.hire_date], ["근무지", employee.work_location]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl></SectionCard> : tab === "projects" || tab === "career" ? <EmployeeProjectTab id={id} career={tab === "career"}/> : <SectionCard className="empty-state"><h2>장비 정보를 준비하고 있습니다</h2><p>서비스 준비가 완료되면 이곳에서 확인할 수 있습니다.</p></SectionCard>}
+    <SectionCard className="profile-summary"><span className="person-avatar large">{employee.name.slice(0, 1)}</span><div className="profile-meta"><div className="button-row"><h1>{employee.name}</h1><Status status={employee.employment_status} /></div><p>{employee.company_email}<span>｜</span>{departments.find(d => d.id === employee.department_id)?.name || "미배정"}<span>｜</span>{employee.title}<span>｜</span>입사 {employee.hire_date}</p></div>{admin && <Link className="button" href={`${base}/edit`}>프로필 수정</Link>}</SectionCard>
+    <CompactTabs label="직원 상세 탭">{[["profile", "기본정보"], ["private", "인사정보"], ["documents", "인사서류"], ["projects", "프로젝트"], ["career", "커리어"], ["assets", "장비"], ["contracts", "근로계약"]].filter(([key]) => (key !== "private" || privateVisible) && (key !== "documents" || documentsVisible) && (key !== "contracts" || contractsVisible) && (key !== "career" || careerVisible)).map(([key, label]) => <Link key={key} href={`${base}?tab=${key}`} aria-current={tab === key ? "page" : undefined}>{label}</Link>)}</CompactTabs>
+    {tab === 'documents' && docs ? <HrDocumentsPanel employeeId={id} documents={docs.documents} manage={docs.manage} history={query.history==='1'} base={base}/> : tab === 'private' ? <SectionCard><h2>인사정보</h2><p>대표와 지정 관리자만 열람할 수 있습니다.</p><PrivatePanel key={`${id}-${privateData?.version||0}`} id={id} version={privateData?.version||0} hasBirth={Boolean(privateBirth)}/></SectionCard> : tab === "contracts" ? <EmployeeContractTab id={id} principal={principal}/> : tab === "profile" ? <SectionCard><h2>기본 / 근무 정보</h2><dl className="profile-facts">{[["역할", employee.roles.map(role => EMPLOYEE_ROLE_LABELS[role]).join(" · ")], ["이름", employee.name], ["영문명", employee.english_name], ["회사 이메일", employee.company_email], ["휴대폰 번호", employee.phone], ["부서", departments.find(d => d.id === employee.department_id)?.name], ["직책", employee.title], ["입사일", employee.hire_date], ["근무지", employee.work_location]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || "—"}</dd></div>)}</dl></SectionCard> : tab === "projects" || tab === "career" ? <EmployeeProjectTab id={id} career={tab === "career"}/> : <SectionCard className="empty-state"><h2>장비 정보를 준비하고 있습니다</h2><p>서비스 준비가 완료되면 이곳에서 확인할 수 있습니다.</p></SectionCard>}
   </>;
 }
 export async function HrPrivateScreen({ id, query }: { id: string; query: SearchParams }) {

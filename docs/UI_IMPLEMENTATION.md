@@ -158,3 +158,10 @@ inline reasons; Excel preview is isolated until explicit Grid application. Repla
 ordinary-row 상세 with 이동 상세 입력/수정 or 참석자 설정 only where applicable.
 Own-card management stays in a compact Drawer. Grid payment/notes controls and the
 renamed 영수증 증빙파일 업로드 area extend only the expense surface.
+
+### Employee HR card — Issue #33
+
+Use the compact v2 employee header/tabs and shared Modal for private HR document uploads.
+인사정보 integrates the existing masked/reveal panel. 인사서류 uses a dense table with
+versions, dates, state and explicit view/download/archive actions. Self view exposes only
+own allowed documents; management/history controls and private fields remain scoped.

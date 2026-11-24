@@ -50,7 +50,7 @@ test("CEO reaches private HR by role while ADMIN requires the designated grant",
     for (const path of ["/admin/employees", "/admin/expenses", "/admin/accounts", "/admin/projects/30000000-0000-4000-8000-000000000001"]) expect((await page.goto(path))!.status()).toBe(200);
     const hasPrivateHr = cases[name].roles.includes("CEO") || Boolean(cases[name].capabilities?.includes("PRIVATE_HR_ACCESS"));
     await page.goto("/admin/employees/10000000-0000-4000-8000-000000000001");
-    await expect(page.getByRole("link", { name: "HR Private" })).toHaveCount(hasPrivateHr ? 1 : 0);
+    await expect(page.getByRole("link", { name: "인사정보", exact: true })).toHaveCount(hasPrivateHr ? 1 : 0);
     expect((await page.goto("/admin/employees/10000000-0000-4000-8000-000000000001/private"))!.status()).toBe(hasPrivateHr ? 200 : 404);
   }
 });
@@ -61,6 +61,7 @@ test("RSC requests, unknown descendants and privilege-shaped query strings fail 
   const flight = await response.text();
   expect(flight).toContain('NEXT_HTTP_ERROR_FALLBACK;404');
   expect(flight).not.toContain('HR Private');
+  expect(flight).not.toContain('인사정보');
   expect(flight).not.toContain('sidebar');
   expect((await page.goto("/people/admin"))!.status()).toBe(404);
   expect((await page.goto("/admin/expenses?role=CEO&PRIVATE_HR_ACCESS=true"))!.status()).toBe(404);

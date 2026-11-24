@@ -33,7 +33,7 @@ test('native modal and drawer trap focus, Escape restores focus, row expansion i
 test('compact profile tabs and contract filters keep authorization scope',async({page,context})=>{
  await loginAs(context,'employee');await page.goto('/people/10000000-0000-4000-8000-000000000001');
  await expect(page.getByRole('navigation',{name:'직원 상세 탭'})).toBeVisible();
- await expect(page.getByRole('link',{name:'HR Private',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'인사정보',exact:true})).toHaveCount(0);
  await page.getByRole('link',{name:'프로젝트',exact:true}).last().click();await expect(page).toHaveURL(/tab=projects/);
  await page.goto('/contracts/me');await page.getByRole('searchbox',{name:'계약 검색'}).fill('존재하지않는검색');await expect(page.getByText('조건에 맞는 근로계약이 없습니다.')).toBeVisible();
  await expect(page.locator('.sidebar').getByRole('link',{name:'근로계약 관리',exact:true})).toHaveCount(0);
