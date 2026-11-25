@@ -9,7 +9,7 @@ test('merged HR documents, certificates and holidays preserve independent author
  try{
   for(const file of ['20261124134708_employee_hr_documents.sql','20261124220933_hr_document_v1_transport_limit.sql','20261124220945_employment_certificates.sql','20261124221310_leave_holiday_calendar.sql'])await db.exec(readFileSync(`supabase/migrations/${file}`,'utf8'));
   for(const [role,expected] of [['admin',[true,true,false]],['ceo',[true,true,true]],['designated',[true,true,true]],['employee',[false,false,false]],['leader',[false,false,false]],['expense',[false,false,false]],['it',[false,false,false]],['division',[false,false,false]]] as const){
-   const result=await asUser(db,role,tx=>tx.query("select has_app_capability('HR_CERTIFICATE_MANAGE') certificate,has_app_capability('HOLIDAY_MANAGE') holiday,has_app_capability('PRIVATE_HR_ACCESS') private"));
+   const result=await asUser(db,role,tx=>tx.query<{certificate:boolean;holiday:boolean;private:boolean}>("select has_app_capability('HR_CERTIFICATE_MANAGE') certificate,has_app_capability('HOLIDAY_MANAGE') holiday,has_app_capability('PRIVATE_HR_ACCESS') private"));
    assert.deepEqual(Object.values(result.rows[0]),[...expected],role);
    if(!expected[2])await assert.rejects(asUser(db,role,tx=>tx.query("select reserve_hr_document($1,'RESUME','synthetic.pdf','application/pdf',100,$2,null,null)",[personId,'a'.repeat(64)])));
   }
