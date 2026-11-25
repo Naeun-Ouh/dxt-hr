@@ -375,3 +375,12 @@ optional issue/expiry dates, per-type version, actor/time, ready and archive tim
 New uploads never overwrite versions; archive preserves metadata and original bytes.
 employee_hr_document_event is append-only, recording upload/view/download/archive without
 sensitive content. See ISSUE_33_DELIVERY.md for publication, scope and recovery limits.
+
+### Employment certificates
+
+`hr_certificate`: auth-derived employee request, simple lifecycle, immutable approval
+snapshot/company seal reference, private PDF path/hash and DB timestamps.
+`hr_certificate_event`: append-only request/review/issue/cancel/download audit.
+`hr_certificate_setting`: optional verified company address/registration, snapshotted
+on approval. Existing `company_seal` image versions are reused without raw access
+expansion. See `ISSUE_32_DELIVERY.md`.

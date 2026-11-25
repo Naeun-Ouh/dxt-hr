@@ -1,3 +1,4 @@
+import { CertificateScreen } from "@/components/certificates/screen";
 import { SealScreen } from '@/components/contracts/seal-screen';
 import { ContractsScreen } from "@/components/contracts/screens";
 import Link from "next/link";
@@ -24,6 +25,7 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/certificates/me":case "/admin/certificates":screen=<CertificateScreen admin={path[0]==='admin'}/>;break;
     case "/admin/contracts/seals":screen=<SealScreen/>;break;
     case "/contracts/me":case "/contracts/me/[id]":case "/admin/contracts":case "/admin/contracts/[id]":screen=<ContractsScreen admin={path[0]==='admin'} id={path[2]} principal={principal}/>;break;
     case "/leave":case "/leave/request":case "/leave/requests":case "/leave/requests/[id]":case "/leave/approvals":case "/leave/team-calendar":case "/admin/leave":case "/admin/leave/[id]":

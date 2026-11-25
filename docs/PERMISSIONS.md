@@ -214,3 +214,11 @@ employee can view/download only their own ready, unarchived BANKBOOK_COPY,
 RESIDENT_REGISTRATION_COPY and RESUME; OTHER_HR remains private. Self upload is not
 implemented. Server checks, row policies and checked RPCs enforce the same boundary.
 No direct authenticated/anonymous Storage access, including private HR managers.
+
+## Employment certificates — Issue 32
+
+`HR_CERTIFICATE_MANAGE`: ADMIN/CEO only, independent from employment contracts and
+PRIVATE_HR_ACCESS. Active employees request/read/download only their own; Team Leaders
+have no team scope. Existing raw company seal permissions are not expanded. Both
+server and RLS enforce scope; private certificate objects have no authenticated
+Storage policies. See `ISSUE_32_DELIVERY.md` for lifecycle and reconciled seal policy.

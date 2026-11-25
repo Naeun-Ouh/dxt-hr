@@ -1,0 +1,4 @@
+import {certificates} from '@/lib/certificates/data';
+import {operationPeople,readRows} from '@/lib/operations/data';
+import {CertificateWorkspace} from './workspace';
+export async function CertificateScreen({admin=false}:{admin?:boolean}){const rows=await certificates(admin);const [people,settings,seals]=await Promise.all([admin?operationPeople():Promise.resolve([]),admin?readRows<{address:string;registration_number:string}>('hr_certificate_setting','address,registration_number',{},'singleton'):Promise.resolve([]),admin?readRows<{company_name:string;representative_name:string}>('company_seal','company_name,representative_name',{active:true,ready:true}):Promise.resolve([])]);const setting=settings[0];return <CertificateWorkspace rows={rows} admin={admin} people={people.map(p=>({id:p.id,name:p.name}))} setting={setting} company={seals[0]}/>;}

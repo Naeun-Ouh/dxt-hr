@@ -7,7 +7,7 @@ import type { Contract,Signature } from './types';
 import { seoulTime } from './types';
 // Fontsource ships WOFF1. Convert its lossless table container to SFNT before
 // embedding: PDF font streams require SFNT, not browser WOFF containers.
-function sfnt(woff:Buffer):Buffer {
+export function sfnt(woff:Buffer):Buffer {
  if(woff.readUInt32BE(0)!==0x774f4646)throw new Error('Invalid font container');
  const count=woff.readUInt16BE(12),out=Buffer.alloc(woff.readUInt32BE(16));
  out.writeUInt32BE(woff.readUInt32BE(4),0);out.writeUInt16BE(count,4);
