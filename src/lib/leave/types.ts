@@ -5,7 +5,7 @@ export interface LeaveRequest{id:string;employee_id:string;start_date:string;end
 export interface Summary{employee_id:string;year:number;version:number;balance:number;adjusted:number;used:number}
 export interface Ledger{id:string;employee_id:string;year:number;bucket:string;amount_delta:number;event_type:'ADJUSTMENT'|'DEDUCTION'|'REVERSAL';request_id:string|null;actor_id:string;note:string;occurred_at:string}
 export interface History{id:string;request_id:string;action:string;actor_id:string;note:string;occurred_at:string}
-export interface CalendarEntry{name:string;start_date:string;end_date:string;unit:Unit}
+export interface CalendarEntry{work_dates?:string[]|null;name:string;start_date:string;end_date:string;unit:Unit}
 export const REQUEST_COLUMNS='id,employee_id,start_date,end_date,unit,days,reason,past_reason,status,version,created_at,decided_by,decided_at';
 export const LEDGER_COLUMNS='id,employee_id,year,bucket,amount_delta,event_type,request_id,actor_id,note,occurred_at';
 export const HISTORY_COLUMNS='id,request_id,action,actor_id,note,occurred_at';

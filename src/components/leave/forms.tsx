@@ -5,21 +5,23 @@ import {useActionState,useEffect,useRef,useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {submitLeave,decideLeave,adjustLeave} from '@/app/actions/leave';
 import {UNITS,STATES,type LeaveRequest,type Summary} from '@/lib/leave/types';
+import type {Holiday,HolidayYear} from '@/lib/leave/holidays';
 import {workingDays} from '@/lib/leave/validation';
 import type {FormState} from '@/lib/employees/types';
 function Feedback({state}:{state:FormState}){return <>{state.error&&<p role="alert" className="form-error">{state.error} {Object.values(state.fields||{}).join(' ')}</p>}{state.success&&<p role="status" className="success-banner">{state.success}</p>}</>;}
-export function RequestForm({today,balance}:{today:string;balance:number}){
+export function RequestForm({today,balance,years,holidays}:{today:string;balance:number;years:HolidayYear[];holidays:Holiday[]}){
  const [state,action,pending]=useActionState(submitLeave,{}),[start,setStart]=useState(today),[end,setEnd]=useState(today),[unit,setUnit]=useState('FULL_DAY');
- const days=workingDays(start,end,unit);
- return <form action={action} className="surface leave-form"><h2>휴가 신청 작성</h2><Feedback state={state}/>
+ const calendar=years.find(y=>y.year===Number(start.slice(0,4)));
+ const days=workingDays(start,end,unit,holidays.filter(h=>h.active).map(h=>h.day));
+ return <form action={action} className="surface leave-form"><h2>휴가 신청 작성</h2><input type="hidden" name="calendar_version" value={calendar?.version||0}/>{!calendar&&<p role="alert" className="form-error">선택한 연도의 공휴일 자료가 확인되지 않았습니다. 관리자에게 달력 확인을 요청해 주세요.</p>}<Feedback state={state}/>
  <label className="field">휴가 유형<select name="unit" value={unit} onChange={e=>{setUnit(e.target.value);if(e.target.value!=='FULL_DAY')setEnd(start);}}>{Object.entries(UNITS).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
  <div className="field-grid"><label className="field">시작일<input type="date" name="start_date" required value={start} onChange={e=>{setStart(e.target.value);if(unit!=='FULL_DAY'||e.target.value>end)setEnd(e.target.value);}}/></label><label className="field">종료일<input type="date" name="end_date" required min={start} readOnly={unit!=='FULL_DAY'} value={end} onChange={e=>setEnd(e.target.value)}/></label></div>
  <label className="field">예상 차감일수<output className="leave-output">{days}일</output></label>
- <p className="muted">당해연차에서 차감합니다. 토·일요일은 제외됩니다. 공휴일 자동 반영은 아직 제공하지 않습니다.</p>
+ <p className="muted">당해연차에서 차감합니다. 토·일요일과 공휴일·회사 휴일은 제외됩니다. 달력이 변경되면 새로고침 후 신청해 주세요.</p>
  <label className="field">신청 사유 (선택)<textarea name="reason" maxLength={2000} rows={3}/></label>
  {start<today&&<div className="leave-past"><label className="field">미리 신청하지 못한 사유<input name="past_reason" required maxLength={2000} aria-describedby="past-reason-help"/></label><small id="past-reason-help">과거 날짜 신청에는 사유가 필요합니다.</small></div>}
  {Number(start.slice(0,4))===Number(today.slice(0,4))&&days>balance&&<p className="form-error">사용 가능한 연차가 부족합니다.</p>}
- <div className="button-row"><Link className="button" href="/leave">취소</Link><button className="button primary" disabled={pending}>신청하기</button></div></form>;
+ <div className="button-row"><Link className="button" href="/leave">취소</Link><button className="button primary" disabled={pending||!calendar||days===0}>신청하기</button></div></form>;
 }
 export function DecisionForm({items,cancel=false,children}:{items?:{id:string;version:number}[];cancel?:boolean;children?:React.ReactNode}){
  const [state,action,pending]=useActionState(decideLeave,{}),dialog=useRef<HTMLDialogElement>(null);

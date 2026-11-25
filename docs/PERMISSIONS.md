@@ -222,3 +222,11 @@ PRIVATE_HR_ACCESS. Active employees request/read/download only their own; Team L
 have no team scope. Existing raw company seal permissions are not expanded. Both
 server and RLS enforce scope; private certificate objects have no authenticated
 Storage policies. See `ISSUE_32_DELIVERY.md` for lifecycle and reconciled seal policy.
+
+### Holiday administration
+
+HOLIDAY_MANAGE remains ADMIN/CEO only, enforced in the database and server actions.
+Employees read active company-wide holiday dates/source metadata, never administrative
+change events. Direct table writes and the obsolete unchecked leave-submit RPC are
+revoked. New leave submission requires the server-validated calendar-year revision;
+existing leave ownership, direct-team approval and reason privacy remain unchanged.

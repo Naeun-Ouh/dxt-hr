@@ -384,3 +384,11 @@ snapshot/company seal reference, private PDF path/hash and DB timestamps.
 `hr_certificate_setting`: optional verified company address/registration, snapshotted
 on approval. Existing `company_seal` image versions are reused without raw access
 expansion. See `ISSUE_32_DELIVERY.md`.
+
+### Holiday calendar — Issue #4 Phase 4B first slice
+
+`holiday_year` records verified-year coverage, source/version and calendar revision.
+`holiday_calendar` holds statutory/substitute dates and versioned company dates;
+`holiday_event` is a client-immutable administrative change trail. Removal deactivates
+company rows. `leave_request.work_dates` and `calendar_version` freeze new-request
+calculation; existing approved rows remain untouched. See `PHASE_4B_HOLIDAYS.md`.
