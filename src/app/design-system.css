@@ -321,3 +321,16 @@ button,input,select,textarea {font:inherit}
 .grid-import-panel th {background:var(--background);white-space:nowrap;}
 .expense-grid .grid-text-button.expense-warning {padding:2px 4px;margin:0;border:0;background:transparent;color:var(--warning);font-size:12px;}
 .expense-row-problems :is(.expense-warning,.form-error) {padding:4px 8px;margin:0;}
+
+/* Employee HR card: reuse v2 surfaces/table density without changing other domains. */
+.hr-documents{min-width:0;width:100%}
+.hr-documents .work-toolbar h2{margin:0}
+.hr-documents .field-help{margin:0 0 12px}
+.hr-documents td:nth-child(2){overflow-wrap:anywhere;max-width:320px}
+.hr-documents td small{display:block;color:var(--text-secondary,#667085);margin-top:3px}
+.hr-documents .button-row{flex-wrap:nowrap}
+.hr-document-form{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.hr-document-form>.field:nth-of-type(2),.hr-document-form>p{grid-column:1/-1}
+.hr-document-form .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.hr-document-form input[type=file]{width:100%}
+@media(max-width:600px){.hr-document-form{grid-template-columns:1fr}}

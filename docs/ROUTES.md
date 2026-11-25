@@ -69,3 +69,8 @@ Suggested Next.js route map.
   private preview and preserved upload history (`EMPLOYMENT_CONTRACT_MANAGE`).
 - `/api/contracts/seals/[id]`: manager-authorized PNG preview; private, no-store;
   no employee access or permanent object URL.
+
+- Employee `?tab=private`: existing PRIVATE_HR_ACCESS masked/reveal panel.
+- Employee `?tab=documents`: own allowed or private-HR document collection.
+- `?tab=documents&history=1`: private-HR archive/history view only.
+- `/api/hr-documents/[id]`: authorized private preview; `?download=1` downloads.

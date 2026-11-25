@@ -8,7 +8,7 @@ test('directory searches, filters and profile tabs use real domain records', asy
  await expect(page.getByText('조건에 맞는 직원이 없습니다')).toBeVisible();
  await page.goto('/people?q=kim&status=ALL');await page.getByRole('link',{name:/김테스트/}).click();
  await expect(page.getByRole('heading',{name:'기본 / 근무 정보'})).toBeVisible();
- await expect(page.getByRole('link',{name:'HR Private'})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'인사정보'})).toHaveCount(0);
  await page.getByRole('link',{name:'프로젝트',exact:true}).click();await expect(page.getByRole('heading',{name:'프로젝트 투입 이력'})).toBeVisible();
  await page.goto('/organization');await expect(page.getByRole('heading',{name:'조직 등록'})).toHaveCount(0);
 });
@@ -23,7 +23,7 @@ test('admin creates, validates, edits and inactivates a profile without private 
  await expect(page.getByRole('checkbox',{name:'팀장',exact:true})).toBeChecked();
  await page.screenshot({path:'docs/screenshots/phase2-employee-new.png',fullPage:true});
  await page.getByRole('button',{name:'프로필 저장'}).click();await expect(page.getByRole('status')).toHaveText('프로필이 저장되었습니다.');
- await expect(page.getByRole('link',{name:'HR Private'})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'인사정보'})).toHaveCount(0);
  await expect(page.getByText('일반 직원 · 팀장',{exact:true})).toBeVisible();
  await page.screenshot({path:'docs/screenshots/phase2-employee-detail.png',fullPage:true});
  await page.getByRole('link',{name:'프로필 수정',exact:true}).click();
@@ -96,7 +96,7 @@ test('role selection is required and planned CEO role never changes session priv
  await page.getByRole('checkbox',{name:'대표',exact:true}).press('Space');
  await page.getByRole('button',{name:'프로필 저장'}).click();
  await expect(page.getByText('일반 직원 · 대표',{exact:true})).toBeVisible();
- await expect(page.getByRole('link',{name:'HR Private',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'인사정보',exact:true})).toHaveCount(0);
  expect((await page.goto(`/admin/employees/${id}/private`))!.status()).toBe(404);
  await loginAs(context,'employee');await page.goto(`/people/${id}`);
  await expect(page.getByText('일반 직원 · 대표',{exact:true})).toBeVisible();

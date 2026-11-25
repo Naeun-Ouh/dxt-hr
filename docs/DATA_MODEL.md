@@ -367,3 +367,11 @@ null. `payment_card_label` is a DB-generated identification snapshot. The same c
 retains its original snapshot across edits; selecting a different card snapshots that
 card. Renaming/deactivating a card never rewrites existing expense items. Existing
 migrations/data are not rewritten or backfilled with invented card IDs.
+
+### Employee HR documents — Issue #33
+
+employee_hr_document contains employee/type, filename/MIME/size, logical path/SHA-256,
+optional issue/expiry dates, per-type version, actor/time, ready and archive timestamps.
+New uploads never overwrite versions; archive preserves metadata and original bytes.
+employee_hr_document_event is append-only, recording upload/view/download/archive without
+sensitive content. See ISSUE_33_DELIVERY.md for publication, scope and recovery limits.

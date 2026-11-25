@@ -130,3 +130,7 @@ and standard PostgreSQL tables/constraints/PLpgSQL transactions. No grid vendor,
 spreadsheet or paid runtime is introduced. Private receipt objects continue through the
 existing storage adapter; only logical attachment IDs/paths are persisted. Export adds
 DXT's two familiar accounting sheets alongside complete normalized records.
+
+Employee HR documents keep portable SQL metadata/audit and logical object paths.
+`src/lib/hr-documents/storage.ts` isolates private provider upload/download. Include the
+employee-hr-documents bucket in exports/backups; no provider URLs or OCR dependency.

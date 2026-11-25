@@ -93,3 +93,24 @@ The historical Gmail-send/cron items in Issue #14 are superseded by Issue #15 an
 - `npm run build` and `npm run typecheck`: PASS.
 - Full `npm run test:e2e` with installed Chrome: **47 passed**, including fixture PKCE login, private Storage test-double flows, scoped leave decisions and disabled cron behavior.
 - Browser fixtures executed real repository SQL/RLS in local PGlite, not hosted Supabase Auth/Storage. Test-generated screenshot changes were discarded because this PR changes documentation only.
+
+## Read-only hosted preflight — 2026-11-25 (Issue #35 / PR #34)
+
+- Connected Supabase ref remains `uqwnxlxzcoxbniockizv`; read-only aggregate checks found
+  2 Auth users / Google identities, 2 linked employee identities, 20 employee rows.
+  Existing rows are not assumed synthetic and were not used/changed for testing.
+- Membership coverage: CEO and designated PRIVATE_HR_ACCESS ADMIN only. Independent
+  employee A/B, Team Leader and ordinary ADMIN test sessions are not available.
+- Hosted migrations reach `20261124125833_expense_payment_cards.sql`; employee HR
+  document table/bucket and both document migrations are not yet present.
+- Public-table RLS remains enabled; existing buckets remain private. Mail enqueue/claim
+  remains denied to authenticated and service_role.
+- PR #34 preview at `48877fd6bcef8df171c968e34186a8e8d256bb1a` is READY, but the 8
+  required Vercel environment variables exist only in production scope, not preview.
+  The production-scoped Supabase hostname matches this staging ref. A READY deployment
+  is therefore not evidence of authenticated hosted preview acceptance.
+- No remote mutation, real file read, credential exposure or real employee test occurred.
+- **Hosted acceptance remains pending**: branch-scoped preview configuration/OAuth
+  callback, reviewed migrations, and dedicated Google test identities with human login/
+  consent. Provider connectors are accessible; account reconnection is not needed.
+  Code/local synthetic regression may proceed independently; do not mark this gate green.

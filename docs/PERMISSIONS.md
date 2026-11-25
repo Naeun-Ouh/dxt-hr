@@ -205,3 +205,12 @@ RLS allows only own-card reads, and direct table writes are revoked. Expense man
 see only the frozen issuer/nickname/last4 label on already authorized expense items;
 they cannot browse or manage another employee's card master. Grid saves validate own,
 ACTIVE card references under a card row lock. Cash cannot carry a card reference.
+
+## Employee HR documents — Issue #33
+
+Only PRIVATE_HR_ACCESS (CEO + designated ADMIN) can upload/archive or read all document
+history. Ordinary ADMIN and TEAM_LEADER do not inherit this scope. An ACTIVE linked
+employee can view/download only their own ready, unarchived BANKBOOK_COPY,
+RESIDENT_REGISTRATION_COPY and RESUME; OTHER_HR remains private. Self upload is not
+implemented. Server checks, row policies and checked RPCs enforce the same boundary.
+No direct authenticated/anonymous Storage access, including private HR managers.
