@@ -172,3 +172,11 @@ Reuse DXT v2 PageHeader, WorkToolbar, FilterPopover, DataTable, SummaryStrip and
 Modal. Own employee card links to certificate requests; HR uses a compact queue with
 local search/status/date filters. Existing company stamp management is shared. Issued
 PDF is a formal Korean document with frozen employee/company data and embedded stamp.
+
+### Holiday/workday workspace — Issue #4
+
+Use the compact v2 toolbar/table and shared Modal at `/admin/holidays`; official dates
+are read-only, company dates have explicit edit/remove actions. Display verified-year
+coverage and source. Leave preview excludes weekends/holidays and blocks unsupported
+years with an actionable notice. A changed pending calculation requires resubmission;
+no silent change to approved leave or ledger. See `PHASE_4B_HOLIDAYS.md`.

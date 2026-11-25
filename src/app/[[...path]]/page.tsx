@@ -1,4 +1,7 @@
 import { CertificateScreen } from "@/components/certificates/screen";
+
+import {HolidayWorkspace} from '@/components/leave/holidays';
+import {holidayData} from '@/lib/leave/holidays';
 import { SealScreen } from '@/components/contracts/seal-screen';
 import { ContractsScreen } from "@/components/contracts/screens";
 import Link from "next/link";
@@ -37,6 +40,7 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
       screen=<AnnouncementsScreen id={path[1]==='new'?undefined:path[1]} create={path[1]==='new'} edit={path[2]==='edit'} query={query} principal={principal}/>;break;
     case "/family-events":case "/family-events/new":case "/family-events/[id]/edit":case "/family-events/review":case "/family-events/review/[id]":
       screen=<FamilyScreen id={path[1]==='review'?path[2]:path[1]==='new'?undefined:path[1]} create={path[1]==='new'} edit={path[2]==='edit'} review={path[1]==='review'} query={query} principal={principal}/>;break;
+    case "/admin/holidays":screen=<HolidayWorkspace {...await holidayData()}/>;break;
     case "/admin/settings/birthday-email":screen=<BirthdayScreen query={query}/>;break;
     case "/assets/me": case "/assets/me/[id]": screen=<AssetList own query={query} id={path[2]}/>;break;
     case "/admin/assets":screen=<AssetList query={query}/>;break;

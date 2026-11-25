@@ -1,8 +1,8 @@
 import {validDate,ValidationError,isUuid} from '../employees/validation';
 import {UNITS,type Unit} from './types';
-export function workingDays(start:string,end:string,unit:string):number{
+export function workingDays(start:string,end:string,unit:string,holidays:readonly string[]=[]):number{
  if(!validDate(start)||!validDate(end)||end<start||start.slice(0,4)!==end.slice(0,4)||!Object.hasOwn(UNITS,unit)||(unit!=='FULL_DAY'&&start!==end))return 0;
- let n=0;for(let d=Date.parse(start);d<=Date.parse(end);d+=86400000){const day=new Date(d).getUTCDay();if(day!==0&&day!==6)n++;}
+ let n=0;for(let d=Date.parse(start);d<=Date.parse(end);d+=86400000){const day=new Date(d).getUTCDay();if(day!==0&&day!==6&&!holidays.includes(new Date(d).toISOString().slice(0,10)))n++;}
  return unit==='FULL_DAY'?n:n?0.5:0;
 }
 export function leaveInput(form:FormData,today:string){

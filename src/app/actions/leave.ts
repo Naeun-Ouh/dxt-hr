@@ -7,12 +7,12 @@ import {leaveRpc,today,requestDetail} from '@/lib/leave/data';
 import {leaveInput,decisionItems} from '@/lib/leave/validation';
 import {ValidationError,isUuid,versionFrom} from '@/lib/employees/validation';
 import type {FormState} from '@/lib/employees/types';
-const messages:Record<string,string>={PAST_REASON_REQUIRED:'미리 신청하지 못한 사유를 입력해 주세요.',INSUFFICIENT_BALANCE:'사용 가능한 연차가 부족합니다. 관리자에게 잔여 일수를 확인해 주세요.',OVERLAPPING_LEAVE:'이미 신청한 날짜와 시간이 겹칩니다. 신청 내역을 확인해 주세요.',INVALID_EMPLOYEE_DATE:'입사일 이후의 날짜를 선택해 주세요.',INACTIVE_EMPLOYEE:'퇴사한 직원의 신청은 승인할 수 없습니다.',INVALID_STATE:'이미 처리된 신청입니다. 새로고침해 주세요.'};
+const messages:Record<string,string>={NO_WORKDAY:'주말 또는 휴일에는 휴가를 신청할 수 없습니다.',HOLIDAY_YEAR_UNVERIFIED:'해당 연도의 공휴일 자료를 관리자에게 확인해 주세요.',LEAVE_CALENDAR_CHANGED:'휴일 변경으로 차감일수가 달라졌습니다. 해당 대기 신청을 거절하고 다시 신청하도록 안내해 주세요.',PAST_REASON_REQUIRED:'미리 신청하지 못한 사유를 입력해 주세요.',INSUFFICIENT_BALANCE:'사용 가능한 연차가 부족합니다. 관리자에게 잔여 일수를 확인해 주세요.',OVERLAPPING_LEAVE:'이미 신청한 날짜와 시간이 겹칩니다. 신청 내역을 확인해 주세요.',INVALID_EMPLOYEE_DATE:'입사일 이후의 날짜를 선택해 주세요.',INACTIVE_EMPLOYEE:'퇴사한 직원의 신청은 승인할 수 없습니다.',INVALID_STATE:'이미 처리된 신청입니다. 새로고침해 주세요.'};
 function failure(error:unknown):FormState{if(error instanceof ValidationError)return {error:error.message,fields:error.fields};if(error&&typeof error==='object'){if('code'in error&&error.code==='40001')return {error:'다른 사용자가 변경했습니다. 새로고침 후 다시 시도해 주세요.'};if('message'in error&&typeof error.message==='string'&&messages[error.message])return {error:messages[error.message]};}return {error:'처리할 수 없습니다. 권한과 입력 내용을 확인하고 새로고침해 주세요.'};}
 function refresh(){for(const path of ['/leave','/leave/requests','/leave/approvals','/leave/team-calendar','/admin/leave'])revalidatePath(path);}
 export async function submitLeave(_state:FormState,form:FormData):Promise<FormState>{
  await requireCapability('EMPLOYEE_ACCESS');const id=randomUUID();
- try{await leaveRpc('submit_leave',{p_id:id,...leaveInput(form,await today())});}catch(error){return failure(error);}
+ try{await leaveRpc('submit_leave_checked',{p_id:id,...leaveInput(form,await today()),p_calendar_version:Number(form.get('calendar_version'))});}catch(error){return failure(error);}
  refresh();redirect('/leave/requests/'+id+'?saved=1');
 }
 export async function decideLeave(_state:FormState,form:FormData):Promise<FormState>{
