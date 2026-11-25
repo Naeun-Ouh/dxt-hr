@@ -165,3 +165,10 @@ Use the compact v2 employee header/tabs and shared Modal for private HR document
 인사정보 integrates the existing masked/reveal panel. 인사서류 uses a dense table with
 versions, dates, state and explicit view/download/archive actions. Self view exposes only
 own allowed documents; management/history controls and private fields remain scoped.
+
+### Employment certificates — Issue 32
+
+Reuse DXT v2 PageHeader, WorkToolbar, FilterPopover, DataTable, SummaryStrip and native
+Modal. Own employee card links to certificate requests; HR uses a compact queue with
+local search/status/date filters. Existing company stamp management is shared. Issued
+PDF is a formal Korean document with frozen employee/company data and embedded stamp.

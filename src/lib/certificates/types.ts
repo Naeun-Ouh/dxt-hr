@@ -1,0 +1,3 @@
+export const CERTIFICATE_COLUMNS='id,employee_id,purpose,note,language,status,requested_at,reviewed_at,reviewed_by,rejection_reason,snapshot,seal_id,issued_at,pdf_path,pdf_sha256';
+export interface Certificate {id:string;employee_id:string;purpose:string;note:string;language:'KO';status:'REQUESTED'|'APPROVED'|'ISSUED'|'REJECTED'|'CANCELLED';requested_at:string;reviewed_at:string|null;reviewed_by:string|null;rejection_reason:string|null;snapshot:Record<string,string>|null;seal_id:string|null;issued_at:string|null;pdf_path:string|null;pdf_sha256:string|null}
+export const certificateLabels:Record<Certificate['status'],string>={REQUESTED:'요청대기',APPROVED:'승인완료 · 발급 대기',ISSUED:'발급완료',REJECTED:'반려',CANCELLED:'취소'};

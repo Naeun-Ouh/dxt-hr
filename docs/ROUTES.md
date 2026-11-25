@@ -74,3 +74,7 @@ Suggested Next.js route map.
 - Employee `?tab=documents`: own allowed or private-HR document collection.
 - `?tab=documents&history=1`: private-HR archive/history view only.
 - `/api/hr-documents/[id]`: authorized private preview; `?download=1` downloads.
+
+- `/certificates/me`: own employment certificate requests/downloads.
+- `/admin/certificates`: HR_CERTIFICATE_MANAGE review/issue/settings workspace.
+- `/api/certificates/[id]/pdf`: reauthorized private/no-store PDF download.

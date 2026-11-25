@@ -334,3 +334,9 @@ button,input,select,textarea {font:inherit}
 .hr-document-form .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .hr-document-form input[type=file]{width:100%}
 @media(max-width:600px){.hr-document-form{grid-template-columns:1fr}}
+
+/* Employment certificate overlays reuse compact v2 controls and spacing. */
+.certificate-form {display:grid;gap:12px;}
+.certificate-form>label {display:grid;gap:4px;font-size:13px;}
+.certificate-form textarea {min-height:80px;resize:vertical;}
+.certificate-actions {display:flex;align-items:center;gap:8px;}
