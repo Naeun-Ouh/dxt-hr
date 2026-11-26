@@ -39,3 +39,14 @@ export async function transferRecipients(){
  if(error)throw new Error('직원 정보를 불러오지 못했습니다.');
  return data as {id:string;name:string;employment_status:string}[];
 }
+
+// Employee detail is not an authority boundary: repeat own/manager checks here.
+export async function employeeAssets(employeeId:string){
+ await requireCapability('EMPLOYEE_ACCESS');if(!isUuid(employeeId))notFound();
+ const db=await employeeClient(),identity=await db.rpc('current_employee_id');if(identity.error)throw new Error('장비 정보를 불러오지 못했습니다.');
+ const own=identity.data===employeeId;
+ if(!own){await requireCapability('ASSET_MANAGE');}
+ const {data,error}=await db.from('asset').select(ASSET_COLUMNS).eq('current_holder_id',employeeId).order('serial_number').limit(100);
+ if(error)throw new Error('장비 정보를 불러오지 못했습니다.');
+ return {assets:data as Asset[],own};
+}

@@ -129,7 +129,7 @@ const server = createServer(async (request, response) => {
      const params: unknown[]=[]; const bind=(v:unknown)=>{params.push(v);return '$'+params.length;};
      const where: string[]=[];
      for(const [key,value] of url.searchParams) {
-      if(allowed.includes(key)) { if(value.startsWith('in.(')&&value.endsWith(')')){where.push(`${key} in (${value.slice(4,-1).split(',').map(v=>bind(v)).join(',')})`);}else{if(value==='is.null'){where.push(`${key} is null`);continue;}if(value.startsWith('neq.')){where.push(`${key}<>${bind(value.slice(4))}`);continue;}if(!value.startsWith('eq.')) throw new Error('Unsupported test filter'); where.push(`${key}=${bind(value.slice(3))}`);} }
+      if(allowed.includes(key)) { if(value.startsWith('in.(')&&value.endsWith(')')){where.push(`${key} in (${value.slice(4,-1).split(',').map(v=>bind(v)).join(',')})`);}else{if(value==='is.null'){where.push(`${key} is null`);continue;}if(value.startsWith('lte.')||value.startsWith('gte.')){where.push(`${key}${value.startsWith('lte.')?'<=':'>='}${bind(value.slice(4))}`);continue;}if(value.startsWith('neq.')){where.push(`${key}<>${bind(value.slice(4))}`);continue;}if(!value.startsWith('eq.')) throw new Error('Unsupported test filter'); where.push(`${key}=${bind(value.slice(3))}`);} }
       if(key==='or') {
        const pieces=value.slice(1,-1).split(',').map(part=>{const match=/^(name|company_email)\.ilike\.\*(.*)\*$/.exec(part);if(!match)throw new Error('Unsupported test search');return `${match[1]} ilike ${bind('%'+match[2]+'%')}`;});
        where.push('('+pieces.join(' or ')+')');

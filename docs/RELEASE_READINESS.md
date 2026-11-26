@@ -67,3 +67,71 @@ memoization across requests or production-wide indexing is introduced.
 
 No hosted migration, real grant/import, payroll mutation, cron or automatic mail is performed
 by this preparation. See `LEAVE_ACTIVATION_READINESS.md` for financial/policy apply gates.
+
+## 2026-11-26 integration baseline (#45–#47)
+
+Main `00ae92855be523523bbc71086d5d90954dac054d` includes merged #39–#44.
+Read-only staging metadata was independently checked on `uqwnxlxzcoxbniockizv`:
+28 applied migrations, including `leave_sources_and_birthday`, `leave_validity_review`,
+`carryover_review`, and `weekend_work_evidence`; no public ordinary table without RLS;
+all six document buckets private; automatic-mail enqueue/claim denied to both
+`authenticated` and `service_role`. This establishes metadata only, not live role-session
+acceptance, data correctness, latency or production readiness.
+
+Use `scripts/release-metadata-preflight.sql` to repeat this inventory. It reads catalog,
+migration and bucket metadata only. It emits no employee rows, object paths or keys and
+makes no changes. Missing buckets/functions, unexpected migration names, public buckets
+or unexpected EXECUTE grants require investigation; the inventory does not declare PASS.
+Hosted migration timestamps differ from original repository timestamps because earlier
+migrations were applied through the connector: compare reviewed names **and actual DDL**,
+not timestamp ordering alone. Never replay historical files merely to align timestamps.
+
+### Integration acceptance additions
+
+| Surface | Synthetic hosted exercise | Required evidence |
+|---|---|---|
+| My Page | A and B plus an additive ADMIN/CEO session; forged employee query; own profile asset tab and unprivileged other profile | Own counts/links only; unknown leave validity remains distinct; no private fields or cross-user counts |
+| Expense | General/Fuel/Toll tab edits, month switch, route preset selection/edit, save/reload, submitted last evidence removal, payment cutoff | One monthly working copy; old rows unchanged by preset edits; last ready evidence retained; foreign preset/claim UUID denied |
+| Contract | Status/search filters, optional deadline update with stale revision, Seoul day boundary, overdue signature, decline/cancel | Audited authorized date edit; deadline does not block signature; private reason inaccessible to ordinary ADMIN/leader; completed PDF hash unchanged |
+| Private files | Current upload limit and historical larger-file download, foreign UUID/path, revoked user | Actual deployed transport + Storage denial; no permanent URL; private/no-store response |
+
+Record exact app SHA, new migration names, environment, timestamp and synthetic actor
+role for every observation. Keep pending tests pending. Existing Google OAuth consent,
+independent test identities and hosted role-session access are prerequisites; local
+PGlite/fixture PKCE does not satisfy them. No automatic Gmail or cron is enabled.
+
+### Performance evidence template
+
+Measure the same synthetic dataset before/after at least 20 requests per route, recording
+sample count, cold/warm split, p50/p95 wall time, response bytes, database request count,
+and denied-request outcome. Use `/me`, `/expenses`, `/contracts/me`, `/admin/contracts`
+and the existing migration review preview. Do not record response contents, cookies,
+signed file URLs or personnel fields. Separate permission-denied responses from successful
+requests; do not average them together. Observe existing query limits and retained history
+at both ordinary and long-history sizes. No hosted capacity claim is made before capture.
+
+### Migration rehearsal and release sequence
+
+1. Retain the existing #43 mapping/dry-run workflow and approved source/hash/cutoff gate.
+   Rehearse synthetic legacy expenses (including paid/locked evidence) and asset periods;
+   compare counts, integer-won totals, source hashes and exact historical periods. Presets
+   and contract due dates must not be inferred from old records.
+2. On an isolated restored baseline, apply only reviewed new migrations. Verify old
+   completed contract body/PDF hashes, evidence access and existing assignment/leave
+   history before/after. Verify two-session stale edits and denied cross-user writes.
+3. Deploy each reviewed feature against its compatible schema; run the table above and
+   the existing full acceptance runbook. Preview environment/OAuth configuration is a
+   separate requirement from a successful Vercel build.
+4. Keep actual import/grants/payroll changes separate from this rehearsal. A reviewed
+   dry-run report remains `applyAuthorized: false`. No new apply path is introduced.
+5. Preserve DB/object/identity/key recovery evidence and test isolated restoration before
+   cutover. Code rollback cannot undo committed data; use a reviewed forward correction.
+
+### Hosted advisor baseline (read-only, 2026-11-26)
+
+The provider advisor is not clean, and its findings are not dismissed as release PASS:
+
+- [RLS without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy): 3 INFO entries (`birthday_calendar`, `company_mail_delivery`, `vault_secret`), intentionally internal deny-by-default tables. Do not add permissive policies to silence the advisory; verify table grants and checked server/RPC boundaries.
+- [Authenticated SECURITY DEFINER execution](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable): 83 WARN entries. Checked domain RPCs intentionally need this privilege; review per-function auth-derived identity, explicit capability/scope, fixed search path and negative tests. Do not blanket-revoke required RPCs or treat the count as proof of an exploit. New RPCs must receive the same review.
+- [Leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection): 1 WARN. Google OAuth remains the application path; verify deployed Auth provider configuration before cutover. No Auth setting was changed in this task.
+- [Unindexed foreign keys](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys): 67 INFO entries; [unused indexes](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index): 11 INFO entries. Measure representative scoped queries before adding/dropping indexes. Newly applied or low-traffic staging indexes are not safe deletion candidates solely because usage is zero.

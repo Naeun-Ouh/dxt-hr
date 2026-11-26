@@ -114,3 +114,18 @@ The historical Gmail-send/cron items in Issue #14 are superseded by Issue #15 an
   callback, reviewed migrations, and dedicated Google test identities with human login/
   consent. Provider connectors are accessible; account reconnection is not needed.
   Code/local synthetic regression may proceed independently; do not mark this gate green.
+
+## Read-only metadata refresh — 2026-11-26 (#45–#47 preparation)
+
+- Verified main baseline: `00ae92855be523523bbc71086d5d90954dac054d` (#39–#44 merged).
+- Staging metadata independently confirms 28 migrations through `weekend_work_evidence`,
+  including source allocation, source-validity review and carryover evidence.
+- All public ordinary tables report RLS enabled. Six document buckets remain private:
+  seals 2 MiB, HR documents 4 MiB, contracts/expense/resignation 10 MiB, certificates 20 MiB.
+  Bucket limits alone do not establish hosted request transport limits.
+- Both `authenticated` and `service_role` remain denied mail enqueue/claim EXECUTE.
+- No employee/file contents were retrieved, and no hosted configuration/schema/data was
+  changed. No Google user-session, restore or hosted performance test was performed.
+- Earlier dated pending acceptance entries are historical, not current verified failures.
+  This metadata refresh does **not** mark their user-session gates passed. Use the current
+  release matrix in `RELEASE_READINESS.md` and record actual outcomes with deployment SHA.

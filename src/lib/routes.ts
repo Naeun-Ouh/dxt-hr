@@ -21,6 +21,7 @@ export const ROUTES: AppRoute[] = [
   employee("/contracts/me/[id]", "근로계약"),
   {path:"/admin/contracts/[id]",title:"근로계약 상세",capability:"EMPLOYMENT_CONTRACT_MANAGE",icon:"FolderLock"},
   employee("/", "홈", "홈"),
+  employee("/me", "마이페이지", "홈", "Users2"),
   employee("/people", "직원", "인사", "Users2"),
   employee("/people/[id]", "직원 프로필"),
   employee("/organization", "조직도", "인사", "ChartNetwork"),
