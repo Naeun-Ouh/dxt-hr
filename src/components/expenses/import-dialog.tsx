@@ -1,4 +1,5 @@
 'use client';
+import {checkExpenseUpload} from '@/lib/expenses/transport';
 import {useRef,useState} from 'react';
 import {Modal} from '@/components/ui/workspace';
 import {previewExpenseGrid} from '@/app/actions/expenses';
@@ -8,10 +9,10 @@ export function ExpenseImport({open,month,onClose,onApply}:{open:boolean;month:s
  const request=useRef(0);
  const close=()=>{request.current++;setPreview(undefined);setError('');setBusy(false);setLegacyDate(false);onClose();};
  const needsDate=!!preview?.items.some(i=>['FUEL','TOLL'].includes(i.expense_type)&&!i.usage_date);
- return <Modal open={open} onClose={close} title="Excel 가져오기"><form className="grid-import-panel" onChange={()=>{request.current++;setPreview(undefined);setBusy(false);}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget),token=++request.current;setBusy(true);setError('');try{const result=await previewExpenseGrid(data);if(token!==request.current)return;if(result.preview){setPreview(result.preview);setLegacyDate(result.preview.items.some(i=>i.import_origin?.includes(' (')));}else setError(result.error||'가져오기 실패');}finally{if(token===request.current)setBusy(false);}}}>
+ return <Modal open={open} onClose={close} title="Excel 가져오기"><form className="grid-import-panel" onChange={()=>{request.current++;setPreview(undefined);setBusy(false);}} onSubmit={async e=>{e.preventDefault();const data=new FormData(e.currentTarget),token=++request.current;setBusy(true);setError('');try{checkExpenseUpload(data);const result=await previewExpenseGrid(data);if(token!==request.current)return;if(result.preview){setPreview(result.preview);setLegacyDate(result.preview.items.some(i=>i.import_origin?.includes(' (')));}else setError(result.error||'가져오기 실패');}catch(e){if(token===request.current)setError((e as Error).message);}finally{if(token===request.current)setBusy(false);}}}>
  <p>귀속월 <strong>{month}</strong> · 미리보기는 저장되지 않습니다.</p><input type="hidden" name="month" value={month}/>
  {error&&<p role="alert" className="form-error">{error}</p>}
- <div className="field-grid"><label>Excel 파일 (.xlsx)<input name="workbook" type="file" accept=".xlsx" required onChange={()=>setLegacyDate(false)}/></label><label>가져오기 방식<select value={mode} onChange={e=>setMode(e.target.value as 'append'|'replace')}><option value="append">기존 행에 추가</option><option value="replace">미저장 신규 행 교체 (저장된 행 유지)</option></select></label></div>
+ <div className="field-grid"><label>Excel 파일 (.xlsx)<small>최대 4 MiB</small><input name="workbook" type="file" accept=".xlsx" required onChange={()=>setLegacyDate(false)}/></label><label>가져오기 방식<select value={mode} onChange={e=>setMode(e.target.value as 'append'|'replace')}><option value="append">기존 행에 추가</option><option value="replace">미저장 신규 행 교체 (저장된 행 유지)</option></select></label></div>
  {legacyDate&&<label>차량 사용일 (기존 양식)<input name="vehicle_date" type="date" min={month+'-01'} max={month+'-31'} required/></label>}
  <button className="button" disabled={busy}>{busy?'분석 중…':'Grid 미리보기'}</button>
  {preview&&<section aria-label="Excel 미리보기"><h3>{preview.items.length}행 · 오류 {preview.problems.filter(p=>p.severity==='ERROR').length} · 확인 {preview.problems.filter(p=>p.severity==='WARNING').length}</h3>

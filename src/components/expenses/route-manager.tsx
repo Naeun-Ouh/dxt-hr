@@ -1,0 +1,15 @@
+'use client';
+import {useState} from 'react';
+import {Drawer} from '@/components/ui/workspace';
+import {saveRoutePreset} from '@/app/actions/expenses';
+import type {RoutePreset} from '@/lib/expenses/routes';
+export const routeLabel=(route:RoutePreset)=>`${route.alias?route.alias+' · ':''}${route.origin} → ${route.destination}`;
+export function RouteManager({routes,onChange}:{routes:RoutePreset[];onChange:(routes:RoutePreset[])=>void}){
+ const [open,setOpen]=useState(false),[editing,setEditing]=useState<RoutePreset|null|undefined>(),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ return <><button className="button" onClick={()=>setOpen(true)}>내 이동 경로</button><Drawer open={open} onClose={()=>{if(!busy){setOpen(false);setEditing(undefined);setError('');}}} title="내 이동 경로">
+ <p>자주 사용하는 출발지·도착지와 선택한 편도 금액만 저장합니다. 경로를 직접 선택해야 입력되며 기존 경비는 바뀌지 않습니다.</p>{error&&<p role="alert" className="form-error">{error}</p>}
+ <ul className="expense-card-list">{routes.map(r=><li key={r.id}><span>{routeLabel(r)} <small>{r.active?'사용 중':'비활성'}</small></span><button className="button" disabled={busy} onClick={()=>setEditing(r)} aria-label={`${routeLabel(r)} 수정`}>수정</button></li>)}</ul><button className="button" disabled={busy} onClick={()=>setEditing(null)}>+ 경로 등록</button>
+ {editing!==undefined&&<form key={editing?.id||'new'} className="expense-card-form" onSubmit={async e=>{e.preventDefault();const form=new FormData(e.currentTarget);setBusy(true);setError('');try{const result=await saveRoutePreset(editing?.id||null,editing?.version||0,{origin:String(form.get('origin')),destination:String(form.get('destination')),alias:String(form.get('alias')),fuel_amount:form.get('fuel_amount')?Number(form.get('fuel_amount')):null,toll_amount:form.get('toll_amount')?Number(form.get('toll_amount')):null,active:form.has('active')});if('routes'in result&&result.routes){onChange(result.routes);setEditing(undefined);}else setError(('error'in result?result.error:undefined)||'경로 저장 실패');}finally{setBusy(false);}}}>
+ <h3>{editing?'경로 수정':'경로 등록'}</h3><fieldset disabled={busy}><label>경로 별칭<input name="alias" maxLength={100} defaultValue={editing?.alias}/></label><label>출발지<input name="origin" required maxLength={200} defaultValue={editing?.origin}/></label><label>도착지<input name="destination" required maxLength={200} defaultValue={editing?.destination}/></label><label>기본 유류비 편도 금액<input name="fuel_amount" type="number" min="1" max="100000000" step="1" defaultValue={editing?.fuel_amount??''}/></label><label>기본 통행료 편도 금액<input name="toll_amount" type="number" min="1" max="100000000" step="1" defaultValue={editing?.toll_amount??''}/></label><label><input name="active" type="checkbox" defaultChecked={editing?.active??true}/>사용 가능한 경로</label><p className="grid-help">금액은 선택 사항입니다. 거리·유가 계산이나 자동 지급 기준으로 사용하지 않습니다.</p><div className="grid-actions"><button type="button" className="button" onClick={()=>setEditing(undefined)}>취소</button><button className="button primary">{busy?'저장 중…':'경로 저장'}</button></div></fieldset></form>}
+ </Drawer></>;
+}

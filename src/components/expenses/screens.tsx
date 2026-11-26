@@ -1,10 +1,10 @@
 import { StatusTag } from '@/components/ui/primitives';
-import { ownPaymentCards } from '@/lib/expenses/data';
+import { ownPaymentCards, ownRoutePresets } from '@/lib/expenses/data';
 import { ExpenseGrid } from './grid';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { expenseData, expenseDetail, expenseOptions, expenseRows } from '@/lib/expenses/data';
-import { PURPOSES, STATUS, CLAIM_COLUMNS, type Claim, type Item } from '@/lib/expenses/types';
+import { PURPOSES, STATUS, type Claim, type Item } from '@/lib/expenses/types';
 import { localDate, claimProblems, deadline, editable, itemProblems, today } from '@/lib/expenses/validation';
 import type { SearchParams } from '@/lib/employees/data';
 import { ClaimAction, ExpenseForm, ImportForm } from './forms';
@@ -14,7 +14,14 @@ function LockPolicy(){return <div className="expense-info"><strong>지급일: �
 function Badge({claim}:{claim:Claim}){return <StatusTag status={claim.status}>{claim.status==='SUBMITTED'&&claim.payment_date&&today()>claim.payment_date?'제출완료 · 잠금':STATUS[claim.status]}</StatusTag>;}
 export async function ExpenseList({query,admin=false}:{query:SearchParams;admin?:boolean}) {
  const options=await expenseOptions();const month=typeof query.month==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(query.month)?query.month:today().slice(0,7);
- if(!admin){const c=options.selfId?(await expenseRows<Claim>('expense_claim',CLAIM_COLUMNS,{employee_id:options.selfId,usage_month:month+'-01'}))[0]:undefined;const detail=c?await expenseDetail(c.id):null;return <ExpenseGrid initialCards={await ownPaymentCards()} accounts={options.accounts} key={month} month={month} initialClaim={detail?.claim} initialItems={detail?.items||[]} initialAttachments={detail?.attachments||[]} employees={options.employees.filter(e=>e.employment_status==='ACTIVE')} projects={options.projects}/>;}
+ if(!admin){
+  const [history,routes,cards]=await Promise.all([
+   options.selfId?expenseRows<Pick<Claim,'id'|'usage_month'|'status'>>('expense_claim','id,usage_month,status',{employee_id:options.selfId}):Promise.resolve([]),
+   ownRoutePresets(),ownPaymentCards(),
+  ]);
+  const current=history.find(c=>c.usage_month.slice(0,7)===month),detail=current?await expenseDetail(current.id):null;
+  return <ExpenseGrid initialRoutes={routes} history={history.map(c=>({month:c.usage_month.slice(0,7),status:c.status}))} initialCards={cards} accounts={options.accounts} key={month} month={month} initialClaim={detail?.claim} initialItems={detail?.items||[]} initialAttachments={detail?.attachments||[]} employees={options.employees.filter(e=>e.employment_status==='ACTIVE')} projects={options.projects}/>;
+ }
  const data=await expenseData(true);
  const employee=typeof query.employee==='string'?query.employee:'';const status=typeof query.status==='string'?query.status:'';
  const claims=data.claims.filter(c=>c.usage_month.slice(0,7)===month&&(!admin||!employee||c.employee_id===employee)&&(!status||c.status===status)&&(query.validation!=='WARNING'||data.items.some(i=>i.claim_id===c.id&&itemProblems(i,data.items.filter(other=>other.claim_id===c.id)).some(p=>p.severity==='WARNING'))));const ids=new Set(claims.map(c=>c.id));const items=data.items.filter(i=>ids.has(i.claim_id));
