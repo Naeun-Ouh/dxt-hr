@@ -392,3 +392,10 @@ expansion. See `ISSUE_32_DELIVERY.md`.
 `holiday_event` is a client-immutable administrative change trail. Removal deactivates
 company rows. `leave_request.work_dates` and `calendar_version` freeze new-request
 calculation; existing approved rows remain untouched. See `PHASE_4B_HOLIDAYS.md`.
+
+### Leave source allocation and birthday
+
+`leave_source` records immutable confirmed grant provenance and validity. Ledger source
+FKs preserve bucket/year identity; `reversal_of` uniquely identifies the original
+deduction. Birthday requests have a separate benefit year and a pending/approved
+uniqueness constraint. See `PHASE_4B_SOURCES_BIRTHDAY.md`.

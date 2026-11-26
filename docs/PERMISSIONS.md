@@ -230,3 +230,10 @@ Employees read active company-wide holiday dates/source metadata, never administ
 change events. Direct table writes and the obsolete unchecked leave-submit RPC are
 revoked. New leave submission requires the server-validated calendar-year revision;
 existing leave ownership, direct-team approval and reason privacy remain unchanged.
+
+### Leave sources and birthday
+
+Own source/ledger reads remain self or LEAVE_MANAGE only. Internal birthday preparation
+and allocation are not callable by authenticated clients. Admin/CEO may explicitly
+record verified sources and append reasoned corrections. No broader Team Leader ledger
+access, raw birthday projection access, or wage/grant automation is introduced.
