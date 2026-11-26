@@ -78,3 +78,8 @@ Suggested Next.js route map.
 - `/certificates/me`: own employment certificate requests/downloads.
 - `/admin/certificates`: HR_CERTIFICATE_MANAGE review/issue/settings workspace.
 - `/api/certificates/[id]/pdf`: reauthorized private/no-store PDF download.
+
+## 프로젝트 이월 검토
+
+- `/leave/carryover`: EMPLOYEE_ACCESS, 본인 상태/사용 안내
+- `/admin/leave/carryover`: LEAVE_MANAGE, 기준일 근거 및 검토 이력

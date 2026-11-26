@@ -1,3 +1,4 @@
+import {CarryoverScreen} from "@/components/carryover/screen";
 import { CertificateScreen } from "@/components/certificates/screen";
 
 import {HolidayWorkspace} from '@/components/leave/holidays';
@@ -28,6 +29,7 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/leave/carryover":case "/admin/leave/carryover":screen=<CarryoverScreen admin={path[0]==='admin'}/>;break;
     case "/certificates/me":case "/admin/certificates":screen=<CertificateScreen admin={path[0]==='admin'}/>;break;
     case "/admin/contracts/seals":screen=<SealScreen/>;break;
     case "/contracts/me":case "/contracts/me/[id]":case "/admin/contracts":case "/admin/contracts/[id]":screen=<ContractsScreen admin={path[0]==='admin'} id={path[2]} principal={principal}/>;break;
