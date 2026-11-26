@@ -241,3 +241,6 @@ access, raw birthday projection access, or wage/grant automation is introduced.
 ## 프로젝트 이월 검토
 
 LEAVE_MANAGE만 후보 근거/검토 RPC 및 원본 이력 접근. 직원은 본인 case 상태만 조회, Team Leader 팀원 접근 금지. 직접 쓰기 금지; RLS와 server capability 검사 병행.
+## 입퇴사 업무 통합 — Issue 35
+
+ONBOARDING_MANAGE 진입 후 업무별 권한 및 연결 도메인 권한을 다시 확인한다. 일반 ADMIN의 HR 문서 개수 노출도 PRIVATE_HR_ACCESS 없이는 금지한다. CEO-only 사직서/사유는 통합 집계에서 제외한다. 기존 사용자 세션/RLS 사용; 새 권한·RPC·Storage 정책 없음.
