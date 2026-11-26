@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAs, cases } from "./fixtures";
 import { ROUTES } from "../../src/lib/routes";
+import {today} from "../../src/lib/expenses/validation";
 const employeePaths = ["/", "/people", "/leave", "/expenses", "/projects/me", "/certificates/me", "/contracts/me", "/assets/me"];
 const additions: Record<string, string[]> = {employee:[],leader:[],division:[],expense:[],it:[],combined:[]};
 for (const [name] of Object.entries(additions)) {
@@ -113,4 +114,14 @@ test('private navigation gives immediate feedback while the authorized server re
  await expect(page.getByRole('status',{name:'화면 이동 중'})).toBeVisible();
  await expect(page.getByRole('heading',{name:'경비관리',exact:true})).toBeVisible();
  await expect(page.getByRole('status',{name:'화면 이동 중'})).toHaveCount(0);
+});
+
+test('an already-open expense Grid reauthorizes save after account deactivation',async({page,context})=>{
+ const month=today().slice(0,7);
+ await loginAs(context,'employee');await page.goto('/expenses?month='+month);
+ await page.getByLabel('1행 사용처',{exact:true}).fill('비활성 계정의 저장 시도');
+ await loginAs(context,'inactive');await page.getByRole('button',{name:'일괄 저장',exact:true}).click();
+ await expect(page).toHaveURL(/\/login\?next=/);
+ await loginAs(context,'employee');await page.goto('/expenses?month='+month);
+ await expect(page.getByLabel('1행 사용처',{exact:true})).not.toHaveValue('비활성 계정의 저장 시도');
 });
