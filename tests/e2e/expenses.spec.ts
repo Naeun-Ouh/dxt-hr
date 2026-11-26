@@ -72,3 +72,18 @@ test('monthly submission, admin filters/export, action replay and payment lock c
  await loginAs(context,'expense');await page.goto(`/admin/expenses/${claim}`);await page.getByRole('button',{name:'지급 완료 처리'}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
  await loginAs(context,'employee');await page.goto(`/expenses/${claim}`);await expect(page.getByText('지급 기간이 잠겼습니다. 경비와 증빙은 읽기 전용입니다.')).toBeVisible();await expect(page.getByRole('link',{name:'수정',exact:true})).toHaveCount(0);expect((await page.goto(`/expenses/items/${item}/edit?claim=${claim}`))!.status()).toBe(404);expect((await context.request.get(`/api/expenses/receipts/${receipt}`)).status()).toBe(200);
 });
+
+test('admin monthly batch export preserves exact vehicle and dining values and employee/month scope',async({page,context})=>{
+ // Reuse this file's UI-authored vehicle and dining evidence; no privileged fixture writes.
+ await loginAs(context,'expense');await page.goto(`/expenses/${otherClaim}`);await page.getByRole('button',{name:'월 경비 제출',exact:true}).click();await expect(page.getByRole('status')).toHaveText('저장했습니다.');
+ const download=async(query:string)=>{const response=await context.request.get('/api/expenses/export?'+query);expect(response.status()).toBe(200);expect(response.headers()['cache-control']).toBe('private, no-store');const book=new ExcelJS.Workbook();await book.xlsx.load(await response.body() as never);return book;};
+ const records=(book:ExcelJS.Workbook)=>{const sheet=book.getWorksheet('경비 내역')!,headers=new Map<string,number>();sheet.getRow(1).eachCell((cell,column)=>headers.set(String(cell.value),column));const rows:Record<string,ExcelJS.CellValue>[]=[];sheet.eachRow((row,index)=>{if(index>1)rows.push(Object.fromEntries([...headers].map(([name,column])=>[name,row.getCell(column).value])));});return rows;};
+ const workbook=await download('month='+month),rows=records(workbook);
+ const vehicle=rows.find(row=>row['출장명']==='삼성바이오로직스 출장');expect(vehicle).toBeDefined();expect(vehicle).toMatchObject({'직원':'김테스트','출발지':'구로역','도착지':'송도','편도금액':5036,'횟수':20,'금액':100720,'참석자/한도사용액':''});
+ const dining=rows.find(row=>row['업체명']==='동료 비공개 식당');expect(dining).toBeDefined();expect(dining).toMatchObject({'직원':'이동료','금액':40000,'참석자/한도사용액':'이동료: 30000','출발지':'','도착지':''});
+ expect(rows.every(row=>row['사용월']===month)).toBe(true);
+ const travel=workbook.getWorksheet('주유비,통행비')!;let travelRow:ExcelJS.Row|undefined;travel.eachRow(row=>{if(row.getCell(3).value==='삼성바이오로직스 출장')travelRow=row;});expect(travelRow).toBeDefined();expect([4,5,6,7].map(column=>travelRow!.getCell(column).value)).toEqual(['구로역','송도',5036,20]);
+ const general=workbook.getWorksheet('지출결의서')!;expect(general.lastRow!.getCell(5).value).toBe(rows.reduce((total,row)=>total+Number(row['금액']),0));
+ const employeeOnly=records(await download('month='+month+'&employee=10000000-0000-4000-8000-000000000001'));expect(employeeOnly.length).toBeGreaterThan(0);expect(employeeOnly.every(row=>row['직원']==='김테스트')).toBe(true);expect(employeeOnly.some(row=>row['업체명']==='동료 비공개 식당')).toBe(false);
+ const empty=await download('month=1999-01');expect(empty.getWorksheet('경비 내역')!.getCell('A1').value).toBe('제출된 경비가 없습니다.');
+});

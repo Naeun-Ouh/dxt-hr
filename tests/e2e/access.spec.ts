@@ -92,3 +92,25 @@ test("Google OAuth shell exchanges PKCE code and returns to the requested page",
   await expect(page.getByRole("heading", { name: "내 프로젝트", exact: true })).toBeVisible();
   await expect(page.locator('nav[aria-label="주 메뉴"] a[href="/admin/employees"]')).toHaveCount(0);
 });
+
+test('request-scoped auth cache never survives session replacement or deactivation', async ({page,context})=>{
+ await loginAs(context,'admin');
+ expect((await page.goto('/admin/expenses'))!.status()).toBe(200);
+ await loginAs(context,'employee');
+ expect((await page.goto('/admin/expenses'))!.status()).toBe(404);
+ await page.goto('/expenses');
+ await expect(page.getByRole('heading',{name:'경비관리',exact:true})).toBeVisible();
+ await loginAs(context,'inactive');
+ await page.goto('/expenses');
+ await expect(page).toHaveURL(/\/login\?next=/);
+ await expect(page.locator('.sidebar')).toHaveCount(0);
+});
+
+test('private navigation gives immediate feedback while the authorized server response is pending',async({page,context})=>{
+ await loginAs(context,'employee');await page.goto('/people');
+ await page.route('**/expenses?*',async route=>{await new Promise(resolve=>setTimeout(resolve,700));await route.continue();});
+ await page.getByRole('navigation',{name:'주 메뉴',exact:true}).getByRole('link',{name:'경비',exact:true}).click();
+ await expect(page.getByRole('status',{name:'화면 이동 중'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'경비관리',exact:true})).toBeVisible();
+ await expect(page.getByRole('status',{name:'화면 이동 중'})).toHaveCount(0);
+});

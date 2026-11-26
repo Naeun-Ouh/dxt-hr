@@ -1,12 +1,12 @@
 import 'server-only';
 import {notFound} from 'next/navigation';
 import {employeeClient} from '../employees/data';
-import {requireCapability} from '../auth/access';
+import {currentEmployeeId,requireCapability} from '../auth/access';
 import {readRows} from '../operations/data';
 import {isUuid} from '../employees/validation';
 import {REQUEST_COLUMNS,LEDGER_COLUMNS,HISTORY_COLUMNS,type LeaveRequest,type Summary,type Ledger,type History,type CalendarEntry} from './types';
 export async function leaveRpc<T>(name:string,args:Record<string,unknown>={}):Promise<T>{const {data,error}=await(await employeeClient()).rpc(name,args);if(error)throw error;return data as T;}
-export async function ownEmployee(){await requireCapability('EMPLOYEE_ACCESS');return leaveRpc<string|null>('current_employee_id');}
+export async function ownEmployee(){await requireCapability('EMPLOYEE_ACCESS');return currentEmployeeId();}
 export async function today(){return leaveRpc<string>('leave_today');}
 export async function summary(id:string,year:number){await requireCapability('EMPLOYEE_ACCESS');return leaveRpc<Summary>('leave_summary',{p_employee:id,p_year:year});}
 export async function requests(employee?:string){await requireCapability('EMPLOYEE_ACCESS');return readRows<LeaveRequest>('leave_request',REQUEST_COLUMNS,employee?{employee_id:employee}:{},'start_date');}

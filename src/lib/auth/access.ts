@@ -25,3 +25,13 @@ export async function requireCapability(capability: Capability, returnPath = "/"
   if (!can(principal, capability)) notFound();
   return principal;
 }
+
+// Read-only identity reuse within one RSC request. API/actions still reauthorize on invocation.
+export const currentEmployeeId = cache(async () => {
+ await requireCapability("EMPLOYEE_ACCESS");
+ const client=await createAuthClient();
+ if(!client)throw new Error("Employee service unavailable");
+ const {data,error}=await client.rpc("current_employee_id");
+ if(error)throw new Error("Employee link unavailable");
+ return data as string|null;
+});

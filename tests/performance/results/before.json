@@ -1,0 +1,2514 @@
+{
+  "label": "before",
+  "workload": "synthetic-v1-50-employees-200-month-claims",
+  "warmSamples": 10,
+  "measurement": "Local production build, hard navigation/action through networkidle; first request is not hosted cold start. HTTP totals include mock queue; adapterSql excludes RLS setup and SQL inside stored functions.",
+  "results": {
+    "employee-home": {
+      "first": {
+        "readyMs": 991.8005840000001,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 15,
+              "totalMs": 2.2882520000011937,
+              "errors": 0
+            },
+            "membership": {
+              "count": 1,
+              "totalMs": 1.1472920000005615,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 4,
+              "totalMs": 16.040291000000252,
+              "errors": 0
+            },
+            "rest": {
+              "count": 10,
+              "totalMs": 48.12504100000115,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 24,
+            "totalMs": 31.263331999999536,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 882.468167,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.4355850000010832,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.17454199999974662,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 10.865958000000319,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 38.05987400000049,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 23.49258600000121,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 914.1126249999998,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.672626999999011,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.22699999999986176,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 13.84324999999808,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 48.88091599999916,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 32.794333999998344,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 880.3146660000002,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.684207999998762,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.16020799999932933,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 11.043958000000202,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 46.519915999997465,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 25.943624000003183,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 905.9247920000007,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.175998000000618,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.289042000000336,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 13.370333000000755,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 51.12058599999909,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 30.034417000009853,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 889.3623749999997,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.4169569999958185,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.13337499999943248,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 14.469041999998808,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 47.511124000000564,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 31.377747999998974,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 895.8067920000003,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 3.1860410000026604,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.18129100000078324,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 14.949124000000666,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 62.98779199999626,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 36.59883200000513,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 914.6066250000003,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.292874999997366,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.21537499999976717,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 9.349500000000262,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 39.97850000000108,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 25.101622999995016,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 881.0434160000004,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.5113340000007156,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.18554200000107812,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 12.310207999997147,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 53.09783399999651,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 27.848877000003995,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 898.2095420000005,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 2.184168999998292,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.20045800000116287,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 18.27400100000341,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 59.45408300000054,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 35.1394999999975,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 891.3690409999999,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 15,
+                "totalMs": 1.5162490000002435,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.29558299999916926,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 4,
+                "totalMs": 10.729290999999648,
+                "errors": 0
+              },
+              "rest": {
+                "count": 10,
+                "totalMs": 35.25183300000208,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 24,
+              "totalMs": 22.10583399999632,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 891.3690409999999,
+      "p95Ms": 914.6066250000003
+    },
+    "employee-expenses": {
+      "first": {
+        "readyMs": 962.7733749999989,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 12,
+              "totalMs": 2.11012600000322,
+              "errors": 0
+            },
+            "membership": {
+              "count": 1,
+              "totalMs": 0.10604199999943376,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 5,
+              "totalMs": 8.775624000001699,
+              "errors": 0
+            },
+            "rest": {
+              "count": 12,
+              "totalMs": 41.640833999997994,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 29,
+            "totalMs": 26.09249899999486,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 703.2255420000001,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.37354200000118,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.25333300000056624,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 8.140332999999373,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 33.34862500000236,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 20.70454300000347,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 696.7467919999999,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.8136649999869405,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.23429200000100536,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 9.782248999999865,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 34.765747000001284,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 22.366001999998844,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 679.3122500000009,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.5480010000028415,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.22183299999960582,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 8.488164999995206,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 33.17962600000101,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 22.331459000019095,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 658.5456250000007,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.5077520000013465,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.13829199999963748,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 7.317750000001979,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 29.17496000000392,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 18.636128000009194,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 663.3327499999978,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.2280010000067705,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.09987499999988358,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 7.72254299999986,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 29.260040999997727,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 18.579954000004363,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 646.9149160000015,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.0012500000011642,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.0930000000007567,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 6.617834000000585,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 28.805748000002495,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 17.923125999983313,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 661.9995830000007,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.5289970000012545,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.14141599999857135,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 7.583542999997007,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 28.56770900000629,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 18.624000000014348,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 666.4809999999998,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.3095419999990554,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.12925000000177533,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 7.540624000001117,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 28.84887300000264,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 18.74275299999863,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 667.6957920000023,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.464958000000479,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.13224999999874854,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 8.027250999999524,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 31.276084000008268,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 19.40870400001222,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 644.0684169999986,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 12,
+                "totalMs": 1.075582999998005,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.05691599999772734,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 5,
+                "totalMs": 6.421749999997701,
+                "errors": 0
+              },
+              "rest": {
+                "count": 12,
+                "totalMs": 26.49024900000586,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 29,
+              "totalMs": 16.848502000000735,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 663.3327499999978,
+      "p95Ms": 703.2255420000001
+    },
+    "leader-approvals": {
+      "first": {
+        "readyMs": 759.7482090000012,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 19,
+              "totalMs": 1.9879200000068522,
+              "errors": 0
+            },
+            "membership": {
+              "count": 1,
+              "totalMs": 0.14166599999953178,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 2,
+              "totalMs": 4.724624999998923,
+              "errors": 0
+            },
+            "rest": {
+              "count": 2,
+              "totalMs": 22.240501000000222,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 6,
+            "totalMs": 20.848458999997092,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 658.1883749999979,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.8304990000069665,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.1389999999992142,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 4.440749999997934,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 20.54633399999875,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 19.069915999996738,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 649.1508329999997,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.8002099999976053,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.09716699999989942,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 3.2502500000009604,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 18.345915999998397,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 16.690542000000278,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 658.8898749999971,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.417540000002191,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.1309579999979178,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 3.896875000002183,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 21.104748999998264,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 19.161499999994703,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 647.6677079999972,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 2.041958000012528,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.10325000000011642,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 3.349125999997341,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 18.274916000002122,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 16.580166000003373,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 671.968582999998,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 3.1129150000087975,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.1315420000028098,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 4.0978329999998095,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 20.27287499999875,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 18.65024899999844,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 649.8582920000008,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.2667870000004768,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.08824999999706051,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 2.8904990000010002,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 17.79866700000275,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 16.304958000004262,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 655.3268330000028,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.715040000002773,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.1337920000005397,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 5.271583000001556,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 20.36116700000275,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 18.742459000000963,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 649.1036249999997,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.6860000000015134,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.12925000000177533,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 3.8966250000012224,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 20.92304200000217,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 19.035831999997754,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 646.7667079999992,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.3405409999977564,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07125000000087311,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 2.9212919999954465,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 18.20237399999678,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 16.49491699999635,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 652.9413749999985,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 19,
+                "totalMs": 1.688081999993301,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.11599999999816646,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 2,
+                "totalMs": 3.777501000000484,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 19.583166999997047,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 6,
+              "totalMs": 17.949124999999185,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 649.8582920000008,
+      "p95Ms": 671.968582999998
+    },
+    "admin-expenses": {
+      "first": {
+        "readyMs": 2658.9521669999995,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 21,
+              "totalMs": 1.6186699999816483,
+              "errors": 0
+            },
+            "membership": {
+              "count": 1,
+              "totalMs": 0.14500000000407454,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 3,
+              "totalMs": 5.594126000010874,
+              "errors": 0
+            },
+            "rest": {
+              "count": 612,
+              "totalMs": 1157.5186119999926,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 1227,
+            "totalMs": 609.1642700000448,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 2023.6639579999974,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.5022080000198912,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.11587499999586726,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 5.536376000003656,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1083.201863000104,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 580.8538759998701,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 1993.0129579999993,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.7480410000061966,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.10575000000244472,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.899792999996862,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1067.9356749999715,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 570.8884899998811,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 2193.791999999994,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.7628310000000056,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.09579200000007404,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 5.367874999996275,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1225.1727790000587,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 638.8303500000184,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 3075.347459000004,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.6362490000101388,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.08041600000433391,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 5.9991250000020955,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1909.572828999837,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 1013.3593329997602,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 2911.6833750000005,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.4011650000029476,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07462500000110595,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.744542000000365,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1877.956161000031,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 1007.4828629999611,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 2382.429959000001,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.4449170000079903,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07270799999969313,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.770457999999053,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1438.3615789998294,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 762.3762579999529,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 1875.1321249999964,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.1452100000096834,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.05612499999551801,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.162333000000217,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1022.8742959999727,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 565.0038270000878,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 1873.7583749999976,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.0198789999922155,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.06483399999706307,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 5.215500000005704,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1023.5244990000137,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 560.1534630000097,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 1844.7224579999965,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.0182079999722191,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.06991700000071432,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.257874999995693,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 1008.1833320000151,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 551.0503470000913,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 1837.1316250000018,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 21,
+                "totalMs": 1.3150010000172188,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07229099999676691,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 3,
+                "totalMs": 4.578125,
+                "errors": 0
+              },
+              "rest": {
+                "count": 612,
+                "totalMs": 991.4477530000149,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 1227,
+              "totalMs": 543.9249859999254,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 1993.0129579999993,
+      "p95Ms": 3075.347459000004
+    },
+    "ceo-employees": {
+      "first": {
+        "readyMs": 755.6694580000039,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 32,
+              "totalMs": 1.8805839999768068,
+              "errors": 0
+            },
+            "membership": {
+              "count": 1,
+              "totalMs": 0.051500000001396984,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 1,
+              "totalMs": 1.6659999999974389,
+              "errors": 0
+            },
+            "rest": {
+              "count": 2,
+              "totalMs": 3.6007509999981266,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 5,
+            "totalMs": 2.203165999992052,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 681.9911250000005,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.3692919999812148,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07495799999742303,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.1225419999973383,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.554207999994105,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.869874999996682,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 666.0251250000001,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.702079999995476,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07758300000568852,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.1357910000006086,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 5.30425099999411,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 3.076792000007117,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 663.768624999997,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.5186649999959627,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07824999999866122,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.1095420000056038,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.561125000000175,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.892833999998402,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 668.8342089999933,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.3955410000344273,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.06524999999965075,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.101833999993687,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 5.025332999997772,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 3.0198749999981374,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 696.7502079999977,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.6699979999975767,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.05683400000270922,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.133457999996608,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 5.438167000000249,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 3.2421250000043074,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 667.0995830000029,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.5007510000068578,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.08383300000423333,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.573000000003958,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.6895430000076885,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 3.2159580000006827,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 671.3300420000014,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.591670999994676,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.05783299999893643,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 1.77774999999383,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 3.990624999998545,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.578917000006186,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 671.7026249999981,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.423079999993206,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07670800000050804,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.339417000002868,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.676958000003651,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.890250999997079,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 672.3511659999931,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.5646659999983967,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.06508300000132294,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 2.1006669999987935,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.8552920000001905,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.8364179999989574,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 671.6163339999985,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 32,
+                "totalMs": 1.4186259999551112,
+                "errors": 0
+              },
+              "membership": {
+                "count": 1,
+                "totalMs": 0.07154199999058619,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 1,
+                "totalMs": 1.9145419999986188,
+                "errors": 0
+              },
+              "rest": {
+                "count": 2,
+                "totalMs": 4.252416000002995,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 5,
+              "totalMs": 2.63625100000354,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 671.3300420000014,
+      "p95Ms": 696.7502079999977
+    },
+    "employee-save": {
+      "first": {
+        "readyMs": 391.39454199999454,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 5,
+              "totalMs": 0.3539160000073025,
+              "errors": 0
+            },
+            "membership": {
+              "count": 4,
+              "totalMs": 0.22345799999311566,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 9,
+              "totalMs": 20.52024900003744,
+              "errors": 0
+            },
+            "rest": {
+              "count": 11,
+              "totalMs": 27.671833999993396,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 31,
+            "totalMs": 26.90649800002575,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 85.06733299999905,
+          "counts": {
+            "http": {
+              "rpc": {
+                "count": 10,
+                "totalMs": 16.793792000011308,
+                "errors": 0
+              },
+              "rest": {
+                "count": 13,
+                "totalMs": 26.307875000027707,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.30666600000404287,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.2055839999957243,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 36,
+              "totalMs": 19.532418000046164,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 79.59116599999834,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 17,
+                "totalMs": 35.63612499998999,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 17.599832000007154,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.21841700001095887,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.1617909999913536,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 46,
+              "totalMs": 26.5556259999139,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 103.82225000000471,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 17,
+                "totalMs": 32.313206999984686,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 17.428083000006154,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.24920899998687673,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.17566799999622162,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 46,
+              "totalMs": 24.08037700004934,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 84.58891599999333,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 15,
+                "totalMs": 26.40341700000863,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 18.324333000011393,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.2837920000019949,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.18816700001480058,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 42,
+              "totalMs": 20.48157799994806,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 95.33095799999865,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 17,
+                "totalMs": 33.69208399998024,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 18.861000000004424,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.25599899997178,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.2747490000037942,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 46,
+              "totalMs": 25.689081999997143,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 78.88387499999953,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 16,
+                "totalMs": 29.845836000007694,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 17.45208200000343,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.2851680000167107,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.19812600000295788,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 44,
+              "totalMs": 22.43425199999183,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 88.96033400000306,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 17,
+                "totalMs": 31.8572069999791,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 18.36479000003601,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.30174999999871943,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.2000839999964228,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 46,
+              "totalMs": 23.78250199998729,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 93.43987499999639,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 15,
+                "totalMs": 26.220461000018986,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 20.289624999990338,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.2973340000025928,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.20237399998586625,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 42,
+              "totalMs": 20.865959999980987,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 85.15316699999676,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 17,
+                "totalMs": 32.5810820000479,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 16.197083999984898,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.23958300000231247,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.17312400000810158,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 46,
+              "totalMs": 23.166957000023103,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 79.7824580000015,
+          "counts": {
+            "http": {
+              "rest": {
+                "count": 15,
+                "totalMs": 26.59216800001741,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 12,
+                "totalMs": 16.43350200007262,
+                "errors": 0
+              },
+              "auth": {
+                "count": 5,
+                "totalMs": 0.3088749999878928,
+                "errors": 0
+              },
+              "membership": {
+                "count": 4,
+                "totalMs": 0.23299999999289867,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 42,
+              "totalMs": 19.564540000021225,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 85.06733299999905,
+      "p95Ms": 103.82225000000471
+    },
+    "leader-approval": {
+      "first": {
+        "readyMs": 209.64883300000656,
+        "counts": {
+          "http": {
+            "auth": {
+              "count": 4,
+              "totalMs": 0.2411650000140071,
+              "errors": 0
+            },
+            "membership": {
+              "count": 3,
+              "totalMs": 0.1975830000010319,
+              "errors": 0
+            },
+            "rpc": {
+              "count": 8,
+              "totalMs": 17.277250000013737,
+              "errors": 0
+            },
+            "rest": {
+              "count": 5,
+              "totalMs": 52.32529100001557,
+              "errors": 0
+            }
+          },
+          "adapterSql": {
+            "count": 18,
+            "totalMs": 55.17833199999586,
+            "errors": 0
+          }
+        }
+      },
+      "warm": [
+        {
+          "readyMs": 169.58233399999153,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.43324899999424815,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.3399999999819556,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 18.828414999996312,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 53.77870899999107,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 55.03608100004203,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 160.15616600000067,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.2727080000040587,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.18737399998644833,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 18.866875000021537,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 53.38783200000762,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 55.0069599999988,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 171.33174999999756,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.2595009999786271,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.1662499999947613,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 16.76545999998052,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.050416999991285,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 52.83445700001903,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 168.25933300000906,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.35958400000527035,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.21995800000149757,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 16.05370900001435,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 50.53645899998082,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 52.98912400001427,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 156.64208299999882,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.2727500000182772,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.15037599999050144,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 16.20945799999754,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 52.26125100000354,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 53.80958399998781,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 159.8924160000024,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.3496259999956237,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.1898349999974016,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 14.443251000004238,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.76804300000367,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 52.535874000022886,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 157.47325000001,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.2484590000094613,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.17699900001753122,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 14.8059589999757,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.09562599998026,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 51.57037599995965,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 154.26020799999242,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.5529590000078315,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.18479199998546392,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 15.50383299998066,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.76500000001397,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 51.609376000007614,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 161.80633300000045,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.35970900001120754,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.1662909999868134,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 14.357626999990316,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.32070800001384,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 51.569876000023214,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "readyMs": 157.72729199999594,
+          "counts": {
+            "http": {
+              "auth": {
+                "count": 4,
+                "totalMs": 0.24270800000522286,
+                "errors": 0
+              },
+              "membership": {
+                "count": 3,
+                "totalMs": 0.18179200000304263,
+                "errors": 0
+              },
+              "rpc": {
+                "count": 8,
+                "totalMs": 14.652044000002206,
+                "errors": 0
+              },
+              "rest": {
+                "count": 5,
+                "totalMs": 51.771415999988676,
+                "errors": 0
+              }
+            },
+            "adapterSql": {
+              "count": 18,
+              "totalMs": 51.9198739999847,
+              "errors": 0
+            }
+          }
+        }
+      ],
+      "p50Ms": 159.8924160000024,
+      "p95Ms": 171.33174999999756
+    }
+  }
+}
