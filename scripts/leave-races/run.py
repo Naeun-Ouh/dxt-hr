@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Synthetic-only PostgreSQL multi-process RPC races; never accepts a remote DSN."""
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -14,7 +15,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 MARKER = 'DXT_DISPOSABLE_LEAVE_RACE_DATABASE'
-BENEFIT_SHA = 'a43f39895896d2d9cd01a2429b9b6d5ef9925da1'
+BENEFIT_SHA = '2bd5e0c9fc284a49f555055b8393d867d8084fb1'
 BENEFIT_FILE = 'supabase/migrations/20261126045159_leave_benefit_review_apply.sql'
 
 def literal(value):
@@ -83,11 +84,13 @@ class Harness:
         # Explicit evidence that worker2 waits on worker1's transaction, not merely a timed sleep.
         observed=False;deadline=time.monotonic()+10
         while time.monotonic()<deadline:
-            blocked=self.sql("select exists(select 1 from pg_stat_activity w join pg_stat_activity h "
+            blocked=self.sql("select json_build_object('waiter_pid',w.pid,'holder_pid',h.pid,"
+                             "'wait_event_type',w.wait_event_type,'wait_event',w.wait_event,"
+                             "'blockers',pg_blocking_pids(w.pid)) from pg_stat_activity w join pg_stat_activity h "
                              "on h.pid=any(pg_blocking_pids(w.pid)) where w.application_name="+
                              literal(tag+'_2')+" and h.application_name="+literal(tag+'_1')+
-                             " and w.wait_event_type='Lock')::text;")
-            if blocked=='true':observed=True;break
+                             " and w.wait_event_type='Lock';")
+            if blocked:observed=json.loads(blocked);break
             if two.poll() is not None:break
             time.sleep(.05)
         if not observed:raise AssertionError(label+': no genuine competing PostgreSQL lock observed')
@@ -97,8 +100,8 @@ class Harness:
         first_error=one.stderr.read();second_error=two.stderr.read()
         if one.returncode or (error and (not two.returncode or error not in second_error)) or (not error and two.returncode):
             raise AssertionError(label+': unexpected outcomes '+first_error+second_error)
-        self.results.append({'scenario':label,'blocking_observed':True,'winner_committed':True,
-                             'contender':error or 'idempotent success'})
+        self.results.append({'scenario':label,'blocking_observed':True,'lock_evidence':observed,'winner_committed':True,
+                             'contender':error or 'success'})
     def close(self):
         for p in self.children:
             if p.poll() is None:p.terminate()
@@ -110,7 +113,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database',required=True);parser.add_argument('--port',required=True,type=int)
     parser.add_argument('--user',default='postgres');parser.add_argument('--ack-disposable',required=True,choices=[MARKER])
-    parser.add_argument('--benefits-sha',choices=[BENEFIT_SHA]);parser.add_argument('--report',type=Path,required=True)
+    parser.add_argument('--benefits-migration',type=Path,default=ROOT/BENEFIT_FILE);parser.add_argument('--benefits-sha',choices=[BENEFIT_SHA]);parser.add_argument('--report',type=Path,required=True)
     args=parser.parse_args()
     if args.report.exists():raise RuntimeError('Report already exists; choose a new output path')
     h=Harness(args)
@@ -122,7 +125,7 @@ def main():
         h.check("to_regprocedure('public.correct_leave_source(uuid,numeric,text,integer)') is not null",'Apply reviewed main migrations first')
         if args.benefits_sha:
             pinned=subprocess.check_output(['git','show',BENEFIT_SHA+':'+BENEFIT_FILE],cwd=ROOT)
-            if not (ROOT/BENEFIT_FILE).exists() or (ROOT/BENEFIT_FILE).read_bytes()!=pinned:
+            if not args.benefits_migration.exists() or args.benefits_migration.read_bytes()!=pinned:
                 raise RuntimeError('Benefit migration does not match the exact opt-in branch SHA')
             h.check("to_regprocedure('public.apply_leave_benefit(uuid,jsonb,text,boolean)') is not null",'Conditional #54 migration not installed')
         else:
@@ -154,11 +157,22 @@ def main():
         ver=h.sql(f"select version from leave_account where employee_id='{emp}' and year=2026 and bucket='ANNUAL';")
         h.race('cancellation invalidates source correction',admin,review(b,2,'CANCELLED'),f"select correct_leave_source('{source}',1,'SYNTHETIC stale correction',{ver})",'STALE_LEAVE')
         h.check(f"leave_source_balance('{source}')=1",'Cancellation restoration lost')
+        c=request('2026-11-25')
+        ver=h.sql(f"select version from leave_account where employee_id='{emp}' and year=2026 and bucket='ANNUAL';")
+        h.race('source correction wins before approval',admin,f"select correct_leave_source('{source}',1,'SYNTHETIC reduce allowance',{ver})",review(c,1,'APPROVED'),'INSUFFICIENT_BALANCE')
+        h.check(f"leave_source_balance('{source}')=0 and (select status='PENDING' from leave_request where id='{c}')",'Correction-first overdraft')
+        ver=h.sql(f"select version from leave_account where employee_id='{emp}' and year=2026 and bucket='ANNUAL';")
+        source=str(uuid.uuid4())
+        h.call(admin,f"select grant_leave_source('{source}','{emp}',2026,'ANNUAL',2,'SYNTHETIC independent allowance',{ver})")
+        h.call(admin,review(c,1,'APPROVED'))
+        ver=h.sql(f"select version from leave_account where employee_id='{emp}' and year=2026 and bucket='ANNUAL';")
+        h.race('source correction before cancellation preserves both',admin,f"select correct_leave_source('{source}',1,'SYNTHETIC independent correction',{ver})",review(c,2,'CANCELLED'),None)
+        h.check(f"leave_source_balance('{source}')=1",'Correction or cancellation lost')
         if args.benefits_sha:
             run_benefits(h,owner,admin,emp,source)
         h.check('not exists(select 1 from leave_ledger r join leave_ledger d on d.id=r.reversal_of where r.source_id<>d.source_id or r.amount_delta<>-d.amount_delta)','Reversal changed source/amount')
         report={'executed':True,'engine':h.sql('select version();'),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-                'benefits_sha':args.benefits_sha,'synthetic_only':True,'google_auth_uat':False,'scenarios':h.results,
+                'executed_at':datetime.now(timezone.utc).isoformat(),'harness_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'bootstrap_sha256':hashlib.sha256(Path(__file__).with_name('bootstrap.sql').read_bytes()).hexdigest(),'provisioner_sha256':hashlib.sha256(Path(__file__).with_name('disposable.sh').read_bytes()).hexdigest(),'benefits_migration_sha256':hashlib.sha256(args.benefits_migration.read_bytes()).hexdigest() if args.benefits_sha else None,'benefits_sha':args.benefits_sha,'synthetic_only':True,'google_auth_uat':False,'scenarios':h.results,
                 'installed_function_sha256':{fn:hashlib.sha256(h.sql('select pg_get_functiondef('+literal(fn)+'::regprocedure);').encode()).hexdigest() for fn in ['public.review_leave(jsonb,text,text)','public.correct_leave_source(uuid,numeric,text,integer)','public.grant_leave_source(uuid,uuid,integer,text,numeric,text,integer)']},
                 'repository_migration_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'supabase/migrations').glob('*.sql'))}}
         args.report.write_text(json.dumps(report,indent=2)+'\n')
@@ -176,6 +190,33 @@ def run_benefits(h,owner,admin,emp,source):
     h.race('weekend competing apply different keys',admin,call(op),call(str(uuid.uuid4())),'BENEFIT_ALREADY_LINKED')
     h.check(f"(select count(*)=1 from leave_benefit_operation where work_id='{work}')",'Duplicate weekend grant')
     h.race('weekend exact replay',admin,call(op),call(op),None)
+    version=lambda:h.sql(f"select version from leave_account where employee_id='{emp}' and year=2026 and bucket='ANNUAL';")
+    reverse=lambda operation,v,reason:f"select reverse_leave_benefit('{operation}',{v},{literal(reason)})"
+    reason='SYNTHETIC exact reversal'
+    v=version();undo=reverse(op,v,reason)
+    h.race('duplicate benefit reversal exact replay',admin,undo,undo,None)
+    h.check(f"(select count(*)=1 from leave_benefit_reversal where operation_id='{op}') and (select leave_source_balance(to_source)=0 from leave_benefit_operation where id='{op}')",'Duplicate benefit reversal')
+    def fresh_work(day):
+        wid=str(uuid.uuid4());oid=str(uuid.uuid4())
+        h.call(owner,f"select submit_weekend_work('{wid}','{day}',540,1080,60,null,'SYNTHETIC weekend evidence')")
+        h.call(admin,f"select decide_weekend_work('{wid}',1,'APPROVED')")
+        fresh=h.call(admin,f"select preview_leave_benefit('WEEKEND','{wid}',null)::text")
+        apply=f"select apply_leave_benefit('{oid}',{literal(fresh)}::jsonb,'SYNTHETIC prior grants reconciled',true)"
+        return wid,oid,apply
+    cancel=lambda wid,v,reason:f"select cancel_approved_weekend_work('{wid}',2,{v},{literal(reason)})"
+    for day,cancel_first in [('2026-11-07',True),('2026-11-08',False)]:
+        wid,oid,apply=fresh_work(day);h.call(admin,apply);v=version()
+        reason='SYNTHETIC atomic work cancellation'
+        cancellation=cancel(wid,v,reason);reversal=reverse(oid,v,reason)
+        h.race('work cancellation versus reversal '+('cancel-first' if cancel_first else 'reverse-first'),admin,cancellation if cancel_first else reversal,reversal if cancel_first else cancellation,None)
+        h.check(f"(select status='CANCELLED' from weekend_work where id='{wid}') and (select count(*)=1 from leave_benefit_reversal where operation_id='{oid}') and (select leave_source_balance(to_source)=0 from leave_benefit_operation where id='{oid}')",'Cancellation/reversal not atomic')
+    wid,oid,apply=fresh_work('2026-11-15');v=version()
+    h.race('apply before cancellation detects stale balance',admin,apply,cancel(wid,v,'SYNTHETIC cancel stale version'),'STALE_LEAVE')
+    h.check(f"(select status='APPROVED' from weekend_work where id='{wid}') and not exists(select 1 from weekend_work_void where work_id='{wid}')",'Stale cancellation partially wrote')
+    h.call(admin,cancel(wid,version(),'SYNTHETIC cancel fresh version'))
+    wid,oid,apply=fresh_work('2026-11-01');v=version()
+    h.race('cancellation before apply denies obsolete plan',admin,cancel(wid,v,'SYNTHETIC cancel before grant'),apply,'APPROVED_WORK_REQUIRED')
+    h.check(f"not exists(select 1 from leave_benefit_operation where work_id='{wid}')",'Cancelled work paid')
     # Candidate capture uses Nov30 project evidence; no fake source import/backdating.
     h.sql("create or replace function public.leave_today() returns date language sql stable as $$select date '2026-12-01'$$;")
     case=h.call(admin,f"select capture_carryover_evidence('{emp}',2026,'MANUAL_RECONCILIATION','SYNTHETIC dated external project','2027-02-28',0,true)")
@@ -186,9 +227,22 @@ def run_benefits(h,owner,admin,emp,source):
     plan=h.call(admin,f"select preview_leave_benefit('CARRYOVER','{case}','{source}')::text")
     op=str(uuid.uuid4());other=str(uuid.uuid4())
     call=lambda oid:f"select apply_leave_benefit('{oid}',{literal(plan)}::jsonb,'SYNTHETIC year-end reconciled',true)"
+    capture=lambda version:f"select capture_carryover_evidence('{emp}',2026,'MANUAL_RECONCILIATION','SYNTHETIC refreshed project evidence','2027-02-28',{version},true)"
+    h.race('carryover capture before apply uses shared advisory order',admin,capture(2),call(op),'CONFIRMED_CARRYOVER_SOURCE_REQUIRED')
+    h.check(f"leave_source_balance('{source}')=1 and not exists(select 1 from leave_benefit_operation where from_source='{source}')",'Changed evidence moved money')
+    h.call(admin,f"select review_carryover_candidate('{case}',3,'CONFIRMED','SYNTHETIC renewed review')")
+    plan=h.call(admin,f"select preview_leave_benefit('CARRYOVER','{case}','{source}')::text")
     h.race('carryover competing apply different keys',admin,call(op),call(other),'BENEFIT_ALREADY_LINKED')
     h.check(f"leave_source_balance('{source}')=0 and (select sum(days)=1 and count(*)=1 from leave_benefit_operation where from_source='{source}')",'Carryover not conserved')
     h.check(f"(select v.valid_until=date '2027-12-31' from leave_benefit_operation o join leave_source_validity v on v.source_id=o.to_source where o.id='{op}')",'Receiving-year validity changed')
+    h.race('carryover apply replay before capture shared advisory order',admin,call(op),capture(4),None)
+    h.check(f"(select count(*)=1 from leave_benefit_operation where from_source='{source}') and leave_source_balance('{source}')=0",'Evidence refresh duplicated transfer')
+    v=h.sql(f"select version from leave_account where employee_id='{emp}' and year=2027 and bucket='ANNUAL';")
+    undo=reverse(op,v,'SYNTHETIC exact carryover reversal')
+    h.race('carryover reversal exact replay conserves both years',admin,undo,undo,None)
+    h.check(f"leave_source_balance('{source}')=1 and (select leave_source_balance(to_source)=0 from leave_benefit_operation where id='{op}') and (select count(*)=1 from leave_benefit_reversal where operation_id='{op}')",'Carryover reversal conservation failed')
+    h.check(f"(select valid_until=date '2026-12-31' from leave_source_validity where source_id='{source}')",'Reversal extended original validity')
+
 
 if __name__=='__main__':
     main()

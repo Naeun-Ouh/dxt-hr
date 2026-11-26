@@ -1,0 +1,307 @@
+{
+  "executed": true,
+  "engine": "PostgreSQL 17.6 on aarch64-apple-darwin24.1.0, compiled by Apple clang version 16.0.0 (clang-1600.0.26.6), 64-bit",
+  "head": "8625bac8593708ffe9e709ce31e68ce756b30ab9",
+  "executed_at": "2026-11-26T09:42:55.524109+00:00",
+  "harness_sha256": "4bae210355d429b395f2145f26d6b66cb493dc16119e82f0dc9f424162077395",
+  "bootstrap_sha256": "289a8d302497f90f828a31674534b26c63956d013622fbfbd3c0dbb4e9c707fa",
+  "provisioner_sha256": "9b8a81e077fc7c51795b51c7d3f9c58b3fd0b75a330db5b849692b976163e68d",
+  "benefits_migration_sha256": "f3bc933a18019cbd10c3477184c5da5d0fb57431ceee038a90ee847503ec6295",
+  "benefits_sha": "2bd5e0c9fc284a49f555055b8393d867d8084fb1",
+  "synthetic_only": true,
+  "google_auth_uat": false,
+  "scenarios": [
+    {
+      "scenario": "approval competing for last day",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 80999,
+        "holder_pid": 80996,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          80996
+        ]
+      },
+      "winner_committed": true,
+      "contender": "INSUFFICIENT_BALANCE"
+    },
+    {
+      "scenario": "same approved request cancellation",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81011,
+        "holder_pid": 81008,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81008
+        ]
+      },
+      "winner_committed": true,
+      "contender": "STALE_LEAVE"
+    },
+    {
+      "scenario": "approval invalidates source correction",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81025,
+        "holder_pid": 81022,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81022
+        ]
+      },
+      "winner_committed": true,
+      "contender": "STALE_LEAVE"
+    },
+    {
+      "scenario": "cancellation invalidates source correction",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81039,
+        "holder_pid": 81036,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81036
+        ]
+      },
+      "winner_committed": true,
+      "contender": "STALE_LEAVE"
+    },
+    {
+      "scenario": "source correction wins before approval",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81055,
+        "holder_pid": 81052,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81052
+        ]
+      },
+      "winner_committed": true,
+      "contender": "INSUFFICIENT_BALANCE"
+    },
+    {
+      "scenario": "source correction before cancellation preserves both",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81075,
+        "holder_pid": 81072,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81072
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "weekend competing apply different keys",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81093,
+        "holder_pid": 81090,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81090
+        ]
+      },
+      "winner_committed": true,
+      "contender": "BENEFIT_ALREADY_LINKED"
+    },
+    {
+      "scenario": "weekend exact replay",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81106,
+        "holder_pid": 81102,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81102
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "duplicate benefit reversal exact replay",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81118,
+        "holder_pid": 81115,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81115
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "work cancellation versus reversal cancel-first",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81140,
+        "holder_pid": 81137,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81137
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "work cancellation versus reversal reverse-first",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81162,
+        "holder_pid": 81159,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81159
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "apply before cancellation detects stale balance",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81182,
+        "holder_pid": 81179,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81179
+        ]
+      },
+      "winner_committed": true,
+      "contender": "STALE_LEAVE"
+    },
+    {
+      "scenario": "cancellation before apply denies obsolete plan",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81206,
+        "holder_pid": 81203,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81203
+        ]
+      },
+      "winner_committed": true,
+      "contender": "APPROVED_WORK_REQUIRED"
+    },
+    {
+      "scenario": "carryover capture before apply uses shared advisory order",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81231,
+        "holder_pid": 81228,
+        "wait_event_type": "Lock",
+        "wait_event": "advisory",
+        "blockers": [
+          81228
+        ]
+      },
+      "winner_committed": true,
+      "contender": "CONFIRMED_CARRYOVER_SOURCE_REQUIRED"
+    },
+    {
+      "scenario": "carryover competing apply different keys",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81247,
+        "holder_pid": 81244,
+        "wait_event_type": "Lock",
+        "wait_event": "advisory",
+        "blockers": [
+          81244
+        ]
+      },
+      "winner_committed": true,
+      "contender": "BENEFIT_ALREADY_LINKED"
+    },
+    {
+      "scenario": "carryover apply replay before capture shared advisory order",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81261,
+        "holder_pid": 81258,
+        "wait_event_type": "Lock",
+        "wait_event": "advisory",
+        "blockers": [
+          81258
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    },
+    {
+      "scenario": "carryover reversal exact replay conserves both years",
+      "blocking_observed": true,
+      "lock_evidence": {
+        "waiter_pid": 81275,
+        "holder_pid": 81272,
+        "wait_event_type": "Lock",
+        "wait_event": "transactionid",
+        "blockers": [
+          81272
+        ]
+      },
+      "winner_committed": true,
+      "contender": "success"
+    }
+  ],
+  "installed_function_sha256": {
+    "public.review_leave(jsonb,text,text)": "c8ec442bccfe6d7ca9aecfcff82de07ffd1ced761d0249345803bb46e31e6bbb",
+    "public.correct_leave_source(uuid,numeric,text,integer)": "6e5b9acbb239c7e5aebe42e5b7f7b9d7cd36b3432690d670316060d8c45091ed",
+    "public.grant_leave_source(uuid,uuid,integer,text,numeric,text,integer)": "f55dbf102be2230124536e9d42b15b4242a101f8d43644050afd7c04c68e0b3d"
+  },
+  "repository_migration_sha256": {
+    "202609300001_foundation.sql": "b8c4ba4e6696c53a8d252e64a2270c05f64dd6db20ae0f54f3e22d10df44c2a0",
+    "202609300002_employees.sql": "5c40e2df21b702c9f636ec74bb44a4d3aa7aa7cf92737b71a27222f68ad38b89",
+    "202609300003_employee_roles.sql": "28ba375000da9cea9af5fd6cdd82c11b75061fe60b9219f8307f350b0789e44f",
+    "202609300004_projects.sql": "5dcc2c427fd81d8f44e6f3fb6c46d02ad8678534384961721b97bcab4d3ef98d",
+    "202609300005_team_career_read.sql": "49c6116f1dca54abf39a7e7cc7c898b44f65ef5f0b2186d7e1fbe70b73ce096b",
+    "202610010006_expenses.sql": "c6ed8822c3e74ffc5430940547725c00ea2cf804e9efaddc5b3de0a95b805597",
+    "202610010007_assets.sql": "ef2d1af003ff31d3ec1fec7954febd86e1e401ded34db3703923b97c819dc6eb",
+    "202610010008_operations.sql": "180e46bfd76e92ea354c7c7507398d8413faee8b006e57e0ad7b9ff1d57780d6",
+    "202610040009_verified_ceo_mail.sql": "1f6cfeaa20776f81ef07621d7b5f062c591ab2af7e460a34d0b31496876e3cd5",
+    "202610040010_verified_mail_recipients.sql": "f2539ed51032b4829b0c473216d71986f5df6e411276e71c88361f0a561f8900",
+    "202610060011_defer_automatic_mail.sql": "1f916823dc586cc2cf178b37961e6f59cc2fd9b6dbf1b8b01a190d9b30e9d00f",
+    "202610060012_basic_leave.sql": "08ba697fc8e2780bcecbc7d96353902e9a02bd9445af2d6096e8690c4cfc011d",
+    "20261118114126_employment_contracts.sql": "69c9d0a858aa18bdabbc45be10d6fc705d90d0691b1d02078cbd80ddfd329ea1",
+    "20261119104141_contract_signature_evidence.sql": "cf4ae93f35b129b2e36989c076fe1f53e47bd72993cb1b67e0b1f480887b4f99",
+    "20261120030704_company_seals.sql": "db83e17caf4a96866da142bf015f290b4ff5f1258c213cd65b3c24673753f320",
+    "20261120122253_asset_transfers.sql": "8f04100150e1f9079c4e049b540e3840e217c5b8705ab1327332824f123573c8",
+    "20261120124228_expense_grid_workspace.sql": "cbd2064b0d8cfcdfa0d407b2086f08366b89db2ad23f15a0846e21035487f6ad",
+    "20261120135814_restore_expense_payment_edit_window.sql": "b042579ac6e3a5af725b7931e30b157d7e4038fbe5c7d5f03e3ef86375ee6046",
+    "20261123141334_expense_monthly_attachments.sql": "d30d4a69fbccf56aa6ce62e4acdc04405f2e466e732ef3477b408ac230851c7c",
+    "20261124125833_expense_payment_cards.sql": "101497bbacfc55877eb05d611d5ebe470e2cc54d89f0318e128a099a2d5aabb7",
+    "20261124134708_employee_hr_documents.sql": "17d8cc598db76416703c97bd771baf1f8b80fa407a0d5e5959cf56213914a688",
+    "20261124220933_hr_document_v1_transport_limit.sql": "d928b318fe3dd81594adeea71b9844b03fb41461df0f2bcca2804fee7aea3deb",
+    "20261124220945_employment_certificates.sql": "92ff6f662d4ff757de68efbe62ed175627339932837d1bafa9c86c644d62cf93",
+    "20261124221310_leave_holiday_calendar.sql": "41cf0a21d198a2c1c175cead62656c40af4487b5c219169c52d3ce48081f9513",
+    "20261125132957_leave_sources_and_birthday.sql": "5e55f30507653c06911bfe60aa34a487fc18d5846ad3cceeaf168bfd40df6ea4",
+    "20261125133312_carryover_review.sql": "44d8e2b50a821770e380ba0b930de5389f2c92e5d2ad791221d152d73387e460",
+    "20261125133519_weekend_work_evidence.sql": "903df0259caade21463c6bd235c59ccfd37b5459cafb8884ee9bb789c56820fd",
+    "20261125235641_leave_validity_review.sql": "306caf4c42dccb267161958fc45147c8f6b84dae418f7ee334418edf8e3d1665",
+    "20261126024427_expense_route_presets.sql": "355f40c39b4e4614b2b1da42c68cb5e0baf2e300b83b3013d24e8e1e934f029f",
+    "20261126030449_contract_due_dates_after_routes.sql": "b7059fee88cc6c09f4f67f89d57fe1afecc7b45a06de572642c56017c37b157a"
+  }
+}

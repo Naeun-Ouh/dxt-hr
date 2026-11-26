@@ -1,9 +1,10 @@
-# Real PostgreSQL leave races (Issue #56)
+# Real PostgreSQL leave races (Issues #56 / #58)
 
-**Execution status: NOT RUN on PostgreSQL.** On 2026-11-26 this workstation has
-Python 3.9 but no `psql`, `postgres` or `docker`. No packages were installed and no
-hosted connection was attempted. Only Python syntax, target-safety and barrier-reader
-tests were run. PGlite/Promise.all is not independent-connection concurrency evidence.
+**Execution status: actual local PostgreSQL 17.6 multi-connection runs completed on
+2026-11-26.** The checked-in [Issue #58 evidence](../../docs/ISSUE_58_POSTGRES_RACES.md)
+records exact scenarios, engine, fixture SHA and lock observations. This is synthetic
+local execution, not hosted acceptance. PGlite/Promise.all is not independent-connection
+evidence.
 
 This is an operator-run, disposable local validation harness. It changes test schema,
 auth/employee fixtures, test clock and synthetic balances. It must never be pointed at
@@ -80,18 +81,18 @@ are reused. The runner tests core ledger integrity, not payroll law or company p
 
 ## Conditional #54 benefit/carryover cases — not current main activation
 
-Main baseline is `e0cf934` (#53 merged). #54/#55 remain separate unapproved features.
+Main baseline is `8625bac8593708ffe9e709ce31e68ce756b30ab9` (#57 merged). #54/#55 remain separate unapproved features.
 The optional suite is pinned to #54 branch commit
-`a43f39895896d2d9cd01a2429b9b6d5ef9925da1`. Do not fetch, merge or apply it to any real
+`2bd5e0c9fc284a49f555055b8393d867d8084fb1`. Do not fetch, merge or apply it to any real
 environment as part of this harness. In a **separate disposable worktree/database**
-containing that exact reviewed migration file, bootstrap then apply only:
+containing that exact migration file, bootstrap then apply only (review requested, not approved):
 
 ```sh
 psql -X -h 127.0.0.1 -p 55432 -U postgres -d dxt_leave_race_benefits1 \
   -v ON_ERROR_STOP=1 -f supabase/migrations/20261126045159_leave_benefit_review_apply.sql
 python3 scripts/leave-races/run.py --database dxt_leave_race_benefits1 --port 55432 \
   --ack-disposable DXT_DISPOSABLE_LEAVE_RACE_DATABASE \
-  --benefits-sha a43f39895896d2d9cd01a2429b9b6d5ef9925da1 \
+  --benefits-sha 2bd5e0c9fc284a49f555055b8393d867d8084fb1 \
   --report /tmp/leave-race-benefits1.json
 ```
 
@@ -118,11 +119,34 @@ migration file hashes. Repository hashes do not claim every migration was instal
 bootstrap's explicit subset is the installation manifest. Archive the command, report,
 bootstrap output, source SHA and database provisioning description together.
 
-Required release evidence still includes repeated runs on the deployed PostgreSQL
-major version, reverse winner ordering/source-correction-first races, cancellation vs
-benefit reversal/carryover ordering, deadlock/rollback investigation, full-schema role
-checks, real Google-role RLS/Storage UAT, workload/latency measurement and recovery.
+Required release evidence still includes matching the deployed PostgreSQL major version,
+full-schema role checks, real Google-role RLS/Storage UAT, workload/latency measurement
+and recovery. The checked-in report lists the specific winner-order and reversal races
+actually executed; it is not proof of every possible interleaving.
 No local harness result is a hosted acceptance result. Do not mark Issue #14, #4 or #56
 complete solely from Python unit checks or future harness instructions.
 
 Offline check (no database): `python3 scripts/leave-races/test_runner.py`.
+
+## Fresh-cluster convenience runner
+
+`scripts/leave-races/disposable.sh` creates a new private `/private/tmp` directory,
+initializes its own PostgreSQL cluster, binds only 127.0.0.1:55438, creates a marked
+empty database and runs the suite. It refuses an existing report directory and never
+reuses a cluster. A busy port fails startup rather than connecting to another server.
+Exit traps stop the server; synthetic files remain for inspection. No system service,
+hosted connection, application dependency or production configuration is modified.
+
+```sh
+DXT_PG_BIN=/private/tmp/dxt-pg17/bin scripts/leave-races/disposable.sh main /private/tmp/race-main-new
+DXT_PG_BIN=/private/tmp/dxt-pg17/bin scripts/leave-races/disposable.sh benefits /private/tmp/race-benefit-new
+```
+
+The conditional runner obtains #54's exact Git blob into the temporary cluster directory;
+no #54 migration is copied into main's migrations. `--benefits-migration` lets the Python
+runner validate that external fixture byte-for-byte against the pinned commit.
+
+Sandbox environments may require approval for PostgreSQL shared memory and loopback
+listening. A sandbox initialization failure is not counted as an executed race.
+The archived report includes the runner and bootstrap hashes, independent of repository
+HEAD, so uncommitted test-support changes during execution are explicitly identifiable.
