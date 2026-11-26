@@ -17,14 +17,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      - run: python3 scripts/leave-races/test_runner.py
       - run: npm run build
       - run: npm run typecheck
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: browser-evidence
-          path: |
-            docs/screenshots/**/*.png
-            test-results/
+      - run: npx playwright test --config tests/performance/validation.config.ts

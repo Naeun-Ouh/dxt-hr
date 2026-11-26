@@ -55,7 +55,7 @@ export async function saveExpense(claimId:string|null,itemId:string|null,_state:
   await ownClaim(target!);if(receipt)item.attachment_id=await attach(target!,receipt);
   const {error}=await client.rpc('save_expense_items',{p_claim:target,p_items:[item],p_reason:reason});if(error)throw error;
  }catch(e){return failure(e);}
- revalidatePath('/','layout');redirect(`/expenses/${target}?saved=1`);
+ revalidatePath('/expenses');revalidatePath('/expenses/[id]','page');revalidatePath('/admin/expenses');revalidatePath('/admin/expenses/[id]','page');revalidatePath('/');revalidatePath('/me');redirect(`/expenses/${target}?saved=1`);
 }
 export async function changeExpenseStatus(claimId:string,action:string,_state:ExpenseState,form:FormData):Promise<ExpenseState> {
  await requireCapability(action==='SUBMIT'?'EMPLOYEE_ACCESS':'EXPENSE_MANAGE');
@@ -64,7 +64,7 @@ export async function changeExpenseStatus(claimId:string,action:string,_state:Ex
   const client=await employeeClient();if(action==='SUBMIT')await ownClaim(claimId);
   const {error}=await client.rpc(action==='SUBMIT'?'submit_expense_claim':'manage_expense_claim',action==='SUBMIT'?{p_claim:claimId,p_version:versionFrom(form),p_reason:String(form.get('late_reason')||'').trim()}:{p_claim:claimId,p_version:versionFrom(form),p_action:action});if(error)throw error;
  }catch(e){return failure(e);}
- revalidatePath('/','layout');redirect(`${action==='SUBMIT'?'/expenses':'/admin/expenses'}/${claimId}?saved=1`);
+ revalidatePath('/expenses');revalidatePath('/expenses/[id]','page');revalidatePath('/admin/expenses');revalidatePath('/admin/expenses/[id]','page');revalidatePath('/');revalidatePath('/me');redirect(`${action==='SUBMIT'?'/expenses':'/admin/expenses'}/${claimId}?saved=1`);
 }
 export async function importExpenses(_state:ExpenseState,form:FormData):Promise<ExpenseState> {
  await requireCapability('EMPLOYEE_ACCESS');let target:string|null=null;
@@ -88,7 +88,7 @@ export async function importExpenses(_state:ExpenseState,form:FormData):Promise<
   const attachmentId=await attach(target,receipt!);const items:ItemInput[]=preview.items.map(i=>({...writableItem(i),attachment_id:attachmentId}));
   const {error:saveError}=await client.rpc('save_expense_items',{p_claim:target,p_items:items,p_reason:reason});if(saveError)return {...failure(saveError),preview};
  }catch(e){return failure(e);}
- revalidatePath('/','layout');redirect(`/expenses/${target}?saved=1`);
+ revalidatePath('/expenses');revalidatePath('/expenses/[id]','page');revalidatePath('/admin/expenses');revalidatePath('/admin/expenses/[id]','page');revalidatePath('/');revalidatePath('/me');redirect(`/expenses/${target}?saved=1`);
 }
 
 // Grid mutations reauthorize on every invocation; the database repeats ownership/version checks.
