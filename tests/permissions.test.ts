@@ -45,8 +45,8 @@ test("CEO needs no private HR grant; ADMIN needs one; specialist grants are igno
     assert.equal(can({ ...user, grants: [...user.grants] }, "PRIVATE_HR_ACCESS"), ["CEO", "ADMIN"].includes(role));
   }
 });
-test("IT navigation replaces personal assets without revoking own-asset capability", () => {
-  assert(!navigationFor(person("IT_ADMIN")).some(route => route.path === "/assets/me"));
+test("IT navigation retains personal assets alongside management capability", () => {
+  assert(navigationFor(person("IT_ADMIN")).some(route => route.path === "/assets/me"));
   assert(can(person("IT_ADMIN"), resolveRoute("/assets/me")!.capability));
 });
 test("private deep links cannot fall through to employee management", () => {

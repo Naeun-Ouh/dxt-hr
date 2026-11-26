@@ -41,7 +41,10 @@ test('compact profile tabs and contract filters keep authorization scope',async(
 test('dense toolbar and contextual employee/asset views retain the main grid',async({page,context})=>{
  await loginAs(context,'employee');await page.goto('/expenses');
  expect(await page.locator('.expense-searchbar').evaluate(e=>e.getBoundingClientRect().height)).toBeLessThan(80);
- expect(await page.locator('.expense-grid').evaluate(e=>e.getBoundingClientRect().top)).toBeLessThan(420);
+ // The new cross-workspace tabs occupy one bounded row; preserve the existing Grid density below them.
+ const navigationHeight=await page.locator('.workspace-tabs').evaluate(e=>e.getBoundingClientRect().height+parseFloat(getComputedStyle(e.parentElement!).rowGap));
+ expect(navigationHeight).toBeLessThan(64);
+ expect(await page.locator('.expense-grid').evaluate(e=>e.getBoundingClientRect().top)-navigationHeight).toBeLessThan(420);
  await loginAs(context,'ceo');await page.goto('/admin/employees');
  await page.getByRole('button',{name:'빠른 보기',exact:true}).first().click();const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
  await expect(dialog.getByText('회사 이메일',{exact:true})).toBeVisible();await page.keyboard.press('Escape');

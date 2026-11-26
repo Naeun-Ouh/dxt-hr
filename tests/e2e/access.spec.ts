@@ -1,19 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { loginAs, cases } from "./fixtures";
 import { ROUTES } from "../../src/lib/routes";
-const employeePaths = ["/me","/leave/carryover","/certificates/me","/contracts/me","/", "/people", "/organization", "/career", "/projects/me", "/leave", "/leave/team-calendar", "/leave/requests", "/expenses", "/assets/me", "/announcements", "/family-events"];
-const additions: Record<string, string[]> = {
-  employee: [], leader: ["/projects/team", "/leave/approvals"], division: [], expense: ["/admin/expenses"],
-  it: ["/admin/assets", "/admin/windows-licenses", "/admin/accounts"],
-  combined: ["/projects/team", "/leave/approvals", "/admin/expenses", "/admin/assets", "/admin/windows-licenses", "/admin/accounts"],
-};
-for (const [name, extra] of Object.entries(additions)) {
+const employeePaths = ["/", "/people", "/leave", "/expenses", "/projects/me", "/certificates/me", "/contracts/me", "/assets/me"];
+const additions: Record<string, string[]> = {employee:[],leader:[],division:[],expense:[],it:[],combined:[]};
+for (const [name] of Object.entries(additions)) {
   test(`${name}: exact rendered navigation, assets and screenshot`, async ({ page, context }) => {
     await loginAs(context, name);
     await page.goto("/people");
-    const expected = [...employeePaths.filter(path => !(path === "/assets/me" && ["it", "combined"].includes(name))), ...extra].sort();
+    const expected = [...employeePaths].sort();
     expect((await page.locator('nav[aria-label="주 메뉴"] a').evaluateAll(links => links.map(a => a.getAttribute("href")))).sort()).toEqual(expected);
-    await expect(page.getByRole("link", { name: "직원", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("link", { name: "조직 / 직원", exact: true })).toHaveAttribute("aria-current", "page");
     const images = await page.locator("img").evaluateAll(images => images.map(element => { const img = element as HTMLImageElement; return ({ loaded: img.complete && img.naturalWidth > 0, width: img.width, naturalWidth: img.naturalWidth, height: img.height, naturalHeight: img.naturalHeight }); }));
     expect(images.every(img => img.loaded && Math.abs(img.width / img.height - img.naturalWidth / img.naturalHeight) < 0.01)).toBe(true);
     expect(await page.locator(".sidebar").evaluate(el => el.getBoundingClientRect().width)).toBe(208);
@@ -70,7 +66,7 @@ test("navigation, home shortcuts, logout and responsive layout work", async ({ p
   await loginAs(context, "admin");
   await page.goto("/");
   await page.screenshot({ path: "docs/screenshots/frame-01-shell.png", fullPage: true });
-  await page.locator('.shortcut-card[href="/admin/employees"]').click();
+  await page.getByRole('navigation',{name:'업무 모드'}).getByRole('link',{name:'관리 업무'}).click();
   await expect(page.getByRole("heading", { name: "직원 관리", exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator("summary").click();
