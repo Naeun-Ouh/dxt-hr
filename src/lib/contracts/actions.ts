@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCapability } from '../auth/access';
 import { employeeClient } from '../employees/data';
 import { encryptHr } from '../employees/crypto-server';
-import { isUuid } from '../employees/validation';
+import { isUuid,validDate } from '../employees/validation';
 import { can } from '../permissions';
 import { contractDetail } from './data';
 import { finalizeContract } from './storage';
@@ -25,7 +25,9 @@ export async function contractAction(_state:ContractResult,form:FormData):Promis
  const {c,own}=await contractDetail(id);
  try{
  const db=await employeeClient();let rpc:string,args:Record<string,unknown>={p_id:id,p_version:version};
- if(action==='EMPLOYEE_SIGN'||action==='COMPANY_SIGN'){
+ if(action==='DUE_DATE'){
+  if(!can(principal,'EMPLOYMENT_CONTRACT_MANAGE'))throw new Error('Forbidden');const due=String(form.get('due_date')||''),dueVersion=Number(form.get('due_version'));if((due&&!validDate(due))||!Number.isSafeInteger(dueVersion)||dueVersion<0)throw new Error('Invalid due date');rpc='set_contract_due_date';args={...args,p_due_version:dueVersion,p_due:due||null};
+ }else if(action==='EMPLOYEE_SIGN'||action==='COMPANY_SIGN'){
   if(action==='EMPLOYEE_SIGN'&&!own)throw new Error('Forbidden');if(action==='COMPANY_SIGN'&&!can(principal,'EMPLOYMENT_CONTRACT_COMPANY_SIGN'))throw new Error('Forbidden');
   if(form.get('consent')!=='on')throw new Error('Consent required');
   rpc=action==='EMPLOYEE_SIGN'?'sign_employee_contract':'sign_company_contract';args={...args,p_hash:String(form.get('hash')||''),p_consent:true};
@@ -36,6 +38,7 @@ export async function contractAction(_state:ContractResult,form:FormData):Promis
  }else{
   if(action==='VIEWED'||action==='DECLINED'){if(!own)throw new Error('Forbidden');}else if(!can(principal,'EMPLOYMENT_CONTRACT_MANAGE'))throw new Error('Forbidden');
   if(!['VIEWED','DECLINED','READY_TO_SEND','SENT','CANCELLED'].includes(action))throw new Error('Invalid action');rpc='transition_employment_contract';args={...args,p_action:action};
+  if(['CANCELLED','DECLINED'].includes(action)){const reason=String(form.get('reason')||'').trim();if(reason.length>2000)throw new Error('Invalid reason');rpc='transition_contract_with_reason';args={...args,p_reason:reason?encryptHr(reason,`contract:${id}:reason:${action}`):null};}
  }
  const {error}=await db.rpc(rpc,args);if(error)throw error;
  if(action==='COMPANY_SIGN'){try{await finalizeContract(id);}catch{revalidatePath('/');return {error:'회사 서명은 저장되었습니다. PDF 보관 재시도를 눌러 주세요.'};}}

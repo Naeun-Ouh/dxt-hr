@@ -14,6 +14,7 @@ export async function contractsDatabase(options:{legacyEvidence?:boolean}={}){co
  await db.exec(`create function auth.jwt() returns jsonb language sql as $$select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb,'{"amr":[{"method":"oauth"}],"app_metadata":{"provider":"google"}}'::jsonb || jsonb_build_object('session_id',auth.uid()))$$;`);
  await db.exec(readFileSync('supabase/migrations/20261118114126_employment_contracts.sql','utf8'));
  if(!options.legacyEvidence){await db.exec(readFileSync('supabase/migrations/20261119104141_contract_signature_evidence.sql','utf8'));await db.exec(readFileSync('supabase/migrations/20261120030704_company_seals.sql','utf8'));}
+ await db.exec(readFileSync('supabase/migrations/20261126030449_contract_due_dates_after_routes.sql','utf8'));
  await db.exec('grant insert on storage.objects to service_role');
  await asUser(db,'designated',tx=>tx.query('select create_employment_contracts($1,null)',[JSON.stringify([contractItem(contractId),contractItem(otherContractId,colleagueId)])]));
  for(const id of [contractId,otherContractId])for(const action of ['READY_TO_SEND','SENT'])await asUser(db,'designated',tx=>tx.query('select transition_employment_contract($1,1,$2)',[id,action]));
