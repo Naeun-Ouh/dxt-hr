@@ -1,3 +1,4 @@
+import {LeaveBenefitsScreen} from '@/components/leave-benefits/screen';
 import {MyPage} from '@/components/my-page/screen';
 import {CarryoverScreen} from "@/components/carryover/screen";
 
@@ -34,6 +35,7 @@ export default async function ProtectedPage({ params, searchParams }: { params: 
   const query = await searchParams;
   let screen: React.ReactNode;
   switch (route.path) {
+    case "/admin/leave/benefits":screen=<LeaveBenefitsScreen/>;break;
     case "/":case "/me":screen=<MyPage/>;break;
     case "/leave/carryover":case "/admin/leave/carryover":screen=<CarryoverScreen admin={path[0]==='admin'}/>;break;
 
