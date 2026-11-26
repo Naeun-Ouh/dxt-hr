@@ -1,0 +1,5 @@
+/* Mixed form/table surfaces retain spacing despite the shared edge-to-edge table rule. */
+.card.card.card.card { padding: var(--space-4, 16px); display: grid; gap: 12px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .fields, .totals { grid-template-columns: 1fr; } }
