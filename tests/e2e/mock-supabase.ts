@@ -57,6 +57,7 @@ const tables: Record<string,string[]> = {
  company_seal:SEAL_COLUMNS.split(','),
  employment_contract_reason:['contract_id','action','encrypted_reason','actor_id','created_at'],
  employment_contract:CONTRACT_COLUMNS.split(','),employment_contract_version:CONTRACT_VERSION_COLUMNS.split(','),employment_contract_signature:SIGNATURE_COLUMNS.split(','),employment_contract_event:CONTRACT_EVENT_COLUMNS.split(','),employment_contract_template:CONTRACT_TEMPLATE_COLUMNS.split(','),
+ leave_source:'id,employee_id,year,bucket,valid_from,valid_until,legacy,note,created_by,created_at'.split(','),
  leave_request:LEAVE_REQUEST_COLUMNS.split(','),leave_ledger:LEAVE_LEDGER_COLUMNS.split(','),leave_history:LEAVE_HISTORY_COLUMNS.split(','),leave_account:['employee_id','year','bucket','version'],
  operation_case:OPERATION_COLUMNS.split(','),operation_task:TASK_COLUMNS.split(','),operation_task_owner:['task_id','employee_id'],operation_history:HISTORY_COLUMNS.split(','),resignation_private:['case_id','version'],resignation_document:DOCUMENT_COLUMNS.split(','),announcement:ANNOUNCEMENT_COLUMNS.split(','),family_registration:REGISTRATION_COLUMNS.split(','),family_post:POST_COLUMNS.split(','),birthday_template:TEMPLATE_COLUMNS.split(','),
  asset_transfer:TRANSFER_COLUMNS.split(','),asset:ASSET_COLUMNS.split(','),vault_entry:VAULT_COLUMNS.split(','),asset_assignment:ASSET_ASSIGNMENT_COLUMNS.split(','),asset_event:EVENT_COLUMNS.split(','),

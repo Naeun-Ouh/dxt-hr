@@ -14,3 +14,8 @@ export async function requestDetail(id:string){await requireCapability('EMPLOYEE
 export async function ledger(id:string,year:number){await requireCapability('EMPLOYEE_ACCESS');const [rows,ownRequests]=await Promise.all([readRows<Ledger>('leave_ledger',LEDGER_COLUMNS,{employee_id:id},'occurred_at'),requests(id)]);const ids=new Set(ownRequests.filter(r=>r.start_date.startsWith(String(year))).map(r=>r.id));return rows.filter(r=>r.year===year||(r.request_id&&ids.has(r.request_id)));}
 export async function history(id:string){await requestDetail(id);return readRows<History>('leave_history',HISTORY_COLUMNS,{request_id:id},'occurred_at');}
 export async function calendar(month:string){await requireCapability('EMPLOYEE_ACCESS');return leaveRpc<CalendarEntry[]>('leave_calendar',{p_month:month});}
+export async function grantEvidence(id:string,year:number){
+ await requireCapability('EMPLOYEE_ACCESS');
+ const [rows,sources]=await Promise.all([ledger(id,year),readRows<{id:string;legacy:boolean}>('leave_source','id,legacy',{employee_id:id,year,bucket:'ANNUAL'})]);
+ return {rows,sources};
+}
