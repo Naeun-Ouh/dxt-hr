@@ -10,6 +10,8 @@ export interface AppRoute {
 const employee = (path: string, title: string, group?: string, icon = "CircleX"): AppRoute => ({ path, title, group, icon, capability: "EMPLOYEE_ACCESS" });
 const managed = (path: string, title: string, capability: Capability, group: string, icon: string): AppRoute => ({ path, title, capability, group, icon });
 export const ROUTES: AppRoute[] = [
+  employee("/leave/carryover", "내 이월 검토", "휴가", "CalendarCheck"),
+  managed("/admin/leave/carryover", "프로젝트 이월 검토", "LEAVE_MANAGE", "관리", "CalendarCog"),
   employee("/certificates/me", "내 증명서", "인사", "FolderLock"),
   managed("/admin/certificates", "재직증명서 발급 관리", "HR_CERTIFICATE_MANAGE", "관리", "FolderLock"),
   {path:"/admin/contracts/seals",title:"회사 직인 관리",capability:"EMPLOYMENT_CONTRACT_MANAGE",icon:"FolderLock"},

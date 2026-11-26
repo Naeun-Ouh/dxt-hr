@@ -399,3 +399,7 @@ calculation; existing approved rows remain untouched. See `PHASE_4B_HOLIDAYS.md`
 FKs preserve bucket/year identity; `reversal_of` uniquely identifies the original
 deduction. Birthday requests have a separate benefit year and a pending/approved
 uniqueness constraint. See `PHASE_4B_SOURCES_BIRTHDAY.md`.
+
+## 프로젝트 이월 후보 검토
+
+`leave_carryover_case` (직원/연도 고유, 상태/version), append-only `leave_carryover_evidence`, `leave_carryover_review_event`. 원장 부여/차감 없음. [정책과 검증](PHASE_4B_CARRYOVER_REVIEW.md).

@@ -188,3 +188,7 @@ Reuse compact leave summaries/tables and existing request/approval controls. Pre
 생일 반차 is a distinct request option with AM/PM and optional project exception reason.
 Show policy-confirmation notices only for unresolved birthday edges. See
 `PHASE_4B_SOURCES_BIRTHDAY.md`.
+
+## 프로젝트 이월 검토
+
+DXT v2 compact toolbar/table/modal 사용. 관리자 근거 등록→검토→정정, 직원은 본인 상태만 표시. 후보 확인과 실제 잔여 휴가 이월 지급을 명확히 구분한다. 고정 상한/만료/자동 원장 처리는 추가하지 않는다.

@@ -237,3 +237,7 @@ Own source/ledger reads remain self or LEAVE_MANAGE only. Internal birthday prep
 and allocation are not callable by authenticated clients. Admin/CEO may explicitly
 record verified sources and append reasoned corrections. No broader Team Leader ledger
 access, raw birthday projection access, or wage/grant automation is introduced.
+
+## 프로젝트 이월 검토
+
+LEAVE_MANAGE만 후보 근거/검토 RPC 및 원본 이력 접근. 직원은 본인 case 상태만 조회, Team Leader 팀원 접근 금지. 직접 쓰기 금지; RLS와 server capability 검사 병행.
