@@ -25,6 +25,13 @@ export async function operationDetail(kind:OperationKind,id:string){await requir
 }
 export async function resignationDocuments(id:string){await requireCapability('RESIGNATION_REASON_ACCESS');if(!isUuid(id))notFound();return readRows<ResignationDocument>('resignation_document',DOCUMENT_COLUMNS,{case_id:id,ready:true});}
 export async function announcements(){await requireCapability('EMPLOYEE_ACCESS');return readRows<Announcement>('announcement',ANNOUNCEMENT_COLUMNS);}
+// Home deliberately excludes drafts/future publications even for managers with broader RLS.
+export async function recentPublishedAnnouncements(){
+ await requireCapability('EMPLOYEE_ACCESS');const db=await employeeClient();
+ const {data,error}=await db.from('announcement').select('id,title,published_at').lte('published_at',new Date().toISOString()).order('published_at',{ascending:false}).order('id',{ascending:false}).limit(3);
+ if(error)throw new Error('공지사항을 불러오지 못했습니다.');
+ return data as {id:string;title:string;published_at:string}[];
+}
 export async function announcement(id:string){await requireCapability('EMPLOYEE_ACCESS');if(!isUuid(id))notFound();const row=(await readRows<Announcement>('announcement',ANNOUNCEMENT_COLUMNS,{id}))[0];if(!row)notFound();return row;}
 export async function familyPosts(){await requireCapability('EMPLOYEE_ACCESS');return readRows<FamilyPost>('family_post',POST_COLUMNS,{},'registration_id');}
 export async function familyRegistrations(review=false){const principal=await requireCapability(review?'FAMILY_EVENT_REVIEW':'EMPLOYEE_ACCESS');const db=await employeeClient();if(review&&can(principal,'FAMILY_EVENT_REVIEW'))return readRows<FamilyRegistration>('family_registration',REGISTRATION_COLUMNS);

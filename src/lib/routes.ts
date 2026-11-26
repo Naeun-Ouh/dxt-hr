@@ -48,7 +48,7 @@ export const ROUTES: AppRoute[] = [
   employee("/expenses/items/[id]/edit", "경비 수정"),
   {path:"/admin/expenses/[id]",title:"경비 상세",capability:"EXPENSE_MANAGE",icon:"CreditCard"},
   employee("/expenses/upload", "Excel 업로드"),
-  { ...employee("/assets/me", "내 장비", "자산", "Laptop"), hideWhen: "ASSET_MANAGE" },
+  employee("/assets/me", "내 장비", "자산", "Laptop"),
   managed("/admin/assets", "장비 관리", "ASSET_MANAGE", "자산", "Laptop"),
   managed("/admin/windows-licenses", "Windows 라이선스", "WINDOWS_MANAGE", "자산", "KeyRound"),
   managed("/admin/accounts", "계정 관리", "ACCOUNT_MANAGE", "자산", "KeyRound"),
