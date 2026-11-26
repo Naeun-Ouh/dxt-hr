@@ -7,12 +7,12 @@ import {leaveRpc,today,requestDetail} from '@/lib/leave/data';
 import {leaveInput,decisionItems} from '@/lib/leave/validation';
 import {ValidationError,isUuid,versionFrom} from '@/lib/employees/validation';
 import type {FormState} from '@/lib/employees/types';
-const messages:Record<string,string>={NO_WORKDAY:'주말 또는 휴일에는 휴가를 신청할 수 없습니다.',HOLIDAY_YEAR_UNVERIFIED:'해당 연도의 공휴일 자료를 관리자에게 확인해 주세요.',LEAVE_CALENDAR_CHANGED:'휴일 변경으로 차감일수가 달라졌습니다. 해당 대기 신청을 거절하고 다시 신청하도록 안내해 주세요.',PAST_REASON_REQUIRED:'미리 신청하지 못한 사유를 입력해 주세요.',INSUFFICIENT_BALANCE:'사용 가능한 연차가 부족합니다. 관리자에게 잔여 일수를 확인해 주세요.',OVERLAPPING_LEAVE:'이미 신청한 날짜와 시간이 겹칩니다. 신청 내역을 확인해 주세요.',INVALID_EMPLOYEE_DATE:'입사일 이후의 날짜를 선택해 주세요.',INACTIVE_EMPLOYEE:'퇴사한 직원의 신청은 승인할 수 없습니다.',INVALID_STATE:'이미 처리된 신청입니다. 새로고침해 주세요.'};
+const messages:Record<string,string>={BIRTHDAY_PROJECT_REQUIRED:'생일 전후 기간에 참여한 프로젝트와 사용하지 못한 사유를 지정해 주세요.',LEAVE_PERIOD_SPLIT_REQUIRED:'휴가 사용기간이 서로 다른 부여 내역과 겹칩니다. 사용기간 경계에서 나누어 신청해 주세요.',INVALID_VALIDITY:'확인된 사용기간과 근거를 입력해 주세요.',VALIDITY_ALREADY_CONFIRMED:'이미 사용기간이 확인된 내역입니다. 새로고침해 주세요.',BIRTHDAY_HALF_REQUIRED:'생일 휴가는 오전 또는 오후 반차로 신청해 주세요.',BIRTHDAY_UNVERIFIED:'생일 정보 확인이 필요합니다. 인사 담당자에게 문의해 주세요.',BIRTHDAY_POLICY_REVIEW:'윤일 또는 연도 경계 생일 사용 기준은 인사 담당자 확인이 필요합니다.',BIRTHDAY_EXCEPTION_REQUIRED:'생일 전후 7일을 벗어나면 프로젝트로 사용하지 못한 사유를 입력해 주세요.',BIRTHDAY_ALREADY_USED:'해당 연도의 생일 반차가 이미 신청 또는 승인되어 있습니다.',NO_WORKDAY:'주말 또는 휴일에는 휴가를 신청할 수 없습니다.',HOLIDAY_YEAR_UNVERIFIED:'해당 연도의 공휴일 자료를 관리자에게 확인해 주세요.',LEAVE_CALENDAR_CHANGED:'휴일 변경으로 차감일수가 달라졌습니다. 해당 대기 신청을 거절하고 다시 신청하도록 안내해 주세요.',PAST_REASON_REQUIRED:'미리 신청하지 못한 사유를 입력해 주세요.',INSUFFICIENT_BALANCE:'사용 가능한 연차가 부족합니다. 관리자에게 잔여 일수를 확인해 주세요.',OVERLAPPING_LEAVE:'이미 신청한 날짜와 시간이 겹칩니다. 신청 내역을 확인해 주세요.',INVALID_EMPLOYEE_DATE:'입사일 이후의 날짜를 선택해 주세요.',INACTIVE_EMPLOYEE:'퇴사한 직원의 신청은 승인할 수 없습니다.',INVALID_STATE:'이미 처리된 신청입니다. 새로고침해 주세요.'};
 function failure(error:unknown):FormState{if(error instanceof ValidationError)return {error:error.message,fields:error.fields};if(error&&typeof error==='object'){if('code'in error&&error.code==='40001')return {error:'다른 사용자가 변경했습니다. 새로고침 후 다시 시도해 주세요.'};if('message'in error&&typeof error.message==='string'&&messages[error.message])return {error:messages[error.message]};}return {error:'처리할 수 없습니다. 권한과 입력 내용을 확인하고 새로고침해 주세요.'};}
 function refresh(){for(const path of ['/leave','/leave/requests','/leave/approvals','/leave/team-calendar','/admin/leave'])revalidatePath(path);}
 export async function submitLeave(_state:FormState,form:FormData):Promise<FormState>{
  await requireCapability('EMPLOYEE_ACCESS');const id=randomUUID();
- try{await leaveRpc('submit_leave_checked',{p_id:id,...leaveInput(form,await today()),p_calendar_version:Number(form.get('calendar_version'))});}catch(error){return failure(error);}
+ try{await leaveRpc('submit_leave_benefit_v2',{p_project:form.get('project')||null,p_id:id,...leaveInput(form,await today()),p_calendar_version:Number(form.get('calendar_version')),p_kind:String(form.get('kind')||'ANNUAL'),p_exception:String(form.get('exception_reason')||'').trim()});}catch(error){return failure(error);}
  refresh();redirect('/leave/requests/'+id+'?saved=1');
 }
 export async function decideLeave(_state:FormState,form:FormData):Promise<FormState>{
@@ -32,4 +32,26 @@ export async function adjustLeave(id:string,year:number,_state:FormState,form:Fo
  await leaveRpc('adjust_leave',{p_employee:id,p_year:year,p_delta:delta,p_reason:reason,p_version:versionFrom(form)});
  }catch(error){return failure(error);}
  refresh();redirect('/admin/leave/'+id+'?year='+year+'&saved=1');
+}
+
+export async function grantSource(employee:string,year:number,_state:FormState,form:FormData):Promise<FormState>{
+ await requireCapability('LEAVE_MANAGE');if(!isUuid(employee))notFound();
+ try{await leaveRpc('grant_leave_source',{p_id:randomUUID(),p_employee:employee,p_year:year,p_bucket:String(form.get('bucket')),p_days:Number(form.get('days')),p_reason:String(form.get('reason')||'').trim(),p_version:versionFrom(form)});}catch(error){return failure(error);}
+ refresh();redirect('/admin/leave/'+employee+'?year='+year+'&saved=1');
+}
+export async function correctSource(employee:string,year:number,_state:FormState,form:FormData):Promise<FormState>{
+ await requireCapability('LEAVE_MANAGE');if(!isUuid(employee))notFound();
+ try{const source=String(form.get('source'));if(!isUuid(source))notFound();
+ const rows=await leaveRpc<{id:string}[]>('leave_sources',{p_employee:employee,p_year:year});if(!rows.some(s=>s.id===source))notFound();
+ await leaveRpc('correct_leave_source',{p_source:source,p_days:Number(form.get('days')),p_reason:String(form.get('reason')||'').trim(),p_version:versionFrom(form)});
+ }catch(error){if(error&&typeof error==='object'&&'digest'in error)throw error;return failure(error);}
+ refresh();redirect('/admin/leave/'+employee+'?year='+year+'&saved=1');
+}
+
+export async function confirmValidity(employee:string,year:number,_state:FormState,form:FormData):Promise<FormState>{
+ await requireCapability('LEAVE_MANAGE');if(!isUuid(employee))notFound();
+ try{const source=String(form.get('source'));const rows=await leaveRpc<{id:string}[]>('leave_sources',{p_employee:employee,p_year:year});if(!rows.some(s=>s.id===source))notFound();
+ await leaveRpc('confirm_leave_validity',{p_source:source,p_year:Number(form.get('receiving_year')),p_from:String(form.get('from')),p_until:String(form.get('until')),p_reason:String(form.get('reason')||'').trim(),p_version:versionFrom(form)});
+ }catch(error){if(error&&typeof error==='object'&&'digest'in error)throw error;return failure(error);}
+ refresh();redirect('/admin/leave/'+employee+'?year='+year+'&saved=1');
 }

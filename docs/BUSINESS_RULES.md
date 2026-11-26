@@ -205,3 +205,6 @@ Monthly claim attachments replace per-item evidence requirements in the primary 
 Submission requires at least one ready active claim attachment. Existing item links
 remain for compatibility. Grid and attachment edits follow the same existing payment/lock
 window. See `ISSUE_26_DELIVERY.md` for limits, removal semantics, security and UX.
+
+### 확인된 이월 사용기간 (Issue #35 / PR #39 검수)
+이월연차는 수령 연도 12월 31일까지 사용할 수 있으며, 대체휴가는 당해 연차와 같은 연간 사용기간을 적용한다. 사용기간이 지난 재원은 사용 가능 잔액에서 제외하지만 원장 금액을 자동 소멸하거나 임금과 상계하지 않는다. 기존 재원의 사용기간은 근거 확인 전 미확정으로 표시한다. 신규 이월 부여의 연도는 수령 연도이다.

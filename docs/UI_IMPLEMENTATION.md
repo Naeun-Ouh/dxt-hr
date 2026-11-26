@@ -180,3 +180,11 @@ are read-only, company dates have explicit edit/remove actions. Display verified
 coverage and source. Leave preview excludes weekends/holidays and blocks unsupported
 years with an actionable notice. A changed pending calculation requires resubmission;
 no silent change to approved leave or ledger. See `PHASE_4B_HOLIDAYS.md`.
+
+### Leave source and birthday follow-up
+
+Reuse compact leave summaries/tables and existing request/approval controls. Present
+대체휴가 → 이월연차 → 당해연차, provenance, validity and exact-source cancellation.
+생일 반차 is a distinct request option with AM/PM and optional project exception reason.
+Show policy-confirmation notices only for unresolved birthday edges. See
+`PHASE_4B_SOURCES_BIRTHDAY.md`.
