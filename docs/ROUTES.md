@@ -83,3 +83,4 @@ Suggested Next.js route map.
 
 - `/leave/carryover`: EMPLOYEE_ACCESS, 본인 상태/사용 안내
 - `/admin/leave/carryover`: LEAVE_MANAGE, 기준일 근거 및 검토 이력
+- `/admin/lifecycle`, `/admin/lifecycle/[id]`: ONBOARDING_MANAGE 입퇴사 업무 통합. 각 연결 도메인은 자체 capability/RLS 재검증.
