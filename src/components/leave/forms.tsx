@@ -6,6 +6,7 @@ import {useRouter} from 'next/navigation';
 import {submitLeave,decideLeave,adjustLeave,grantSource,correctSource,confirmValidity} from '@/app/actions/leave';
 import {UNITS,STATES,BUCKETS,type Source,type LeaveRequest,type Summary} from '@/lib/leave/types';
 import type {Holiday,HolidayYear} from '@/lib/leave/holidays';
+import {requestExperience} from '@/lib/leave/experience';
 import {workingDays} from '@/lib/leave/validation';
 import type {FormState} from '@/lib/employees/types';
 function Feedback({state}:{state:FormState}){return <>{state.error&&<p role="alert" className="form-error">{state.error} {Object.values(state.fields||{}).join(' ')}</p>}{state.success&&<p role="status" className="success-banner">{state.success}</p>}</>;}
@@ -14,20 +15,26 @@ export function RequestForm({today,sources,projects,years,holidays}:{today:strin
  const excluded=holidays.filter(h=>h.active).map(h=>h.day),workDates:string[]=[];
  if(workingDays(start,end,unit,excluded)>0)for(let d=Date.parse(start);d<=Date.parse(end);d+=86400000){const date=new Date(d).toISOString().slice(0,10);if(workingDays(date,date,'FULL_DAY',excluded))workDates.push(date);}
  const balance=sources.filter(s=>s.bucket!=='BIRTHDAY'&&s.validity_confirmed&&workDates.length>0&&s.valid_from!<=workDates[0]&&s.valid_until!>=workDates.at(-1)!).reduce((total,s)=>total+Number(s.balance),0);
+ const preview=requestExperience(start,end,unit,sources,excluded);
  const calendar=years.find(y=>y.year===Number(start.slice(0,4)));
  const days=workingDays(start,end,unit,holidays.filter(h=>h.active).map(h=>h.day));
  return <form action={action} className="surface leave-form"><h2>휴가 신청 작성</h2><input type="hidden" name="calendar_version" value={calendar?.version||0}/>{!calendar&&<p role="alert" className="form-error">선택한 연도의 공휴일 자료가 확인되지 않았습니다. 관리자에게 달력 확인을 요청해 주세요.</p>}<Feedback state={state}/>
  <label className="field">휴가 구분<select name="kind" value={kind} onChange={e=>{setKind(e.target.value);if(e.target.value==='BIRTHDAY'){setUnit('AM_HALF');setEnd(start);}}}><option value="ANNUAL">연차 · 대체휴가</option><option value="BIRTHDAY">생일 반차</option></select></label>
  <label className="field">휴가 유형<select name="unit" value={unit} onChange={e=>{setUnit(e.target.value);if(e.target.value!=='FULL_DAY')setEnd(start);}}>{Object.entries(UNITS).filter(([v])=>kind!=='BIRTHDAY'||v!=='FULL_DAY').map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
  <div className="field-grid"><label className="field">시작일<input type="date" name="start_date" required value={start} onChange={e=>{setStart(e.target.value);if(unit!=='FULL_DAY'||e.target.value>end)setEnd(e.target.value);}}/></label><label className="field">종료일<input type="date" name="end_date" required min={start} readOnly={unit!=='FULL_DAY'} value={end} onChange={e=>setEnd(e.target.value)}/></label></div>
- <label className="field">예상 차감일수<output className="leave-output">{days}일</output></label>
+ <label className="field">예상 차감일수<output className="leave-output">{preview.crossYear?'연도별 분리 신청 필요':`${days}일`}</output></label>
+ <section aria-label="휴가 차감 미리보기"><h3>기간 · 차감 확인</h3><p>근무일 {preview.workDates.length}일 · 토·일 제외 {preview.weekends.length}일 · 평일 공휴일/회사 휴일 제외 {preview.excluded.length}일</p><details><summary>날짜별 계산 확인</summary><p>차감 대상: {preview.workDates.join(', ')||'없음'}</p><p>주말: {preview.weekends.join(', ')||'없음'}</p><p>공휴일·회사 휴일: {preview.excluded.join(', ')||'없음'}</p></details>
+ {preview.crossYear&&<div role="alert" className="asset-notice warning"><strong>연도별로 나누어 신청해 주세요.</strong><p>연도별 달력과 재원을 각각 확인합니다. 아래 기간을 순서대로 신청하세요. 반차는 하루만 선택할 수 있습니다.</p>{[...new Set(preview.workDates.map(d=>d.slice(0,4)))].map(year=>{const dates=preview.workDates.filter(d=>d.startsWith(year));const part=requestExperience(dates[0],dates.at(-1)!,unit,sources,excluded);return <p key={year}>{dates[0]} – {dates.at(-1)} · 차감 {part.days}일 · 확인된 재원 {part.available}일 {years.some(y=>y.year===Number(year))?'':'· 달력 확인 필요'}</p>;})}</div>}
+ {preview.split&&!preview.crossYear&&<p role="alert" className="asset-notice warning">선택한 기간 중 휴가 재원의 사용기간이 시작되거나 끝납니다. 부여 내역의 사용기간 경계에서 나누어 신청해 주세요.</p>}
+ {kind==='ANNUAL'&&!preview.crossYear&&<><table className="asset-table"><thead><tr><th>재원</th><th>기간 내 확인 잔액</th><th>예상 차감</th><th>승인 후 예상</th></tr></thead><tbody>{preview.allocation.map(a=><tr key={a.bucket}><td>{BUCKETS[a.bucket]}</td><td>{a.available}일</td><td>{a.taken}일</td><td>{a.after}일</td></tr>)}</tbody></table><p className="muted">이 신청만 승인되는 경우의 참고 계산입니다. 대기 신청·다른 승인·재원 변경은 반영하지 않으며 최종 차감은 서버에서 재검증합니다.{preview.split?' 기간 분리 전에는 이 배분이 확정되지 않습니다.':''}</p></>}
+ {kind==='BIRTHDAY'&&<p>생일 반차 {days}일 · 연차 재원에서 차감하지 않습니다. 생일 정보·사용기간·중복 여부는 서버에서 확인합니다.</p>}</section>
  <p className="muted">대체휴가 → 이월연차 → 당해연차 순으로 차감합니다. 생일 반차는 별도 연 0.5일입니다. 토·일요일과 공휴일·회사 휴일은 제외됩니다. 달력이 변경되면 새로고침 후 신청해 주세요.</p>
  {kind==='BIRTHDAY'&&<><p className="asset-notice">생일 전후 7일에 사용합니다. 프로젝트로 사용하지 못한 경우 사유를 남겨 주세요. 윤일·연도 경계는 담당자 확인이 필요합니다.</p><label className="field">생일 기간에 참여한 프로젝트 (예외 사용 시)<select name="project"><option value="">선택해 주세요</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><p className="muted">생일 전후 7일에 참여한 프로젝트로 사용하지 못한 경우에만 예외 신청합니다. 팀장 본인도 별도 승인자가 검토합니다.</p><label className="field">프로젝트 예외 사유 (해당 시)<textarea name="exception_reason" maxLength={2000} rows={2}/></label></>}
  <label className="field">신청 사유 (선택)<textarea name="reason" maxLength={2000} rows={3}/></label>
  {start<today&&<div className="leave-past"><label className="field">미리 신청하지 못한 사유<input name="past_reason" required maxLength={2000} aria-describedby="past-reason-help"/></label><small id="past-reason-help">과거 날짜 신청에는 사유가 필요합니다.</small></div>}
- {kind==='ANNUAL'&&<p className="muted">선택한 날짜에 사용 가능한 확인된 휴가: {balance}일. 사용기간 경계를 넘으면 나누어 신청해 주세요.</p>}
+ {kind==='ANNUAL'&&!preview.crossYear&&<p className="muted">선택한 날짜에 사용 가능한 확인된 휴가: {balance}일. 사용기간 경계를 넘으면 나누어 신청해 주세요.</p>}
  {kind==='ANNUAL'&&days>balance&&<p className="form-error">사용 가능한 연차가 부족합니다.</p>}
- <div className="button-row"><Link className="button" href="/leave">취소</Link><button className="button primary" disabled={pending||!calendar||days===0}>신청하기</button></div></form>;
+ <div className="button-row"><Link className="button" href="/leave">취소</Link><button className="button primary" disabled={pending||!calendar||days===0||(kind==='ANNUAL'&&preview.split)}>신청하기</button></div></form>;
 }
 export function DecisionForm({items,cancel=false,children}:{items?:{id:string;version:number}[];cancel?:boolean;children?:React.ReactNode}){
  const [state,action,pending]=useActionState(decideLeave,{}),dialog=useRef<HTMLDialogElement>(null);
