@@ -346,3 +346,13 @@ button,input,select,textarea {font:inherit}
 .carryover-form textarea {min-height:80px;resize:vertical;}
 .carryover-evidence {border-bottom:1px solid var(--border);padding:12px 0;overflow-wrap:anywhere;}
 .lifecycle-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);gap:16px;align-items:start}.lifecycle-panel{padding:16px}.lifecycle-panel h2{font-size:16px;margin:0 0 12px}.lifecycle-panel h3{font-size:14px}.lifecycle-panel p{font-size:13px}.lifecycle-related{display:grid;gap:12px}@media(max-width:900px){.lifecycle-grid{grid-template-columns:1fr}}
+
+/* Interactive contract KPIs reuse the compact summary surface. */
+.app-shell .summary-strip>.contract-status-filter{flex:1;min-width:130px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-default);background:var(--surface);color:var(--text-primary);text-align:left;cursor:pointer;font:inherit;box-shadow:none}
+.app-shell .summary-strip>.contract-status-filter:hover{border-color:var(--primary);background:var(--primary-surface)}
+.app-shell .summary-strip>.contract-status-filter[aria-pressed="true"]{border-color:var(--primary);background:var(--primary-surface);box-shadow:inset 0 0 0 1px var(--primary)}
+.app-shell .summary-strip>.contract-status-filter:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.contract-status-filter>span{display:block;white-space:nowrap;margin-bottom:var(--space-1)}
+.contract-status-filter strong{display:block;margin:0;font-variant-numeric:tabular-nums}
+.contract-status-filter small{font-size:var(--font-caption);font-weight:400;color:var(--text-secondary);margin-left:var(--space-1)}
+.contract-due-cell{display:inline-flex;align-items:center;gap:var(--space-2);white-space:nowrap}
