@@ -1,5 +1,7 @@
 'use server';
 import { writableItem } from '@/lib/expenses/grid';
+import {checkExpenseUpload} from '@/lib/expenses/transport';
+import {routeValues} from '@/lib/expenses/routes';
 import { cardValues } from '@/lib/expenses/cards';
 import { randomUUID } from 'node:crypto';
 import { redirect } from 'next/navigation';
@@ -7,12 +9,13 @@ import { revalidatePath } from 'next/cache';
 import { requireCapability } from '@/lib/auth/access';
 import { employeeClient } from '@/lib/employees/data';
 import { isUuid, versionFrom } from '@/lib/employees/validation';
-import { expenseDetail, expenseOptions, expenseRows, ownPaymentCards } from '@/lib/expenses/data';
+import { expenseDetail, expenseOptions, expenseRows, ownPaymentCards, ownRoutePresets } from '@/lib/expenses/data';
 import { CLAIM_COLUMNS, type Claim, type ExpenseState, type ItemInput } from '@/lib/expenses/types';
 import { claimProblems, editable, fromForm, itemProblems } from '@/lib/expenses/validation';
 import { parseWorkbook } from '@/lib/expenses/workbook';
 function failure(e:unknown):ExpenseState {
  const code=e&&typeof e==='object'&&'code'in e?e.code:'';
+ if(e&&typeof e==='object'&&'message'in e&&e.message==='LAST_READY_EVIDENCE')return {error:'제출한 경비의 마지막 증빙은 삭제할 수 없습니다. 새 증빙 업로드를 완료한 뒤 삭제해 주세요.'};
  return {error:code==='40001'?'다른 변경이 있습니다. 새로고침 후 다시 시도해 주세요.':e instanceof Error?e.message:'저장할 수 없습니다. 권한·잠금 상태·참석자의 남은 월 한도를 확인해 주세요.'};
 }
 async function ownClaim(id:string) {
@@ -22,7 +25,7 @@ async function ownClaim(id:string) {
 }
 async function receiptFile(file:FormDataEntryValue|null) {
  if(!(file instanceof File)||!file.size)return null;
- if(file.size>10485760||file.name.length>200||!['application/pdf','image/png','image/jpeg'].includes(file.type))throw new Error('증빙은 10MB 이하 PDF, PNG, JPG 파일로 첨부해 주세요.');
+ if(file.size>4194304||file.name.length>200||!['application/pdf','image/png','image/jpeg'].includes(file.type))throw new Error('증빙은 4 MiB 이하 PDF, PNG, JPG 파일로 첨부해 주세요.');
  const bytes=Buffer.from(await file.arrayBuffer());
  const valid=file.type==='application/pdf'?bytes.subarray(0,5).toString()==='%PDF-':file.type==='image/png'?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):bytes[0]===255&&bytes[1]===216&&bytes[2]===255;
  if(!valid)throw new Error('증빙 파일 형식을 확인해 주세요.');return {file,bytes};
@@ -39,6 +42,7 @@ async function attach(claimId:string,receipt:NonNullable<Awaited<ReturnType<type
 export async function saveExpense(claimId:string|null,itemId:string|null,_state:ExpenseState,form:FormData):Promise<ExpenseState> {
  await requireCapability('EMPLOYEE_ACCESS');let target=claimId;
  try {
+  checkExpenseUpload(form);
   if(form.has('employee_id')||form.has('user_id'))throw new Error('제출자 변경은 허용되지 않습니다.');
   const item=fromForm(form),reason=String(form.get('late_reason')||'').trim();item.id=itemId||randomUUID();item.version=versionFrom(form);
   if((itemId&&(!isUuid(itemId)||item.version<1))||(!itemId&&item.version!==0))throw new Error('입력값을 확인해 주세요.');
@@ -65,9 +69,10 @@ export async function changeExpenseStatus(claimId:string,action:string,_state:Ex
 export async function importExpenses(_state:ExpenseState,form:FormData):Promise<ExpenseState> {
  await requireCapability('EMPLOYEE_ACCESS');let target:string|null=null;
  try {
+  checkExpenseUpload(form);
   if(form.has('employee_id')||form.has('items'))throw new Error('원본 Excel 파일로 검증해 주세요.');
   const file=form.get('workbook'),month=String(form.get('month')||''),reason=String(form.get('late_reason')||'').trim();
-  if(!(file instanceof File)||!file.size||file.size>5242880||!file.name.toLowerCase().endsWith('.xlsx')||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('사용월과 5MB 이하 xlsx 파일을 선택해 주세요.');
+  if(!(file instanceof File)||!file.size||file.size>4194304||!file.name.toLowerCase().endsWith('.xlsx')||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('사용월과 4 MiB 이하 xlsx 파일을 선택해 주세요.');
   const options=await expenseOptions();if(!options.selfId)throw new Error('직원 계정 연결이 필요합니다.');
   const preview=await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'),await ownPaymentCards());
   preview.problems.push(...claimProblems(month,reason));
@@ -108,8 +113,9 @@ export async function saveExpenseGrid(payload:string) {
 export async function previewExpenseGrid(form:FormData) {
  await requireCapability('EMPLOYEE_ACCESS');
  try{
+  checkExpenseUpload(form);
   const file=form.get('workbook'),month=String(form.get('month')||'');
-  if(!(file instanceof File)||file.size>5242880||(!file.name.toLowerCase().endsWith('.xlsx')||file.name.length>200)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('귀속월과 5MB 이하 xlsx 파일을 확인해 주세요.');
+  if(!(file instanceof File)||file.size>4194304||(!file.name.toLowerCase().endsWith('.xlsx')||file.name.length>200)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error('귀속월과 4 MiB 이하 xlsx 파일을 확인해 주세요.');
   const options=await expenseOptions();
   return {preview:await parseWorkbook(Buffer.from(await file.arrayBuffer()),file.name,month,String(form.get('vehicle_date')||''),options.employees.filter(e=>e.employment_status==='ACTIVE'),await ownPaymentCards())};
  }catch(e){return failure(e);}
@@ -120,7 +126,7 @@ export async function uploadExpenseAttachments(claimId:string,form:FormData) {
   await ownClaim(claimId);
   if([...form.keys()].some(k=>k!=='files'))throw new Error('파일 요청 형식을 확인해 주세요.');
   const files=form.getAll('files');
-  if(!files.length||files.length>20||files.some(f=>!(f instanceof File))||files.reduce((n,f)=>n+(f as File).size,0)>15728640)throw new Error('한 번에 20개, 15MB 이하로 업로드해 주세요. 파일별 최대 10MB, 월별 최대 20개·100MB입니다.');
+  if(!files.length||files.length>20||files.some(f=>!(f instanceof File))||files.reduce((n,f)=>n+(f as File).size,0)>4194304)throw new Error('한 요청은 4 MiB 이하입니다. 파일별 최대 4 MiB, 월별 최대 20개·100MB입니다.');
   const results:{name:string;ok:boolean;error?:string}[]=[];
   for(const entry of files){
    try{const receipt=await receiptFile(entry);if(!receipt)throw new Error('빈 파일은 업로드할 수 없습니다.');await attach(claimId,receipt);results.push({name:(entry as File).name,ok:true});}
@@ -161,5 +167,16 @@ export async function savePaymentCard(id:string|null,version:number,value:unknow
   const {error}=await(await employeeClient()).rpc('save_expense_payment_card',{p_id:id,p_version:version,p_values:values});
   if(error)throw error;
   revalidatePath('/expenses');return {cards:await ownPaymentCards()};
+ }catch(e){return failure(e);}
+}
+
+export async function saveRoutePreset(id:string|null,version:number,value:unknown){
+ await requireCapability('EMPLOYEE_ACCESS');
+ try{
+  const values=routeValues(value);
+  if((id&&!isUuid(id))||!Number.isInteger(version)||version<0)throw new Error('경로 요청을 확인해 주세요.');
+  const routes=await ownRoutePresets();if(id&&!routes.some(r=>r.id===id))throw new Error('본인의 경로만 수정할 수 있습니다.');
+  const {error}=await(await employeeClient()).rpc('save_expense_route_preset',{p_id:id,p_version:version,p_values:values});if(error)throw error;
+  revalidatePath('/expenses');return {routes:await ownRoutePresets()};
  }catch(e){return failure(e);}
 }

@@ -1,0 +1,14 @@
+.vehicleGrid.vehicleGrid.vehicleGrid { min-width: 1390px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th { width: 110px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(1),.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(2) { width: 32px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(3) { width: 175px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(8) { width: 65px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(9) { width: 145px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:nth-child(11) { width: 175px; }
+.vehicleGrid.vehicleGrid.vehicleGrid th:last-child { width: 135px; }
+.vehicleGrid.vehicleGrid.vehicleGrid td input[type=number] { text-align:right; }
+.vehicleGrid.vehicleGrid.vehicleGrid td input[type=text] { text-align:left; }
+.tabs { display:flex; gap:4px; flex-wrap:wrap; }
+.tabs button { min-height:32px; padding:6px 14px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--text-secondary); font:inherit; cursor:pointer; }
+.tabs button[aria-selected=true] { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; }
+.tabs button:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }

@@ -52,3 +52,10 @@ export async function ownPaymentCards():Promise<PaymentCard[]> {
  if(error||!self)throw new Error('직원 계정 연결이 필요합니다.');
  return expenseRows<PaymentCard>('expense_payment_card',CARD_COLUMNS,{employee_id:self});
 }
+
+export async function ownRoutePresets(){
+ await requireCapability('EMPLOYEE_ACCESS');
+ const {data:self,error}=await(await employeeClient()).rpc('current_employee_id');
+ if(error||!self)throw new Error('직원 계정 연결이 필요합니다.');
+ return expenseRows<import('./routes').RoutePreset>('expense_route_preset','id,employee_id,origin,destination,alias,fuel_amount,toll_amount,active,version',{employee_id:self});
+}
