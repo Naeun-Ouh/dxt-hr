@@ -357,3 +357,6 @@ button:disabled { opacity: .65; cursor: wait; }
 .grid-detail .attendee-row label { flex-direction:row; align-items:center; }
 .grid-confirm { border:2px solid #6366f1; }
 @media(max-width:900px) { .grid-bottom { grid-template-columns:1fr; } .grid-overview { gap:18px; } }
+
+/* Employee self-service: compact DXT workspace, no separate design system. */
+.my-page{display:grid;gap:16px;min-width:0}.my-page .profile-meta{min-width:0;overflow-wrap:anywhere}.my-page-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.my-page-links>a{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--border,#e2e8f0);border-radius:6px;min-width:0}.my-page-links span{color:var(--muted,#64748b);font-size:12px}.my-page .summary-strip>a{min-width:0;color:inherit;text-decoration:none}.my-page .summary-strip>a:focus-visible{outline:2px solid var(--primary,#4f46e5);outline-offset:2px}@media(max-width:768px){.my-page-links{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:440px){.my-page-links{grid-template-columns:1fr}}
