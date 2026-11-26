@@ -36,6 +36,7 @@ export const ROUTES: AppRoute[] = [
   employee("/leave/team-calendar", "팀 휴가 캘린더", "휴가", "Calendar"),
   employee("/leave/requests", "휴가 신청 내역", "휴가"),
   employee("/leave/weekend-work", "주말근무 등록"),
+  {path:"/leave/weekend-work/approvals",title:"주말근무 검토",capability:"TEAM_LEAVE_APPROVE",icon:"ShieldCheck"},
   managed("/leave/approvals", "휴가 승인", "TEAM_LEAVE_APPROVE", "휴가", "ShieldCheck"),
   employee("/expenses", "경비관리", "경비", "CreditCard"),
   employee("/expenses/new", "경비 등록"),
