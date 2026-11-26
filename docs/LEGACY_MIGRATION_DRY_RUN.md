@@ -102,3 +102,19 @@ identity mapping, invalid date/money, history conflicts, reconciliation/exclusio
 actual-layout synthetic workbook parsing, and CLI privacy/no-overwrite behavior.
 No new web surface or database privilege exists; existing cross-user/RLS regression
 remains required at integration CI. Hosted Auth/Storage acceptance is independent.
+
+## Private mapping and review workspace (Issue #35)
+
+`/admin/migration-review` provides a compact DSv2 workspace over the same offline engine. Access requires the existing `PRIVATE_HR_ACCESS` capability (CEO or designated private-HR administrator), independently checked on the page and every preview request. Ordinary ADMIN, Team Leader, expense/asset specialists, and employees do not gain migration access. This combined legacy source may contain sensitive personnel data, so specialist scope is not sufficient. No new capability, database table, RLS policy, persistent draft, service key, or apply endpoint is introduced.
+
+1. Select an authorized, synthetic/non-production JSON or XLSX source. The browser computes its SHA-256; explicitly designate that exact source as the review baseline.
+2. Load an existing mapping JSON or connect source employee keys to Employee Master entries. Specify mapping version, cutoff date, and independently checked reconciliation totals.
+3. Use the advanced mapping editor for exclusions and explicit legacy Excel row/origin mappings. This initial UI intentionally does not infer employee identity or silently map workbook rows. The existing CLI mapping format above remains authoritative.
+4. Run write-free validation. Review candidate/rejected records by source sheet/row, search and page through the results, and inspect diagnostics and expected/observed totals. Missing history remains missing; the UI never fabricates historical assignments.
+5. Only an error-free report permits the local review acknowledgement. Diagnostic export remains possible for blocked reports. All exports contain `applyAuthorized: false`; acknowledgement is neither authorization to import nor proof of historical eligibility.
+
+Source/mapping edits immediately discard the report and acknowledgement; request generation checks prevent a delayed response from restoring an obsolete report. No source, mapping, or report is kept in browser persistent storage. Exported reports still contain amounts and source locations and must be handled as confidential local files.
+
+Web limits are **3 MiB source, 512 KiB mapping, 4 MiB total request**, lower than the CLI limits to fit hosted transport constraints. The endpoint authenticates before reading the body, requires the exact same Origin, bounds the actual streamed bytes independently of Content-Length, verifies employee mapping UUIDs against the authenticated live directory, and returns `private, no-store`. Errors do not echo source content. The parser and report have no database or Storage write path. Existing XLSX archive/row limits still apply.
+
+Verification: focused unit tests exercise stream limits (including false Content-Length), deterministic preview, unknown employee mappings, source hash mismatch and unsupported/oversized files. Browser coverage exercises synthetic asset mapping/reconciliation/export, edit invalidation, blocked acknowledgement, session downgrade, ordinary-admin/leader/specialist/anonymous denial, CSRF, response caching, and CEO access. These are local synthetic checks; hosted acceptance and reviewed real-source import remain separate gates. Bulk apply remains unsupported.
