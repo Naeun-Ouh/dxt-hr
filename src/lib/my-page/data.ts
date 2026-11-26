@@ -1,15 +1,15 @@
 import 'server-only';
-import {requireCapability} from '../auth/access';
+import {currentEmployeeId,requireCapability} from '../auth/access';
 import {employeeClient,getEmployee,organizations} from '../employees/data';
 import type {Source} from '../leave/types';
 
 // No employee identifier is accepted by this entry point, including for managers.
 export async function myPageData(){
  await requireCapability('EMPLOYEE_ACCESS','/me');
- const db=await employeeClient(),identity=await db.rpc('current_employee_id');
- if(identity.error)throw new Error('내 정보를 불러오지 못했습니다.');
- const id=identity.data as string|null;if(!id)return null;
- const date=await db.rpc('leave_today');if(date.error||typeof date.data!=='string')throw new Error('내 정보를 불러오지 못했습니다.');
+ const db=await employeeClient();
+ const [id,date]=await Promise.all([currentEmployeeId(),db.rpc('leave_today')]);
+ if(!id)return null;
+ if(date.error||typeof date.data!=='string')throw new Error('내 정보를 불러오지 못했습니다.');
  const today=date.data,year=Number(today.slice(0,4));
  const count=async(query:PromiseLike<{count:number|null;error:unknown}>)=>{const r=await query;if(r.error||r.count===null)throw new Error('Summary unavailable');return r.count;};
  const [profile,departments,leave,projects,signatures,pendingCertificates,issuedCertificates,expense,assets]=await Promise.allSettled([

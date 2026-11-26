@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { requireCapability } from '@/lib/auth/access';
 import { employeeClient } from '@/lib/employees/data';
 import { isUuid, versionFrom } from '@/lib/employees/validation';
-import { expenseDetail, expenseOptions, expenseRows, ownPaymentCards, ownRoutePresets } from '@/lib/expenses/data';
+import { expenseMutationSession, expenseDetail, expenseOptions, expenseRows, ownPaymentCards, ownRoutePresets } from '@/lib/expenses/data';
 import { CLAIM_COLUMNS, type Claim, type ExpenseState, type ItemInput } from '@/lib/expenses/types';
 import { claimProblems, editable, fromForm, itemProblems } from '@/lib/expenses/validation';
 import { parseWorkbook } from '@/lib/expenses/workbook';
@@ -93,21 +93,22 @@ export async function importExpenses(_state:ExpenseState,form:FormData):Promise<
 
 // Grid mutations reauthorize on every invocation; the database repeats ownership/version checks.
 export async function saveExpenseGrid(payload:string) {
- await requireCapability('EMPLOYEE_ACCESS');
+ const session=await expenseMutationSession();
  try {
+  await session.ready();
   if(payload.length>1500000)throw new Error('입력 데이터가 너무 큽니다.');
   const value=JSON.parse(payload);
   if(!value||Object.keys(value).some(k=>!['claimId','month','version','items','deleted','reason'].includes(k))||!/^\d{4}-(0[1-9]|1[0-2])$/.test(value.month)||!Number.isInteger(value.version)||value.version<0||typeof value.reason!=='string'||value.reason.length>2000||!Array.isArray(value.items)||value.items.length>500||!Array.isArray(value.deleted)||value.deleted.length>500)throw new Error('일괄 저장 형식을 확인해 주세요.');
-  if(value.claimId)await ownClaim(value.claimId);
+  if(value.claimId)await session.ownClaim(value.claimId);
   const {gridProblems}=await import('@/lib/expenses/grid');
   const keys=['id','version','usage_date','expense_type','merchant','description','account_category','amount','evidence_type','payment_method','payment_card_id','project_id','trip_context','notes','attachment_id','attendees','vehicle','legacy_summary','import_filename','import_origin'];
   for(const row of value.items){if(!row||Object.keys(row).some(k=>!keys.includes(k))||!isUuid(row.id)||!Number.isInteger(row.version)||row.version<0||!Array.isArray(row.attendees)||['usage_date','merchant','description','account_category','notes','trip_context'].some(k=>typeof row[k]!=='string'))throw new Error('행 입력 형식을 확인해 주세요.');}
-  const cards=await ownPaymentCards();
+  const cards=value.items.some((row:ItemInput)=>row.payment_card_id)?await session.cards():[];
   for(const row of value.items)if(row.payment_card_id&&!cards.some(c=>c.id===row.payment_card_id&&c.active))throw new Error('본인의 활성 카드를 선택해 주세요. 비활성 카드는 새 저장에 사용할 수 없습니다.');
   const errors=[...claimProblems(value.month,value.reason),...value.items.flatMap((r:ItemInput)=>gridProblems(r,value.items,value.month))].filter(p=>p.severity==='ERROR');
   if(errors.length)throw new Error(errors.map(p=>p.message).join(' '));
-  const {data:id,error}=await(await employeeClient()).rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;
-  revalidatePath('/expenses');return {detail:await expenseDetail(id)};
+  const {data:id,error}=await session.client.rpc('save_expense_grid',{p_claim:value.claimId||null,p_month:value.month+'-01',p_version:value.version,p_items:value.items,p_deleted:value.deleted,p_reason:value.reason});if(error)throw error;
+  revalidatePath('/expenses');return {detail:await session.detail(id)};
  }catch(e){return failure(e);}
 }
 export async function previewExpenseGrid(form:FormData) {
